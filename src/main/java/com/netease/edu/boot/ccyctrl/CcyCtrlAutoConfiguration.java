@@ -2,9 +2,11 @@ package com.netease.edu.boot.ccyctrl;/**
  * Created by hzfjd on 17/12/4.
  */
 
+import com.netease.ccyctrl.component.CcyCtrlConfigurer;
 import com.netease.ccyctrl.component.CcyCtrlManager;
 import com.netease.ccyctrl.component.CcyCtrlMonitor;
 import com.netease.ccyctrl.component.CcyCtrlSupport;
+import com.netease.ccyctrl.component.impl.CcyCtrlConfigurerImpl;
 import com.netease.ccyctrl.component.impl.CcyCtrlManagerImpl;
 import com.netease.ccyctrl.component.impl.CcyCtrlMonitorImpl;
 import com.netease.ccyctrl.component.impl.CcyCtrlSupportImpl;
@@ -20,7 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * 临时复制,后面做成单独的auto-configure
+ * 并发控制自动配置,see @EnableCcyCtrl
  *
  * @author hzfjd
  * @create 17/12/4
@@ -36,28 +38,35 @@ public class CcyCtrlAutoConfiguration {
      * @return
      */
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(ConcurrencyCtrlAspectJ.class)
     public ConcurrencyCtrlAspectJ concurrencyCtrlAspectJ() {
         return new ConcurrencyCtrlAspectJ();
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(CcyCtrlManager.class)
     public CcyCtrlManager ccyCtrlManager() {
         return new CcyCtrlManagerImpl();
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(CcyCtrlSupport.class)
     public CcyCtrlSupport CcyCtrlSupport() {
         return new CcyCtrlSupportImpl();
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(CcyCtrlMonitor.class)
     @ConditionalOnClass(CcyCtrlMonitorImpl.class)
     public CcyCtrlMonitor CcyCtrlMonitor() {
         return new CcyCtrlMonitorImpl();
+    }
+
+
+    @Bean
+    @ConditionalOnMissingBean(CcyCtrlConfigurer.class)
+    public CcyCtrlConfigurer ccyCtrlConfigurer(){
+        return new CcyCtrlConfigurerImpl();
     }
 
     /**
@@ -66,13 +75,13 @@ public class CcyCtrlAutoConfiguration {
      * @return
      */
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(SpringCloudConfigCcyCtrlConfigManagement.class)
     public SpringCloudConfigCcyCtrlConfigManagement springCloudConfigCcyCtrlConfigManagement() {
         return new SpringCloudConfigCcyCtrlConfigManagement();
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(CcyCtrlConfigManagementRefreshListener.class)
     public CcyCtrlConfigManagementRefreshListener ccyCtrlConfigManagementRefreshListener(
             SpringCloudConfigCcyCtrlConfigManagement springCloudConfigCcyCtrlConfigManagement) {
         return new CcyCtrlConfigManagementRefreshListener(springCloudConfigCcyCtrlConfigManagement);
