@@ -4,7 +4,7 @@
 
     <groupId>com.netease.edu.boot</groupId>
     <artifactId>ccyctrl-autoconfigure</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>ccyctrl-autoconfigure</name>
@@ -16,10 +16,9 @@
         <jacoco.output>file</jacoco.output>
         <sonar-project-env-suffix-branch>scratch</sonar-project-env-suffix-branch>
         <sonar-project-env-suffix-id>scratch</sonar-project-env-suffix-id>
-        <argLine>-XX:MaxPermSize=256M -Xmx1024m -Dfile.encoding=UTF-8 -da</argLine>
         <sonar-project-artifactId>${project.artifactId}</sonar-project-artifactId>
         <jacocoCoverageDir>**</jacocoCoverageDir>
-        <edu-second-party-base.version>1.0.40.s2-micro-special-1-jt-20171113-SNAPSHOT</edu-second-party-base.version>
+        <edu-second-party-base.version>1.0.40</edu-second-party-base.version>
         <edu-third-party-base.version>1.0.3</edu-third-party-base.version>
     </properties>
 
