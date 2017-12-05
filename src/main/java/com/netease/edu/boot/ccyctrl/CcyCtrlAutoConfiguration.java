@@ -2,14 +2,8 @@ package com.netease.edu.boot.ccyctrl;/**
  * Created by hzfjd on 17/12/4.
  */
 
-import com.netease.ccyctrl.component.CcyCtrlConfigurer;
-import com.netease.ccyctrl.component.CcyCtrlManager;
-import com.netease.ccyctrl.component.CcyCtrlMonitor;
-import com.netease.ccyctrl.component.CcyCtrlSupport;
-import com.netease.ccyctrl.component.impl.CcyCtrlConfigurerImpl;
-import com.netease.ccyctrl.component.impl.CcyCtrlManagerImpl;
-import com.netease.ccyctrl.component.impl.CcyCtrlMonitorImpl;
-import com.netease.ccyctrl.component.impl.CcyCtrlSupportImpl;
+import com.netease.ccyctrl.component.*;
+import com.netease.ccyctrl.component.impl.*;
 import com.netease.edu.aop.aspect.ConcurrencyCtrlAspectJ;
 import com.netease.edu.util.ccyctrl.SpringCloudConfigCcyCtrlConfigManagement;
 import org.slf4j.Logger;
@@ -53,6 +47,11 @@ public class CcyCtrlAutoConfiguration {
     @ConditionalOnMissingBean(CcyCtrlSupport.class)
     public CcyCtrlSupport CcyCtrlSupport() {
         return new CcyCtrlSupportImpl();
+    }
+    @Bean
+    @ConditionalOnMissingBean(CcyCtrlConfigDataCenter.class)
+    public CcyCtrlConfigDataCenter ccyCtrlConfigDataCenter(){
+        return  new CcyCtrlConfigDataCenterImpl();
     }
 
     @Bean
