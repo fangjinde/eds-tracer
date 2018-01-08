@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.netease.edu.boot</groupId>
-    <artifactId>ccyctrl-autoconfigure</artifactId>
+    <artifactId>edu-hystrix-spring-boot-starter</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>ccyctrl-autoconfigure</name>
+    <name>edu-hystrix-spring-boot-starter</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -25,6 +25,22 @@
     <dependencyManagement>
         <dependencies>
 
+        	<dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-parent</artifactId>
+                <version>Camden.SR7</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <!-- Import dependency management from Spring Boot -->
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>1.4.5.RELEASE</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <dependency>
                 <groupId>com.netease.edu</groupId>
                 <artifactId>edu-second-party-base</artifactId>
@@ -41,21 +57,7 @@
                 <scope>import</scope>
             </dependency>
 
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-starter-parent</artifactId>
-                <version>Camden.SR7</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <!-- Import dependency management from Spring Boot -->
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>1.4.5.RELEASE</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
+
 
         </dependencies>
     </dependencyManagement>
@@ -69,14 +71,14 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter</artifactId>
         </dependency>
-        <dependency>
+<!--         <dependency>
             <groupId>com.netease.edu</groupId>
             <artifactId>edu-base-util</artifactId>
         </dependency>
         <dependency>
             <groupId>com.netease.edu</groupId>
             <artifactId>edu-base-aop</artifactId>
-        </dependency>
+        </dependency> -->
     </dependencies>
 
     <distributionManagement>
