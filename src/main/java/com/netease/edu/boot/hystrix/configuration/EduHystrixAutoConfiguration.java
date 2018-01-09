@@ -27,7 +27,7 @@ public class EduHystrixAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public FallbackFactory springFallbackFactory(){
+    public FallbackFactory fallbackFactory(){
         return new SpringFallbackFactory();
     }
 

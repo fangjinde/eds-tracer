@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml" />
+    <!-- 文件输出格式 -->
+    <property name="PATTERN" value="%-12(%d{yyyy-MM-dd HH:mm:ss.SSS}) |-%-5level [%thread] %c [%L] -| %msg%n"/>
+
+    <springProperty scope="context" name="appLogRootDir"
+                    source="appLogRootDir" />
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+
+    <!-- 每天产生一个文件 -->
+    <appender name="ROOT_LOG_FILE_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 文件路径 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 文件名称 -->
+            <fileNamePattern>${appLogRootDir}/root-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 文件最大保存历史数量 -->
+            <MaxHistory>3</MaxHistory>
+        </rollingPolicy>
+
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${PATTERN}</pattern>
+        </layout>
+    </appender>
+
+    <!-- 开发环境 -->
+    <springProfile name="!online">
+        <root level="info">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ROOT_LOG_FILE_APPENDER"/>
+        </root>
+    </springProfile>
+    <!-- 测试环境 -->
+    <springProfile name="online">
+        <root level="info">
+            <appender-ref ref="ROOT_LOG_FILE_APPENDER"/>
+        </root>
+    </springProfile>
+
+</configuration>

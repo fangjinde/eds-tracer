@@ -5,7 +5,6 @@ package com.netease.edu.boot.hystrix.aop.filter;/**
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.extension.Activate;
 import com.alibaba.dubbo.rpc.*;
-import com.netease.edu.boot.hystrix.core.FallbackFactory;
 import com.netease.edu.boot.hystrix.core.constants.HystrixKeyConstants;
 import com.netease.edu.boot.hystrix.core.constants.OriginApplicationConstants;
 import com.netease.edu.boot.hystrix.support.DubboHystrixFilterSupport;
@@ -17,16 +16,11 @@ import com.netflix.hystrix.*;
  * @create 18/1/2
  */
 
-@Activate(group = Constants.PROVIDER, value = "dubboHystrixProviderFilter")
+@Activate(group = Constants.PROVIDER)
 public class DubboHystrixProviderFilter implements Filter {
 
-    FallbackFactory fallbackFactory;
-
-    public void setFallbackFactory(FallbackFactory fallbackFactory) {
-        this.fallbackFactory = fallbackFactory;
-    }
-
-    @Override public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+    @Override
+    public Result invoke(final Invoker<?> invoker, final Invocation invocation) throws RpcException {
         String originApplicationName = invocation.getAttachment(OriginApplicationConstants.HEADER_NAME);
 
         String groupKey = invoker.getInterface().getName();
@@ -44,11 +38,38 @@ public class DubboHystrixProviderFilter implements Filter {
                         HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE));
 
 
-        Object fallback = null;
-        if (fallbackFactory != null) {
-            fallback = fallbackFactory.getFallback(invoker.getInterface(), true);
-        }
+        HystrixCommand<Result> hystrixCommand = new HystrixCommand<Result>(setter) {
 
-        return DubboHystrixFilterSupport.invokeWithHystrix(invoker, invocation, setter, fallback, true);
+            @Override
+            protected Result run() throws Exception {
+                    Result result=invoker.invoke(invocation);
+                    if(result.hasException()&&!DubboHystrixFilterSupport.isUserBadRequestException(
+                            result.getException())){
+                        //just let Hystrix to record
+                        throw new DubboProviderInvokeException(result.getException());
+                    }
+                    return result;
+            }
+
+            @Override
+            protected Result getFallback() {
+                    Throwable executionException = getFailedExecutionException();
+                    if (executionException instanceof DubboProviderInvokeException){
+                        //wrapper it back to RpcResult
+                        return new RpcResult(executionException.getCause());
+                    }
+                    //so far i have no idea why it will happen
+                    throw new RuntimeException("",executionException);
+            }
+        };
+
+        return hystrixCommand.execute();
+    }
+
+
+    static class DubboProviderInvokeException extends Exception{
+        DubboProviderInvokeException(Throwable cause){
+            super(cause);
+        }
     }
 }

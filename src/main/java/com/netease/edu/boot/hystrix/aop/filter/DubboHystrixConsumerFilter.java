@@ -18,7 +18,7 @@ import org.springframework.core.env.Environment;
  * @create 18/1/2
  */
 
-@Activate(group = Constants.CONSUMER, value = "dubboHystrixConsumerFilter")
+@Activate(group = Constants.CONSUMER)
 public class DubboHystrixConsumerFilter implements Filter {
 
     FallbackFactory fallbackFactory;
@@ -50,7 +50,7 @@ public class DubboHystrixConsumerFilter implements Filter {
                 HystrixCommandKey.Factory.asKey(commandKey)).andThreadPoolKey(
                 HystrixThreadPoolKey.Factory.asKey(threadPoolKey)).andCommandPropertiesDefaults(
                 HystrixCommandProperties.Setter().withExecutionIsolationStrategy(
-                        HystrixCommandProperties.ExecutionIsolationStrategy.THREAD));
+                        HystrixCommandProperties.ExecutionIsolationStrategy.THREAD).withExecutionTimeoutInMilliseconds(6000000));
 
 
         Object fallback = null;
@@ -59,6 +59,13 @@ public class DubboHystrixConsumerFilter implements Filter {
         }
 
         return DubboHystrixFilterSupport.invokeWithHystrix(invoker, invocation, setter, fallback, false);
+    }
+
+
+    static class DubboConsumerInvokeException extends Exception{
+        DubboConsumerInvokeException(Throwable cause){
+            super(cause);
+        }
     }
 
 

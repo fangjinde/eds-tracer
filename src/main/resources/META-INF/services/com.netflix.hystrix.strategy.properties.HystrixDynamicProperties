@@ -1,1 +1,1 @@
-com.netease.edu.member.boot.hystrix.support.HystrixDynamicPropertiesSpringEnvironmentAdapter
+com.netease.edu.boot.hystrix.support.HystrixDynamicPropertiesSpringEnvironmentAdapter
