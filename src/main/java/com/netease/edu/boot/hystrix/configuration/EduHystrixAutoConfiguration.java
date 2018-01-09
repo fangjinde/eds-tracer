@@ -10,6 +10,7 @@ import com.netease.edu.boot.hystrix.core.FallbackFactory;
 import com.netease.edu.boot.hystrix.core.OriginApplicationNameResolver;
 import com.netease.edu.boot.hystrix.core.SpringFallbackFactory;
 import com.netease.edu.boot.hystrix.core.constants.HystrixBeanNameContants;
+import com.netease.edu.boot.hystrix.support.DubboReferenceRegistryProcessor;
 import com.netease.edu.boot.hystrix.support.HystrixDynamicPropertiesSpringEnvironmentAdapter;
 import com.netease.edu.boot.hystrix.support.OriginApplicationNameControllerResolver;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -27,8 +28,14 @@ public class EduHystrixAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public FallbackFactory fallbackFactory(){
+    public FallbackFactory fallbackFactory() {
         return new SpringFallbackFactory();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public static DubboReferenceRegistryProcessor dubboReferenceRegistryProcessor() {
+        return new DubboReferenceRegistryProcessor();
     }
 
     @Bean
@@ -50,7 +57,6 @@ public class EduHystrixAutoConfiguration {
         return new OriginApplicationNameControllerResolver();
     }
 
-
     @Bean
     @ConditionalOnMissingBean(name = {
             HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_API_CONTROLLER_ASPECT_BEAN_NAME })
@@ -62,15 +68,16 @@ public class EduHystrixAutoConfiguration {
     }
 
     // @Bean
-    @ConditionalOnMissingBean(name={HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_DWR_ASPECT_BEAN_NAME})
-    @ConditionalOnClass(name={"org.directwebremoting.servlet.UrlProcessor"})
-    public DefaultHystrixCommandDwrAspect defaultHystrixCommandDwrAspect(){
-       return new DefaultHystrixCommandDwrAspect();
+    @ConditionalOnMissingBean(name = { HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_DWR_ASPECT_BEAN_NAME })
+    @ConditionalOnClass(name = { "org.directwebremoting.servlet.UrlProcessor" })
+    public DefaultHystrixCommandDwrAspect defaultHystrixCommandDwrAspect() {
+        return new DefaultHystrixCommandDwrAspect();
     }
 
     //@Bean
-    @ConditionalOnMissingBean(name={HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_FRONT_CONTROLLER_ASPECT_BEAN_NAME})
-    public DefaultHystrixCommandFrontControllerAspect defaultHystrixCommandFrontControllerAspect(){
+    @ConditionalOnMissingBean(name = {
+            HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_FRONT_CONTROLLER_ASPECT_BEAN_NAME })
+    public DefaultHystrixCommandFrontControllerAspect defaultHystrixCommandFrontControllerAspect() {
         return new DefaultHystrixCommandFrontControllerAspect();
     }
 }
