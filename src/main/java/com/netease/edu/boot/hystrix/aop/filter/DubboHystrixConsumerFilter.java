@@ -6,7 +6,7 @@ import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.extension.Activate;
 import com.alibaba.dubbo.rpc.*;
 import com.netease.edu.boot.hystrix.core.FallbackFactory;
-import com.netease.edu.boot.hystrix.core.constants.HystrixKeyConstants;
+import com.netease.edu.boot.hystrix.core.constants.HystrixKeyPrefixEnum;
 import com.netease.edu.boot.hystrix.core.constants.OriginApplicationConstants;
 import com.netease.edu.boot.hystrix.support.DubboHystrixFilterSupport;
 import com.netease.edu.boot.hystrix.support.HystrixKeyUtils;
@@ -40,9 +40,9 @@ public class DubboHystrixConsumerFilter implements Filter {
                                         environment.getProperty("spring.application.name"));
 
         String groupKey = invoker.getInterface().getName();
-        String rawCommandKey = HystrixKeyUtils.getMethodSignature(invoker.getInterface(), invocation.getMethodName(),
+        String methodSignature = HystrixKeyUtils.getMethodSignature(invoker.getInterface(), invocation.getMethodName(),
                                                                   invocation.getParameterTypes());
-        String commandKey = HystrixKeyUtils.getCommandKey(HystrixKeyConstants.CONSUMER_PREFIX, rawCommandKey);
+        String commandKey = HystrixKeyUtils.getCommandKey(HystrixKeyPrefixEnum.CONSUMER.getPrefix(), methodSignature);
         String threadPoolKey = commandKey;
 
         HystrixCommand.Setter setter = HystrixCommand.Setter.withGroupKey(

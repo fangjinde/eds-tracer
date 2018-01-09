@@ -9,6 +9,7 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
 
 /**
+ * 适配到spring environment
  * @author hzfjd
  * @create 17/12/24
  */

@@ -69,7 +69,7 @@ public class HystrixCommandAspectSupport {
                                               .build();
     }
 
-    public Object methodsWithHystrixSupport(final ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object methodsWithHystrixSupport(final ProceedingJoinPoint joinPoint,String sidePrefix) throws Throwable {
         Method method = getMethodFromTarget(joinPoint);
         Validate.notNull(method, String.format("failed to get method from joinPoint: %s", joinPoint));
         if (method.isAnnotationPresent(EduHystrixCommand.class) && method.isAnnotationPresent(
@@ -80,7 +80,7 @@ public class HystrixCommandAspectSupport {
         }
         MetaHolderFactory metaHolderFactory = META_HOLDER_FACTORY_MAP.get(HystrixPointcutType.of(method));
         MetaHolder metaHolder = metaHolderFactory.create(joinPoint,
-                                                         eduHystrixCommandProperties.isIsolatedByOriginEnable() ? originApplicationNameResolver : null);
+                                                         eduHystrixCommandProperties.isIsolatedByOriginEnable() ? originApplicationNameResolver : null, sidePrefix);
         HystrixInvokable invokable = EduHystrixCommandFactory.getInstance().create(metaHolder);
         ExecutionType executionType = metaHolder.isCollapserAnnotationPresent() ?
                 metaHolder.getCollapserExecutionType() : metaHolder.getExecutionType();
@@ -134,28 +134,28 @@ public class HystrixCommandAspectSupport {
     private static abstract class MetaHolderFactory {
 
         public MetaHolder create(final ProceedingJoinPoint joinPoint,
-                                 OriginApplicationNameResolver originApplicationNameResolver) {
+                                 OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix) {
             Method method = getMethodFromTarget(joinPoint);
             Object obj = joinPoint.getTarget();
             Object[] args = joinPoint.getArgs();
             Object proxy = joinPoint.getThis();
-            return create(proxy, method, obj, args, joinPoint, originApplicationNameResolver);
+            return create(proxy, method, obj, args, joinPoint, originApplicationNameResolver, sidePrefix);
         }
 
         public abstract MetaHolder create(Object proxy, Method method, Object obj, Object[] args,
                                           final ProceedingJoinPoint joinPoint,
-                                          OriginApplicationNameResolver originApplicationNameResolver);
+                                          OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix);
 
         MetaHolder.Builder metaHolderBuilder(Object proxy, Method method, Object obj, Object[] args,
                                              final ProceedingJoinPoint joinPoint,
-                                             OriginApplicationNameResolver originApplicationNameResolver) {
+                                             OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix) {
             MetaHolder.Builder builder = MetaHolder.builder()
                                                    .args(args).method(method).obj(obj).proxyObj(proxy)
                                                    .joinPoint(joinPoint);
 
             setFallbackMethod(builder, obj.getClass(), method);
 
-            setDefaultKeyByJoinPoint(builder,proxy,method,obj,args,joinPoint,originApplicationNameResolver);
+            setDefaultKeyByJoinPoint(builder,proxy,method,obj,args,joinPoint,originApplicationNameResolver, sidePrefix);
 
             builder = setDefaultProperties(builder, obj.getClass(), joinPoint);
 
@@ -175,9 +175,9 @@ public class HystrixCommandAspectSupport {
          * @return
          */
         private MetaHolder.Builder setDefaultKeyByJoinPoint(MetaHolder.Builder builder,Object proxy, Method method, Object obj, Object[] args,
-                                                            final ProceedingJoinPoint joinPoint,OriginApplicationNameResolver originApplicationNameResolver){
+                                                            final ProceedingJoinPoint joinPoint,OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix){
             return HystrixKeyUtils.setDefaultKeyBySignatureAndOrigin(builder, method, obj,
-                                                                     originApplicationNameResolver);
+                                                                     originApplicationNameResolver, sidePrefix);
         }
 
     }
@@ -189,7 +189,7 @@ public class HystrixCommandAspectSupport {
         @Override
         public MetaHolder create(Object proxy, Method collapserMethod, Object obj, Object[] args,
                                  final ProceedingJoinPoint joinPoint,
-                                 OriginApplicationNameResolver originApplicationNameResolver) {
+                                 OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix) {
             EduHystrixCollapser hystrixCollapser = collapserMethod.getAnnotation(EduHystrixCollapser.class);
             if (collapserMethod.getParameterTypes().length > 1 || collapserMethod.getParameterTypes().length == 0) {
                 throw new IllegalStateException("Collapser method must have one argument: " + collapserMethod);
@@ -243,7 +243,7 @@ public class HystrixCommandAspectSupport {
             // that should be invoked upon intercepted method, it's required only for underlying batch command
 
             MetaHolder.Builder builder = metaHolderBuilder(proxy, batchCommandMethod, obj, args, joinPoint,
-                                                           originApplicationNameResolver);
+                                                           originApplicationNameResolver, sidePrefix);
 
             if (isCompileWeaving()) {
                 builder.ajcMethod(getAjcMethodAroundAdvice(obj.getClass(), batchCommandMethod.getName(), List.class));
@@ -275,11 +275,11 @@ public class HystrixCommandAspectSupport {
         @Override
         public MetaHolder create(Object proxy, Method method, Object obj, Object[] args,
                                  final ProceedingJoinPoint joinPoint,
-                                 OriginApplicationNameResolver originApplicationNameResolver) {
+                                 OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix) {
             EduHystrixCommand hystrixCommand = method.getAnnotation(EduHystrixCommand.class);
             ExecutionType executionType = ExecutionType.getExecutionType(method.getReturnType());
             MetaHolder.Builder builder = metaHolderBuilder(proxy, method, obj, args, joinPoint,
-                                                           originApplicationNameResolver);
+                                                           originApplicationNameResolver, sidePrefix);
             if (isCompileWeaving()) {
                 builder.ajcMethod(getAjcMethodFromTarget(joinPoint));
             }

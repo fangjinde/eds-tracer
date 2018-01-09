@@ -5,7 +5,7 @@ package com.netease.edu.boot.hystrix.aop.filter;/**
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.extension.Activate;
 import com.alibaba.dubbo.rpc.*;
-import com.netease.edu.boot.hystrix.core.constants.HystrixKeyConstants;
+import com.netease.edu.boot.hystrix.core.constants.HystrixKeyPrefixEnum;
 import com.netease.edu.boot.hystrix.core.constants.OriginApplicationConstants;
 import com.netease.edu.boot.hystrix.support.DubboHystrixFilterSupport;
 import com.netease.edu.boot.hystrix.support.HystrixKeyUtils;
@@ -26,8 +26,8 @@ public class DubboHystrixProviderFilter implements Filter {
         String groupKey = invoker.getInterface().getName();
         String rawCommandKey = HystrixKeyUtils.getMethodSignature(invoker.getInterface(), invocation.getMethodName(),
                                                                   invocation.getParameterTypes());
-        String commandKey = HystrixKeyUtils.getCommandKey(HystrixKeyConstants.PROVIDER_API_PREFIX, rawCommandKey);
-        String threadPoolKey = HystrixKeyUtils.getThreadPoolKey(HystrixKeyConstants.PROVIDER_API_PREFIX, rawCommandKey,
+        String commandKey = HystrixKeyUtils.getCommandKey(HystrixKeyPrefixEnum.API_PROVIDER.getPrefix(), rawCommandKey);
+        String threadPoolKey = HystrixKeyUtils.getThreadPoolKey(HystrixKeyPrefixEnum.API_PROVIDER.getPrefix(), rawCommandKey,
                                                                 originApplicationName);
 
         HystrixCommand.Setter setter = HystrixCommand.Setter.withGroupKey(

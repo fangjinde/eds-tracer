@@ -2,8 +2,8 @@ package com.netease.edu.boot.hystrix.support;/**
  * Created by hzfjd on 18/1/3.
  */
 
+import com.netease.edu.boot.hystrix.core.HystrixKeyParam;
 import com.netease.edu.boot.hystrix.core.OriginApplicationNameResolver;
-import com.netease.edu.boot.hystrix.core.constants.OriginApplicationConstants;
 import com.netflix.hystrix.contrib.javanica.command.MetaHolder;
 import org.apache.commons.lang.StringUtils;
 
@@ -20,17 +20,20 @@ public class HystrixKeyUtils {
 
     public static MetaHolder.Builder setDefaultKeyBySignatureAndOrigin(MetaHolder.Builder builder, Method method,
                                                                        Object obj,
-                                                                       OriginApplicationNameResolver originApplicationNameResolver) {
+                                                                       OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix) {
         //ThreadPoolKey默认：RemoteAppcationName+Class+Method+ArgumentTypes
         String defaultCommandGroupKey = obj.getClass().getName();
-        String defaultCommandKey = getDefaultCommandKey(method, obj);
-        String defaultThreadPoolKey = defaultCommandKey;
+        String methodSignature = getMethodSignature(method, obj);
+
+        HystrixKeyParam hystrixKeyParam=  new HystrixKeyParam(sidePrefix,methodSignature);
+        String defaultCommandKey=hystrixKeyParam.generateCommandKey();
+        String defaultThreadPoolKey=defaultCommandKey;
+
         if (originApplicationNameResolver != null) {
             String originApplicationName = originApplicationNameResolver.getOriginApplicationName();
             if (StringUtils.isNotBlank(originApplicationName)) {
-                defaultThreadPoolKey = new StringBuilder(originApplicationName).append(
-                        OriginApplicationConstants.SEPARATOR).append(
-                        defaultThreadPoolKey).toString();
+                hystrixKeyParam.setOriginApplicationName(originApplicationName);
+                defaultThreadPoolKey=hystrixKeyParam.generateThreadPoolKey();
             }
         }
         builder.defaultGroupKey(defaultCommandGroupKey).defaultCommandKey(defaultCommandKey).defaultThreadPoolKey(
@@ -38,31 +41,14 @@ public class HystrixKeyUtils {
         return builder;
     }
 
-    public static String getDefaultCommandKey(Method method, Object obj) {
+    public static String getMethodSignature(Method method, Object obj) {
         return EduMethodProvider.getMethodSignature(obj.getClass(), method);
     }
 
-    public static String parseOriginApplicationName(String originKeyName) {
-        if (StringUtils.isBlank(originKeyName)) {
-            return null;
-        }
-        int index = originKeyName.indexOf(OriginApplicationConstants.SEPARATOR);
-        if (index > -1) {
-            return originKeyName.substring(0, index);
-        }
-        return null;
-
-    }
-
-    public static String getHystrixFallbackThreadPoolKey(String originMethodThreadPoolKey, String currentCommandKey) {
-        String originApplicationName = parseOriginApplicationName(originMethodThreadPoolKey);
-
-        StringBuilder sb = new StringBuilder();
-        if (StringUtils.isNotBlank(originApplicationName)) {
-            sb.append(originApplicationName).append(OriginApplicationConstants.SEPARATOR);
-        }
-        sb.append(currentCommandKey);
-        return sb.toString();
+    public static String getHystrixFallbackThreadPoolKey(String originMethodThreadPoolKey, String currentMethodSignature) {
+        HystrixKeyParam hystrixKeyParam= HystrixKeyParam.parseFromKey(originMethodThreadPoolKey);
+        hystrixKeyParam.setMethodSignature(currentMethodSignature);
+        return hystrixKeyParam.generateThreadPoolKey();
     }
 
     /**
@@ -103,23 +89,12 @@ public class HystrixKeyUtils {
        return getMethodSignature(targetType.getName(),methodName, paraClassSimpleNames);
     }
 
-    public static String getCommandKey(String prefix,String rawCommand){
-
-        StringBuilder sb=new StringBuilder(prefix).append(".");
-        sb.append(rawCommand);
-        return sb.toString();
-
+    public static String getCommandKey(String prefix,String methodSignature){
+       return new HystrixKeyParam(prefix, methodSignature).generateCommandKey();
     }
 
-    public static String getThreadPoolKey(String prefix,String rawCommand,String originApplicationName){
-
-        StringBuilder sb=new StringBuilder(prefix).append(".");
-        if (StringUtils.isNotBlank(originApplicationName)){
-            sb.append(originApplicationName).append(OriginApplicationConstants.SEPARATOR);
-        }
-        sb.append(rawCommand);
-        return sb.toString();
-
+    public static String getThreadPoolKey(String prefix,String methodSignature,String originApplicationName){
+        return new HystrixKeyParam(prefix,originApplicationName, methodSignature).generateThreadPoolKey();
     }
 
     private  static String getMethodSignature(String className,String methodName,List<String> paraClassSimpleNames){
@@ -135,22 +110,26 @@ public class HystrixKeyUtils {
         return builder.append(')').toString();
     }
 
+    public String getPrefixFromKey(String key){
+       return HystrixKeyParam.parseFromKey(key).getSidePrefix();
+    }
+
 
     public static void main(String[] args) throws NoSuchMethodException {
 
-        //testParseOriginApplicationName();
+        testParseOriginApplicationName();
     }
 
     public static void testParseOriginApplicationName() {
 
-        String testcase1 = "com.netease.edu.member.api.controller.ApiStratchController#testDoubleFallback(Integer)";
-        String testcase2 = "CourseSevice@com.netease.edu.member.api.controller.ApiStratchController#testDoubleFallback(Integer)";
-        String testcase3 = "@com.netease.edu.member.api.controller.ApiStratchController#testDoubleFallback(Integer)";
-        String testcase4 = "CourseSevice@";
-        System.out.println(parseOriginApplicationName(testcase1));
-        System.out.println(parseOriginApplicationName(testcase2));
-        System.out.println(parseOriginApplicationName(testcase3));
-        System.out.println(parseOriginApplicationName(testcase4));
+        String testcase1 = "C.com.netease.edu.member.api.controller.ApiStratchController#testDoubleFallback(Integer)";
+        String testcase2 = "AP.CourseSevice@com.netease.edu.member.api.controller.ApiStratchController#testDoubleFallback(Integer)";
+        String testcase3 = "UP.@com.netease.edu.member.api.controller.ApiStratchController#testDoubleFallback(Integer)";
+        String testcase4 = "AP.CourseSevice@";
+        System.out.println(HystrixKeyParam.parseFromKey(testcase1));
+        System.out.println(HystrixKeyParam.parseFromKey(testcase2));
+        System.out.println(HystrixKeyParam.parseFromKey(testcase3));
+        System.out.println(HystrixKeyParam.parseFromKey(testcase4));
     }
 
 }

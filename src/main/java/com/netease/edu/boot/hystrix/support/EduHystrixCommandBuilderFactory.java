@@ -97,8 +97,8 @@ public class EduHystrixCommandBuilderFactory {
 
 
                 //独立支持隔离版本的fallback method的command key和thread pool key
-               String fallbackMethodDefaultCommandKey= HystrixKeyUtils.getDefaultCommandKey(fMethod,
-                                                                                            metaHolder.getObj());
+               String fallbackMethodDefaultCommandKey= HystrixKeyUtils.getMethodSignature(fMethod,
+                                                                                          metaHolder.getObj());
                String hystrixFallbackThreadPoolKey= HystrixKeyUtils.getHystrixFallbackThreadPoolKey(
                        metaHolder.getDefaultThreadPoolKey(), fallbackMethodDefaultCommandKey);
 

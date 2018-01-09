@@ -2,6 +2,7 @@ package com.netease.edu.boot.hystrix.aop.aspectj;/**
  * Created by hzfjd on 17/12/21.
  */
 
+import com.netease.edu.boot.hystrix.core.constants.HystrixKeyPrefixEnum;
 import com.netease.edu.boot.hystrix.support.HystrixCommandAspectSupport;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -38,7 +39,7 @@ public class DefaultHystrixCommandDwrAspect extends HystrixCommandAspectSupport 
 
     @Around("allDwr()")
     public Object methodsWithHystrixCommand(final ProceedingJoinPoint joinPoint) throws Throwable {
-        return super.methodsWithHystrixSupport(joinPoint);
+        return super.methodsWithHystrixSupport(joinPoint, HystrixKeyPrefixEnum.UI_PROVIDER.getPrefix());
     }
 
 }
