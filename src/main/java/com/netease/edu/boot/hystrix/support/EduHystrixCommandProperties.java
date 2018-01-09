@@ -14,6 +14,10 @@ import org.slf4j.LoggerFactory;
 import static com.netflix.hystrix.strategy.properties.HystrixPropertiesChainedProperty.*;
 
 /**
+ *  * 增加属性查找fallback.
+ * 1. 原完整key查询,包括SidePrefix,MethodSignature
+ * 2. 增加包含SidePrefix的default Key的属性查询
+ * 3. 原default查询
  * @author hzfjd
  * @create 18/1/9
  */

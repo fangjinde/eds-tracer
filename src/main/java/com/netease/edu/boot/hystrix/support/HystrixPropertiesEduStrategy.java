@@ -23,6 +23,6 @@ public class HystrixPropertiesEduStrategy extends HystrixPropertiesStrategy {
     @Override
     public HystrixThreadPoolProperties getThreadPoolProperties(HystrixThreadPoolKey threadPoolKey,
                                                                HystrixThreadPoolProperties.Setter builder) {
-        return super.getThreadPoolProperties(threadPoolKey, builder);
+        return new EduHystrixThreadPoolProperties(threadPoolKey, builder);
     }
 }
