@@ -18,7 +18,7 @@ import org.springframework.core.env.Environment;
  * @create 18/1/2
  */
 
-@Activate(group = Constants.CONSUMER)
+@Activate(group = Constants.CONSUMER,order=-9000)
 public class DubboHystrixConsumerFilter implements Filter {
 
     FallbackFactory fallbackFactory;
