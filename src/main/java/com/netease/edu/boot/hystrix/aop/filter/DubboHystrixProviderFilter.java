@@ -5,9 +5,9 @@ package com.netease.edu.boot.hystrix.aop.filter;/**
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.extension.Activate;
 import com.alibaba.dubbo.rpc.*;
+import com.netease.edu.boot.hystrix.core.EduBadRequestExceptionIdentifier;
 import com.netease.edu.boot.hystrix.core.constants.HystrixKeyPrefixEnum;
 import com.netease.edu.boot.hystrix.core.constants.OriginApplicationConstants;
-import com.netease.edu.boot.hystrix.support.DubboHystrixFilterSupport;
 import com.netease.edu.boot.hystrix.support.HystrixKeyUtils;
 import com.netflix.hystrix.*;
 
@@ -43,7 +43,7 @@ public class DubboHystrixProviderFilter implements Filter {
             @Override
             protected Result run() throws Exception {
                     Result result=invoker.invoke(invocation);
-                    if(result.hasException()&&!DubboHystrixFilterSupport.isUserBadRequestException(
+                    if(result.hasException()&&!EduBadRequestExceptionIdentifier.isIgnorable(
                             result.getException())){
                         //just let Hystrix to record
                         throw new DubboExceptionResultAdapterException(result);

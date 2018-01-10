@@ -4,8 +4,8 @@ package com.netease.edu.boot.hystrix.support;/**
 
 import com.alibaba.dubbo.rpc.*;
 import com.alibaba.dubbo.rpc.support.RpcUtils;
+import com.netease.edu.boot.hystrix.core.EduBadRequestExceptionIdentifier;
 import com.netease.edu.boot.hystrix.core.HystrixExecutionContext;
-import com.netease.edu.util.exceptions.FrontNotifiableRuntimeException;
 import com.netflix.hystrix.HystrixCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,12 +21,6 @@ public class DubboHystrixFilterSupport {
 
     private static final Logger logger = LoggerFactory.getLogger(DubboHystrixFilterSupport.class);
 
-    public static boolean isUserBadRequestException(Throwable e) {
-        if (e instanceof FrontNotifiableRuntimeException) {
-            return true;
-        }
-        return false;
-    }
 
     public static Result invokeWithHystrix(final Invoker<?> invoker, final Invocation invocation,
                                            HystrixCommand.Setter setter, final Object fallbackFinal,
@@ -37,7 +31,7 @@ public class DubboHystrixFilterSupport {
             @Override
             protected Result run() throws Exception {
                 Result result = invoker.invoke(invocation);
-                if (result.hasException() && !isUserBadRequestException(
+                if (result.hasException() && !EduBadRequestExceptionIdentifier.isIgnorable(
                         result.getException())) {
                     //just let Hystrix to record
                     throw new DubboExceptionResultAdapterException(result);

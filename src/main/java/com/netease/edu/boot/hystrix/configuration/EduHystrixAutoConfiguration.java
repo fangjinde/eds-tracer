@@ -5,11 +5,9 @@ package com.netease.edu.boot.hystrix.configuration;/**
 import com.netease.edu.boot.hystrix.aop.aspectj.DefaultHystrixCommandApiControllerAspect;
 import com.netease.edu.boot.hystrix.aop.aspectj.DefaultHystrixCommandDwrAspect;
 import com.netease.edu.boot.hystrix.aop.aspectj.DefaultHystrixCommandUIControllerAspect;
-import com.netease.edu.boot.hystrix.core.EduHystrixCommandProperties;
-import com.netease.edu.boot.hystrix.core.FallbackFactory;
-import com.netease.edu.boot.hystrix.core.OriginApplicationNameResolver;
-import com.netease.edu.boot.hystrix.core.SpringFallbackFactory;
+import com.netease.edu.boot.hystrix.core.*;
 import com.netease.edu.boot.hystrix.core.constants.HystrixBeanNameContants;
+import com.netease.edu.boot.hystrix.support.DefaultHystrixIgnoreSuperExceptionProvider;
 import com.netease.edu.boot.hystrix.support.DubboReferenceRegistryProcessor;
 import com.netease.edu.boot.hystrix.support.HystrixDynamicPropertiesSpringEnvironmentAdapter;
 import com.netease.edu.boot.hystrix.support.OriginApplicationNameControllerResolver;
@@ -25,6 +23,18 @@ import org.springframework.web.servlet.DispatcherServlet;
  */
 @Configuration
 public class EduHystrixAutoConfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean
+    public EduBadRequestExceptionIdentifier eduBadRequestExceptionIdentifier() {
+        return new EduBadRequestExceptionIdentifier();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(name = HystrixBeanNameContants.EDU_HYSTRIX_IGNORABLE_SUPER_EXCEPTIONS_BEAN_NAME)
+    public HystrixIgnoreExceptionProvider defaultHystrixIgnoreExceptionProvider() {
+        return new DefaultHystrixIgnoreSuperExceptionProvider();
+    }
 
     @Bean
     @ConditionalOnMissingBean
@@ -67,14 +77,14 @@ public class EduHystrixAutoConfiguration {
         return defaultHystrixCommandApiControllerAspect;
     }
 
-    // @Bean
+    @Bean
     @ConditionalOnMissingBean(name = { HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_DWR_ASPECT_BEAN_NAME })
     @ConditionalOnClass(name = { "org.directwebremoting.servlet.UrlProcessor" })
     public DefaultHystrixCommandDwrAspect defaultHystrixCommandDwrAspect() {
         return new DefaultHystrixCommandDwrAspect();
     }
 
-    //@Bean
+    @Bean
     @ConditionalOnMissingBean(name = {
             HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_FRONT_CONTROLLER_ASPECT_BEAN_NAME })
     public DefaultHystrixCommandUIControllerAspect defaultHystrixCommandFrontControllerAspect() {
