@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @create 17/12/24
  */
 @ConfigurationProperties(prefix = "edu_hystrix")
-public class EduHystrixCommandProperties {
+public class EduHystrixGlobalProperties {
 
     public boolean isIsolatedByOriginEnable() {
         return isolatedByOriginEnable;

@@ -44,7 +44,8 @@ public class DefaultHystrixCommandApiControllerAspect extends HystrixCommandAspe
         return super.methodsWithHystrixSupport(joinPoint, HystrixKeyPrefixEnum.API_PROVIDER.getPrefix());
     }
 
-    @Override public void afterPropertiesSet() throws Exception {
-        this.getEduHystrixCommandProperties().setIsolatedByOriginEnable(true);
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.getEduHystrixGlobalProperties().setIsolatedByOriginEnable(true);
     }
 }

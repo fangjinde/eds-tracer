@@ -56,8 +56,8 @@ public class EduHystrixAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public EduHystrixCommandProperties eduHystrixCommandProperties() {
-        return new EduHystrixCommandProperties();
+    public EduHystrixGlobalProperties eduHystrixGlobalProperties() {
+        return new EduHystrixGlobalProperties();
     }
 
     @Bean

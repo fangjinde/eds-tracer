@@ -4,7 +4,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.netease.edu.boot.hystrix.annotation.EduHystrixCollapser;
 import com.netease.edu.boot.hystrix.annotation.EduHystrixCommand;
-import com.netease.edu.boot.hystrix.core.EduHystrixCommandProperties;
+import com.netease.edu.boot.hystrix.core.EduHystrixGlobalProperties;
 import com.netease.edu.boot.hystrix.core.OriginApplicationNameResolver;
 import com.netflix.hystrix.HystrixInvokable;
 import com.netflix.hystrix.contrib.javanica.annotation.DefaultProperties;
@@ -49,15 +49,15 @@ public class HystrixCommandAspectSupport {
         this.originApplicationNameResolver = originApplicationNameResolver;
     }
 
-    public EduHystrixCommandProperties getEduHystrixCommandProperties() {
-        return eduHystrixCommandProperties;
+    public EduHystrixGlobalProperties getEduHystrixGlobalProperties() {
+        return eduHystrixGlobalProperties;
     }
 
-    private EduHystrixCommandProperties eduHystrixCommandProperties;
+    private EduHystrixGlobalProperties eduHystrixGlobalProperties;
 
     @Autowired
-    public void setEduHystrixCommandProperties(EduHystrixCommandProperties eduHystrixCommandProperties) {
-        this.eduHystrixCommandProperties = eduHystrixCommandProperties;
+    public void setEduHystrixGlobalProperties(EduHystrixGlobalProperties eduHystrixGlobalProperties) {
+        this.eduHystrixGlobalProperties = eduHystrixGlobalProperties;
     }
 
     private static final Map<HystrixPointcutType, MetaHolderFactory> META_HOLDER_FACTORY_MAP;
@@ -69,7 +69,7 @@ public class HystrixCommandAspectSupport {
                                               .build();
     }
 
-    public Object methodsWithHystrixSupport(final ProceedingJoinPoint joinPoint,String sidePrefix) throws Throwable {
+    public Object methodsWithHystrixSupport(final ProceedingJoinPoint joinPoint, String sidePrefix) throws Throwable {
         Method method = getMethodFromTarget(joinPoint);
         Validate.notNull(method, String.format("failed to get method from joinPoint: %s", joinPoint));
         if (method.isAnnotationPresent(EduHystrixCommand.class) && method.isAnnotationPresent(
@@ -80,7 +80,8 @@ public class HystrixCommandAspectSupport {
         }
         MetaHolderFactory metaHolderFactory = META_HOLDER_FACTORY_MAP.get(HystrixPointcutType.of(method));
         MetaHolder metaHolder = metaHolderFactory.create(joinPoint,
-                                                         eduHystrixCommandProperties.isIsolatedByOriginEnable() ? originApplicationNameResolver : null, sidePrefix);
+                                                         eduHystrixGlobalProperties.isIsolatedByOriginEnable() ? originApplicationNameResolver : null,
+                                                         sidePrefix);
         HystrixInvokable invokable = EduHystrixCommandFactory.getInstance().create(metaHolder);
         ExecutionType executionType = metaHolder.isCollapserAnnotationPresent() ?
                 metaHolder.getCollapserExecutionType() : metaHolder.getExecutionType();
