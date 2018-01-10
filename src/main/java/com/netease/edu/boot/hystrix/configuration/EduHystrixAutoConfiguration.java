@@ -4,7 +4,7 @@ package com.netease.edu.boot.hystrix.configuration;/**
 
 import com.netease.edu.boot.hystrix.aop.aspectj.DefaultHystrixCommandApiControllerAspect;
 import com.netease.edu.boot.hystrix.aop.aspectj.DefaultHystrixCommandDwrAspect;
-import com.netease.edu.boot.hystrix.aop.aspectj.DefaultHystrixCommandFrontControllerAspect;
+import com.netease.edu.boot.hystrix.aop.aspectj.DefaultHystrixCommandUIControllerAspect;
 import com.netease.edu.boot.hystrix.core.EduHystrixCommandProperties;
 import com.netease.edu.boot.hystrix.core.FallbackFactory;
 import com.netease.edu.boot.hystrix.core.OriginApplicationNameResolver;
@@ -77,7 +77,7 @@ public class EduHystrixAutoConfiguration {
     //@Bean
     @ConditionalOnMissingBean(name = {
             HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_FRONT_CONTROLLER_ASPECT_BEAN_NAME })
-    public DefaultHystrixCommandFrontControllerAspect defaultHystrixCommandFrontControllerAspect() {
-        return new DefaultHystrixCommandFrontControllerAspect();
+    public DefaultHystrixCommandUIControllerAspect defaultHystrixCommandFrontControllerAspect() {
+        return new DefaultHystrixCommandUIControllerAspect();
     }
 }

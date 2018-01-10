@@ -6,8 +6,9 @@ import com.alibaba.dubbo.rpc.*;
 import com.alibaba.dubbo.rpc.support.RpcUtils;
 import com.netease.edu.boot.hystrix.core.HystrixExecutionContext;
 import com.netease.edu.util.exceptions.FrontNotifiableRuntimeException;
-import com.netease.edu.util.exceptions.SystemErrorRuntimeException;
 import com.netflix.hystrix.HystrixCommand;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,6 +18,8 @@ import java.lang.reflect.Method;
  * @create 18/1/8
  */
 public class DubboHystrixFilterSupport {
+
+    private static final Logger logger = LoggerFactory.getLogger(DubboHystrixFilterSupport.class);
 
     public static boolean isUserBadRequestException(Throwable e) {
         if (e instanceof FrontNotifiableRuntimeException) {
@@ -37,23 +40,47 @@ public class DubboHystrixFilterSupport {
                 if (result.hasException() && !isUserBadRequestException(
                         result.getException())) {
                     //just let Hystrix to record
-                    throw new DubboInvokeException(result.getException());
+                    throw new DubboExceptionResultAdapterException(result);
                 }
                 return result;
             }
 
+            private Result returnResultOrgetSuperFallback(Result result) {
+                if (result != null) {
+                    return result;
+                }
+                return super.getFallback();
+            }
+
+            private Result returnResultOrThrowException(Result result,Throwable e) {
+                if (result != null) {
+                    return result;
+                }
+                if (e instanceof RuntimeException){
+                    throw (RuntimeException)e;
+                }
+                throw new RuntimeException("caught exception of on getFallback for dubbo, simple wrapper it cause it is useless for hystrix.",e);
+            }
+
             @Override
             protected Result getFallback() {
+                Throwable commandExecutionException = getFailedExecutionException();
+
+                Result result = null;
+                if (commandExecutionException instanceof DubboExceptionResultAdapterException) {
+                    result = ((DubboExceptionResultAdapterException) commandExecutionException).getResult();
+                }
+
                 if (fallbackFinal == null) {
-                    return super.getFallback();
+                    return returnResultOrgetSuperFallback(result);
                 }
 
                 Object fallbackResult = null;
-                Throwable commandExecutionException = getFailedExecutionException();
                 Throwable targetException = commandExecutionException;
-                if (commandExecutionException instanceof DubboInvokeException) {
-                    targetException = commandExecutionException.getCause();
+                if (result!=null) {
+                    targetException = result.getException();
                 }
+
                 HystrixExecutionContext.setExecutionException(targetException);
                 try {
                     Method method = fallbackFinal.getClass().getMethod(RpcUtils.getMethodName(invocation),
@@ -61,13 +88,13 @@ public class DubboHystrixFilterSupport {
                                                                                invocation));
                     fallbackResult = method.invoke(fallbackFinal, RpcUtils.getArguments(invocation));
                 } catch (NoSuchMethodException e) {
-                    return super.getFallback();
+                    return returnResultOrThrowException(result, e);
                 } catch (IllegalAccessException e) {
-                    return super.getFallback();
+                    return returnResultOrThrowException(result, e);
                 } catch (IllegalArgumentException e) {
-                    return super.getFallback();
+                    return returnResultOrThrowException(result, e);
                 } catch (InvocationTargetException e) {
-                    throw new SystemErrorRuntimeException("InvocationTargetException on fallback",e);
+                    return returnResultOrThrowException(result, e);
                 } finally {
                     HystrixExecutionContext.resetExecutionException();
                 }
@@ -80,10 +107,17 @@ public class DubboHystrixFilterSupport {
         return hystrixCommand.execute();
     }
 
-    static class DubboInvokeException extends Exception {
+    static class DubboExceptionResultAdapterException extends Exception {
 
-        DubboInvokeException(Throwable cause) {
-            super(cause);
+        Result result = null;
+
+        DubboExceptionResultAdapterException(Result result) {
+            this.result = result;
         }
+
+        public Result getResult() {
+            return result;
+        }
+
     }
 }

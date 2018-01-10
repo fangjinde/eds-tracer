@@ -46,7 +46,7 @@ public class DubboHystrixProviderFilter implements Filter {
                     if(result.hasException()&&!DubboHystrixFilterSupport.isUserBadRequestException(
                             result.getException())){
                         //just let Hystrix to record
-                        throw new DubboProviderInvokeException(result.getException());
+                        throw new DubboExceptionResultAdapterException(result);
                     }
                     return result;
             }
@@ -54,12 +54,13 @@ public class DubboHystrixProviderFilter implements Filter {
             @Override
             protected Result getFallback() {
                     Throwable executionException = getFailedExecutionException();
-                    if (executionException instanceof DubboProviderInvokeException){
-                        //wrapper it back to RpcResult
-                        return new RpcResult(executionException.getCause());
+                    if (executionException instanceof DubboExceptionResultAdapterException){
+                        //never support fallback on provider, cause it will confuse the consumer!
+                        //simply use this adapter to let hystrix notice the implicit exception.
+                       return ( (DubboExceptionResultAdapterException)executionException).getResult();
                     }
-                    //so far i have no idea why it will happen
-                    throw new RuntimeException("",executionException);
+                    // no fallback for provider.
+                    return super.getFallback();
             }
         };
 
@@ -67,9 +68,17 @@ public class DubboHystrixProviderFilter implements Filter {
     }
 
 
-    static class DubboProviderInvokeException extends Exception{
-        DubboProviderInvokeException(Throwable cause){
-            super(cause);
+    static class DubboExceptionResultAdapterException extends Exception {
+
+        Result result = null;
+
+        DubboExceptionResultAdapterException(Result result) {
+            this.result = result;
         }
+
+        public Result getResult() {
+            return result;
+        }
+
     }
 }

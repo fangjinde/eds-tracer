@@ -22,16 +22,16 @@ public class DefaultHystrixCommandApiControllerAspect extends HystrixCommandAspe
     public void eduController() {
     }
 
-    @Pointcut("execution(public * com.netease.study..*.api.controller..*.*.*(..))")
+    @Pointcut("execution(public * com.netease.study..api.controller..*.*(..))")
     public void studyController() {
     }
 
-    @Pointcut("execution(public * com.netease.yooc..*.api.controller..*.*.*(..))")
+    @Pointcut("execution(public * com.netease.yooc..api.controller..*.*(..))")
     public void yoocController() {
     }
 
 
-    @Pointcut("execution(public * com.netease.mooc..*.api.controller..*.*.*(..))")
+    @Pointcut("execution(public * com.netease.mooc..api.controller..*.*(..))")
     public void moocController() {
     }
 

@@ -50,7 +50,7 @@ public class DubboHystrixConsumerFilter implements Filter {
                 HystrixCommandKey.Factory.asKey(commandKey)).andThreadPoolKey(
                 HystrixThreadPoolKey.Factory.asKey(threadPoolKey)).andCommandPropertiesDefaults(
                 HystrixCommandProperties.Setter().withExecutionIsolationStrategy(
-                        HystrixCommandProperties.ExecutionIsolationStrategy.THREAD).withExecutionTimeoutInMilliseconds(6000000));
+                        HystrixCommandProperties.ExecutionIsolationStrategy.THREAD));
 
 
         Object fallback = null;
