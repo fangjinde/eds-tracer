@@ -5,9 +5,11 @@ package com.netease.edu.boot.hystrix.aop.filter;/**
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.extension.Activate;
 import com.alibaba.dubbo.rpc.*;
-import com.netease.edu.boot.hystrix.core.EduBadRequestExceptionIdentifier;
+import com.netease.edu.boot.hystrix.core.CommandAction;
+import com.netease.edu.boot.hystrix.core.EduHystrixExecutor;
 import com.netease.edu.boot.hystrix.core.constants.HystrixKeyPrefixEnum;
 import com.netease.edu.boot.hystrix.core.constants.OriginApplicationConstants;
+import com.netease.edu.boot.hystrix.support.DubboHystrixFilterSupport;
 import com.netease.edu.boot.hystrix.support.HystrixKeyUtils;
 import com.netflix.hystrix.*;
 
@@ -38,47 +40,9 @@ public class DubboHystrixProviderFilter implements Filter {
                         HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE));
 
 
-        HystrixCommand<Result> hystrixCommand = new HystrixCommand<Result>(setter) {
+        CommandAction<Result> commandAction = DubboHystrixFilterSupport.getCommandAction(invoker, invocation);
 
-            @Override
-            protected Result run() throws Exception {
-                    Result result=invoker.invoke(invocation);
-                    if(result.hasException()&&!EduBadRequestExceptionIdentifier.isIgnorable(
-                            result.getException())){
-                        //just let Hystrix to record
-                        throw new DubboExceptionResultAdapterException(result);
-                    }
-                    return result;
-            }
-
-            @Override
-            protected Result getFallback() {
-                    Throwable executionException = getFailedExecutionException();
-                    if (executionException instanceof DubboExceptionResultAdapterException){
-                        //never support fallback on provider, cause it will confuse the consumer!
-                        //simply use this adapter to let hystrix notice the implicit exception.
-                       return ( (DubboExceptionResultAdapterException)executionException).getResult();
-                    }
-                    // no fallback for provider.
-                    return super.getFallback();
-            }
-        };
-
-        return hystrixCommand.execute();
-    }
-
-
-    static class DubboExceptionResultAdapterException extends Exception {
-
-        Result result = null;
-
-        DubboExceptionResultAdapterException(Result result) {
-            this.result = result;
-        }
-
-        public Result getResult() {
-            return result;
-        }
+        return EduHystrixExecutor.executeWithHystrix(commandAction, null, setter, null);
 
     }
 }
