@@ -14,7 +14,7 @@
 	<dubbo:protocol name="dubbo" port="${dubbo_port}"
 		threads="1000" />
 
-	<dubbo:provider timeout="10000" loadbalance="random"
+	<dubbo:provider timeout="600000" loadbalance="random"
 		executes="1000" actives="300" filter="-exception,eduexception" />
 
 	<!-- 服务提供 -->
