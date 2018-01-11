@@ -6,9 +6,12 @@ import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.extension.Activate;
 import com.alibaba.dubbo.rpc.*;
 import com.netease.edu.boot.hystrix.core.CommandAction;
+import com.netease.edu.boot.hystrix.core.EduBadRequestExceptionIdentifier;
 import com.netease.edu.boot.hystrix.core.EduHystrixExecutor;
+import com.netease.edu.boot.hystrix.core.ResultExceptionChecker;
 import com.netease.edu.boot.hystrix.core.constants.HystrixKeyPrefixEnum;
 import com.netease.edu.boot.hystrix.core.constants.OriginApplicationConstants;
+import com.netease.edu.boot.hystrix.core.exception.CommandExecuteException;
 import com.netease.edu.boot.hystrix.support.DubboHystrixFilterSupport;
 import com.netease.edu.boot.hystrix.support.HystrixKeyUtils;
 import com.netflix.hystrix.*;
@@ -39,10 +42,21 @@ public class DubboHystrixProviderFilter implements Filter {
                 HystrixCommandProperties.Setter().withExecutionIsolationStrategy(
                         HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE));
 
+        ResultExceptionChecker<Result> resultChecker = new ResultExceptionChecker<Result>() {
+            @Override
+            public void check(Result result) throws CommandExecuteException {
+                if (result.hasException() && !EduBadRequestExceptionIdentifier.isIgnorable(
+                        result.getException())) {
+                    //just let Hystrix to record
+                    throw new CommandExecuteException().withResult(result);
+                }
+            }
+        };
+
 
         CommandAction<Result> commandAction = DubboHystrixFilterSupport.getCommandAction(invoker, invocation);
 
-        return EduHystrixExecutor.executeWithHystrix(commandAction, null, setter, null);
+        return EduHystrixExecutor.executeWithHystrix(commandAction, null, setter, resultChecker);
 
     }
 }

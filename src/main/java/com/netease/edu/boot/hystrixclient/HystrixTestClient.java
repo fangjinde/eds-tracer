@@ -2,7 +2,7 @@ package com.netease.edu.boot.hystrixclient;/**
  * Created by hzfjd on 18/1/8.
  */
 
-import com.netease.edu.boot.hystrixtest.service.HystrixScratchService;
+import com.netease.edu.boot.hystrixtest.service.HystrixTestWithFallbackService;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.actuate.autoconfigure.HealthIndicatorAutoConfiguration;
@@ -46,22 +46,8 @@ public class HystrixTestClient {
 
         ConfigurableApplicationContext applicationContext = new SpringApplicationBuilder().bannerMode(
                 Banner.Mode.OFF).sources(HystrixTestClient.class).profiles("client").run(args);
-        HystrixScratchService hystrixScratchService = applicationContext.getBean(HystrixScratchService.class);
-
-        String v1 = testSafely(hystrixScratchService, 1);
-        String v2 = testSafely(hystrixScratchService,2);
-        String v3 =testSafely(hystrixScratchService, 3);
-        String vnull = testSafely(hystrixScratchService, null);
-
-    }
-
-    public static String testSafely(HystrixScratchService hystrixScratchService,Integer testcase){
-        try{
-           return hystrixScratchService.echo(testcase);
-        }catch (Exception e){
-            e.printStackTrace();
-            return null;
-        }
+        HystrixTestWithFallbackService hystrixScratchService = applicationContext.getBean(
+                HystrixTestWithFallbackService.class);
 
     }
 
