@@ -4,15 +4,13 @@ package com.netease.edu.boot.hystrixtest.api.controller;/**
 
 import com.netease.edu.boot.hystrix.annotation.EduHystrixCommand;
 import com.netease.edu.boot.hystrixtest.service.impl.EchoLogic;
+import com.netease.edu.web.viewer.ResponseView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author hzfjd
@@ -27,44 +25,38 @@ public class ApiStratchController {
     Logger logger = LoggerFactory.getLogger(ApiStratchController.class);
 
     @RequestMapping(path = "/echoWithoutFallback")
-    public String echoWithoutFallback(@RequestParam(value = "testCase", required = false) Integer testCase) {
-        return echoLogic.innerEcho(testCase);
+    public ResponseView echoWithoutFallback(@RequestParam(value = "testCase", required = false) Integer testCase) {
+        return echoLogic.echoOfResponseView(testCase);
     }
-
 
     @RequestMapping(path = "/echo")
     @EduHystrixCommand(fallbackMethod = "fallback1")
-    public String echo(@RequestParam(value = "testCase", required = false) Integer testCase) {
-      return echoLogic.innerEcho(testCase);
+    public ResponseView echo(@RequestParam(value = "testCase", required = false) Integer testCase,
+                             @RequestParam(value = "fallbackDepth", required = false) Integer fallbackDepth) {
+        return echoLogic.echoOfResponseView(testCase);
     }
 
     @EduHystrixCommand(fallbackMethod = "fallback2")
-    public String fallback1(Integer testCase, Throwable e) {
-        logger.warn("fallback on error:", e);
-        if (testCase != null && testCase >= 2) {
-            throw new RuntimeException("doubleFallback1 error", e);
+    public ResponseView fallback1(Integer testCase, Integer fallbackDepth, Throwable e) {
+        logger.warn("fallback1 on error:", e);
+        if (fallbackDepth !=null && fallbackDepth.intValue() == 1) {
+            ResponseView responseView = new ResponseView();
+            responseView.setResult("fallback1");
+            return responseView;
+        } else {
+            throw new RuntimeException("fallback1 can't handle", e);
         }
-
-        return "doubleFallback1 ok";
     }
 
-    public String fallback2(Integer error, Throwable e) {
-        logger.warn("fallback on error:", e);
-        if (error != null && error >= 3) {
-            throw new RuntimeException("doubleFallback1 error", e);
+    public ResponseView fallback2(Integer testCase, Integer fallbackDepth, Throwable e) {
+        logger.warn("fallback2 on error:", e);
+        if (fallbackDepth != null && fallbackDepth.intValue() == 2) {
+            ResponseView responseView = new ResponseView();
+            responseView.setResult("fallback2");
+            return responseView;
+        } else {
+            throw new RuntimeException("fallback2 can't handle", e);
         }
-
-        return "doubleFallback2 ok";
     }
-
-    private static Map<String, String> data = new HashMap<String, String>(3);
-
-    static {
-        data.put("1", "a");
-        data.put("2", "t");
-        data.put("3", "b");
-        data.put("4", "j");
-    }
-
 
 }
