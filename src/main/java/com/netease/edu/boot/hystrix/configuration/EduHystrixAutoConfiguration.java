@@ -63,10 +63,9 @@ public class EduHystrixAutoConfiguration {
         return new EduHystrixGlobalProperties();
     }
 
-    @Bean(name=HystrixBeanNameContants.ORIGIN_APPLICATION_NAME_CONTROLLER_RESOLVER_BEAN_NAME)
     @ConditionalOnClass({DispatcherServlet.class})
     @ConditionalOnBean({HttpServletRequest.class})
-    @ConditionalOnMissingBean(name = { HystrixBeanNameContants.ORIGIN_APPLICATION_NAME_CONTROLLER_RESOLVER_BEAN_NAME })
+    @ConditionalOnMissingBean
     public OriginApplicationNameResolver originApplicationNameControllerResolver() {
         return new OriginApplicationNameControllerResolver();
     }
@@ -75,10 +74,10 @@ public class EduHystrixAutoConfiguration {
     @ConditionalOnMissingBean(name = {
             HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_API_CONTROLLER_ASPECT_BEAN_NAME })
     @ConditionalOnBean({HttpServletRequest.class})
-    public DefaultHystrixCommandApiControllerAspect defaultHystrixCommandApiControllerAspect() {
+    public DefaultHystrixCommandApiControllerAspect defaultHystrixCommandApiControllerAspect(OriginApplicationNameResolver originApplicationNameControllerResolver) {
         DefaultHystrixCommandApiControllerAspect defaultHystrixCommandApiControllerAspect = new DefaultHystrixCommandApiControllerAspect();
         defaultHystrixCommandApiControllerAspect.setOriginApplicationNameResolver(
-                originApplicationNameControllerResolver());
+                originApplicationNameControllerResolver);
         return defaultHystrixCommandApiControllerAspect;
     }
 

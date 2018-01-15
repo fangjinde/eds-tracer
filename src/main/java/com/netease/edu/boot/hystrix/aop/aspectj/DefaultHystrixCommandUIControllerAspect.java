@@ -3,18 +3,19 @@ package com.netease.edu.boot.hystrix.aop.aspectj;/**
  */
 
 import com.netease.edu.boot.hystrix.core.constants.HystrixKeyPrefixEnum;
-import com.netease.edu.boot.hystrix.support.HystrixCommandAspectSupport;
+import com.netease.edu.boot.hystrix.support.HystrixCommandAspectSimpleSupport;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.beans.factory.InitializingBean;
 
 /**
  * @author hzfjd
  * @create 17/12/21
  */
 @Aspect
-public class DefaultHystrixCommandUIControllerAspect extends HystrixCommandAspectSupport {
+public class DefaultHystrixCommandUIControllerAspect extends HystrixCommandAspectSimpleSupport implements InitializingBean{
 
     @Pointcut("execution(public * com.netease.edu..web.controller..*.*(..))||execution(public * com.netease.edu..mobile.controller..*.*(..))||execution(public * com.netease.edu..wap.controller..*.*(..))")
     public void eduController() {
@@ -39,8 +40,11 @@ public class DefaultHystrixCommandUIControllerAspect extends HystrixCommandAspec
 
     @Around("allController()")
     public Object methodsWithHystrixCommand(final ProceedingJoinPoint joinPoint) throws Throwable {
-        return super.methodsWithHystrixSupport(joinPoint, HystrixKeyPrefixEnum.UI_PROVIDER.getPrefix());
+        return super.methodsWithHystrix(joinPoint);
     }
 
-
+    @Override
+    public void afterPropertiesSet() throws Exception {
+       setSidePrefix( HystrixKeyPrefixEnum.UI_PROVIDER.getPrefix());
+    }
 }

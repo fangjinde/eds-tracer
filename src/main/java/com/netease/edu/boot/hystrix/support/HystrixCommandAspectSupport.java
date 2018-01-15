@@ -43,6 +43,16 @@ import static com.netflix.hystrix.contrib.javanica.utils.ajc.AjcUtils.getAjcMeth
  */
 public class HystrixCommandAspectSupport {
 
+    private String sidePrefix;
+
+    public String getSidePrefix() {
+        return sidePrefix;
+    }
+
+    public void setSidePrefix(String sidePrefix) {
+        this.sidePrefix = sidePrefix;
+    }
+
     private OriginApplicationNameResolver originApplicationNameResolver;
 
     public void setOriginApplicationNameResolver(OriginApplicationNameResolver originApplicationNameResolver) {
@@ -68,6 +78,7 @@ public class HystrixCommandAspectSupport {
                                               .put(HystrixPointcutType.COLLAPSER, new CollapserMetaHolderFactory())
                                               .build();
     }
+
 
     public Object methodsWithHystrixSupport(final ProceedingJoinPoint joinPoint, String sidePrefix) throws Throwable {
         Method method = getMethodFromTarget(joinPoint);
@@ -135,7 +146,7 @@ public class HystrixCommandAspectSupport {
     private static abstract class MetaHolderFactory {
 
         public MetaHolder create(final ProceedingJoinPoint joinPoint,
-                                 OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix) {
+                                 OriginApplicationNameResolver originApplicationNameResolver, String sidePrefix) {
             Method method = getMethodFromTarget(joinPoint);
             Object obj = joinPoint.getTarget();
             Object[] args = joinPoint.getArgs();
@@ -145,18 +156,21 @@ public class HystrixCommandAspectSupport {
 
         public abstract MetaHolder create(Object proxy, Method method, Object obj, Object[] args,
                                           final ProceedingJoinPoint joinPoint,
-                                          OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix);
+                                          OriginApplicationNameResolver originApplicationNameResolver,
+                                          String sidePrefix);
 
         MetaHolder.Builder metaHolderBuilder(Object proxy, Method method, Object obj, Object[] args,
                                              final ProceedingJoinPoint joinPoint,
-                                             OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix) {
+                                             OriginApplicationNameResolver originApplicationNameResolver,
+                                             String sidePrefix) {
             MetaHolder.Builder builder = MetaHolder.builder()
                                                    .args(args).method(method).obj(obj).proxyObj(proxy)
                                                    .joinPoint(joinPoint);
 
             setFallbackMethod(builder, obj.getClass(), method);
 
-            setDefaultKeyByJoinPoint(builder,proxy,method,obj,args,joinPoint,originApplicationNameResolver, sidePrefix);
+            setDefaultKeyByJoinPoint(builder, proxy, method, obj, args, joinPoint, originApplicationNameResolver,
+                                     sidePrefix);
 
             builder = setDefaultProperties(builder, obj.getClass(), joinPoint);
 
@@ -166,6 +180,7 @@ public class HystrixCommandAspectSupport {
 
         /**
          * 根据方法签名以及应用来源,确定默认的group key, command key, thread pool key
+         *
          * @param builder
          * @param proxy
          * @param method
@@ -175,22 +190,23 @@ public class HystrixCommandAspectSupport {
          * @param originApplicationNameResolver
          * @return
          */
-        private MetaHolder.Builder setDefaultKeyByJoinPoint(MetaHolder.Builder builder,Object proxy, Method method, Object obj, Object[] args,
-                                                            final ProceedingJoinPoint joinPoint,OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix){
+        private MetaHolder.Builder setDefaultKeyByJoinPoint(MetaHolder.Builder builder, Object proxy, Method method,
+                                                            Object obj, Object[] args,
+                                                            final ProceedingJoinPoint joinPoint,
+                                                            OriginApplicationNameResolver originApplicationNameResolver,
+                                                            String sidePrefix) {
             return HystrixKeyUtils.setDefaultKeyBySignatureAndOrigin(builder, method, obj,
                                                                      originApplicationNameResolver, sidePrefix);
         }
 
     }
 
-
-
     private static class CollapserMetaHolderFactory extends MetaHolderFactory {
 
         @Override
         public MetaHolder create(Object proxy, Method collapserMethod, Object obj, Object[] args,
                                  final ProceedingJoinPoint joinPoint,
-                                 OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix) {
+                                 OriginApplicationNameResolver originApplicationNameResolver, String sidePrefix) {
             EduHystrixCollapser hystrixCollapser = collapserMethod.getAnnotation(EduHystrixCollapser.class);
             if (collapserMethod.getParameterTypes().length > 1 || collapserMethod.getParameterTypes().length == 0) {
                 throw new IllegalStateException("Collapser method must have one argument: " + collapserMethod);
@@ -276,7 +292,7 @@ public class HystrixCommandAspectSupport {
         @Override
         public MetaHolder create(Object proxy, Method method, Object obj, Object[] args,
                                  final ProceedingJoinPoint joinPoint,
-                                 OriginApplicationNameResolver originApplicationNameResolver,String sidePrefix) {
+                                 OriginApplicationNameResolver originApplicationNameResolver, String sidePrefix) {
             EduHystrixCommand hystrixCommand = method.getAnnotation(EduHystrixCommand.class);
             ExecutionType executionType = ExecutionType.getExecutionType(method.getReturnType());
             MetaHolder.Builder builder = metaHolderBuilder(proxy, method, obj, args, joinPoint,
@@ -330,31 +346,26 @@ public class HystrixCommandAspectSupport {
         throw new UnsupportedOperationException("Unsupported type " + tType);
     }
 
-
-
     private static MetaHolder.Builder setDefaultProperties(MetaHolder.Builder builder, Class<?> declaringClass,
                                                            final ProceedingJoinPoint joinPoint) {
         Optional<DefaultProperties> defaultPropertiesOpt = AopUtils.getAnnotation(joinPoint, DefaultProperties.class);
 
-
-
         if (defaultPropertiesOpt.isPresent()) {
             DefaultProperties defaultProperties = defaultPropertiesOpt.get();
             //默认切换为SEMAPHORE隔离策略
-            builder.defaultProperties(new DefaultPropertiesAdapter(defaultProperties,HystrixPropertyForged.SEMAPHORE_HYSTRIX_PROPERTY));
+            builder.defaultProperties(
+                    new DefaultPropertiesAdapter(defaultProperties, HystrixPropertyForged.SEMAPHORE_HYSTRIX_PROPERTY));
             if (StringUtils.isNotBlank(defaultProperties.groupKey())) {
                 builder.defaultGroupKey(defaultProperties.groupKey());
             }
             if (StringUtils.isNotBlank(defaultProperties.threadPoolKey())) {
                 builder.defaultThreadPoolKey(defaultProperties.threadPoolKey());
             }
-        }else{
+        } else {
             //默认切换为SEMAPHORE隔离策略
             builder.defaultProperties(new DefaultPropertiesForged(HystrixPropertyForged.SEMAPHORE_HYSTRIX_PROPERTY));
 
         }
-
-
 
         return builder;
     }
