@@ -24,22 +24,25 @@ import javax.servlet.http.HttpServletRequest;
 @Configuration
 public class EduHystrixAutoConfiguration {
 
-    @Bean(name=HystrixBeanNameContants.HYSTRIX_COMMAND_ASPECT_RESULT_EXCEPTION_CHECKERS)
-    @ConditionalOnMissingBean(name=HystrixBeanNameContants.HYSTRIX_COMMAND_ASPECT_RESULT_EXCEPTION_CHECKERS)
-    public ResultExceptionChecker hystrixCommandAspectResultExceptionCheckers(){
+    @Bean(name = HystrixBeanNameContants.HYSTRIX_COMMAND_ASPECT_RESULT_EXCEPTION_CHECKERS)
+    @ConditionalOnMissingBean(name = HystrixBeanNameContants.HYSTRIX_COMMAND_ASPECT_RESULT_EXCEPTION_CHECKERS)
+    public ResultExceptionChecker hystrixCommandAspectResultExceptionCheckers() {
         return new ResultExceptionCheckerComposite();
     }
 
-    @Bean
-    @ConditionalOnClass(name={"com.netease.edu.agent.mobile.common.vo.MobReturnVo"})
-    public ResultExceptionChecker mobReturnVoResultExceptionChecker(){
-        return new MobReturnVoResultExceptionChecker();
-    }
+    class DefaultResultExceptionCheckers {
 
-    @Bean
-    @ConditionalOnClass(name={"com.netease.edu.web.viewer.ResponseView"})
-    public ResultExceptionChecker responseViewResultExceptionChecker(){
-        return new ResponseViewResultExceptionChecker();
+        @Bean
+        @ConditionalOnClass(name = { "com.netease.edu.agent.mobile.common.vo.MobReturnVo" })
+        public ResultExceptionChecker mobReturnVoResultExceptionChecker() {
+            return new MobReturnVoResultExceptionChecker();
+        }
+
+        @Bean
+        @ConditionalOnClass(name = { "com.netease.edu.web.viewer.ResponseView" })
+        public ResultExceptionChecker responseViewResultExceptionChecker() {
+            return new ResponseViewResultExceptionChecker();
+        }
     }
 
     @Bean
@@ -48,7 +51,7 @@ public class EduHystrixAutoConfiguration {
         return new EduBadRequestExceptionIdentifier();
     }
 
-    @Bean(name=HystrixBeanNameContants.EDU_HYSTRIX_IGNORABLE_SUPER_EXCEPTIONS_BEAN_NAME)
+    @Bean(name = HystrixBeanNameContants.EDU_HYSTRIX_IGNORABLE_SUPER_EXCEPTIONS_BEAN_NAME)
     @ConditionalOnMissingBean(name = HystrixBeanNameContants.EDU_HYSTRIX_IGNORABLE_SUPER_EXCEPTIONS_BEAN_NAME)
     public HystrixIgnoreExceptionProvider defaultHystrixIgnoreExceptionProvider() {
         return new DefaultHystrixIgnoreSuperExceptionProvider();
@@ -78,32 +81,33 @@ public class EduHystrixAutoConfiguration {
         return new EduHystrixGlobalProperties();
     }
 
-    @ConditionalOnClass({DispatcherServlet.class})
-    @ConditionalOnBean({HttpServletRequest.class})
+    @ConditionalOnClass({ DispatcherServlet.class })
+    @ConditionalOnBean({ HttpServletRequest.class })
     @ConditionalOnMissingBean
     public OriginApplicationNameResolver originApplicationNameControllerResolver() {
         return new OriginApplicationNameControllerResolver();
     }
 
-    @Bean(name=HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_API_CONTROLLER_ASPECT_BEAN_NAME)
+    @Bean(name = HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_API_CONTROLLER_ASPECT_BEAN_NAME)
     @ConditionalOnMissingBean(name = {
             HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_API_CONTROLLER_ASPECT_BEAN_NAME })
-    @ConditionalOnBean({HttpServletRequest.class})
-    public DefaultHystrixCommandApiControllerAspect defaultHystrixCommandApiControllerAspect(OriginApplicationNameResolver originApplicationNameControllerResolver) {
+    @ConditionalOnBean({ HttpServletRequest.class })
+    public DefaultHystrixCommandApiControllerAspect defaultHystrixCommandApiControllerAspect(
+            OriginApplicationNameResolver originApplicationNameControllerResolver) {
         DefaultHystrixCommandApiControllerAspect defaultHystrixCommandApiControllerAspect = new DefaultHystrixCommandApiControllerAspect();
         defaultHystrixCommandApiControllerAspect.setOriginApplicationNameResolver(
                 originApplicationNameControllerResolver);
         return defaultHystrixCommandApiControllerAspect;
     }
 
-    @Bean(name=HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_DWR_ASPECT_BEAN_NAME)
+    @Bean(name = HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_DWR_ASPECT_BEAN_NAME)
     @ConditionalOnMissingBean(name = { HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_DWR_ASPECT_BEAN_NAME })
     @ConditionalOnClass(name = { "org.directwebremoting.servlet.UrlProcessor" })
     public DefaultHystrixCommandDwrAspect defaultHystrixCommandDwrAspect() {
         return new DefaultHystrixCommandDwrAspect();
     }
 
-    @Bean(name=HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_FRONT_CONTROLLER_ASPECT_BEAN_NAME)
+    @Bean(name = HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_FRONT_CONTROLLER_ASPECT_BEAN_NAME)
     @ConditionalOnMissingBean(name = {
             HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_FRONT_CONTROLLER_ASPECT_BEAN_NAME })
     public DefaultHystrixCommandUIControllerAspect defaultHystrixCommandFrontControllerAspect() {
