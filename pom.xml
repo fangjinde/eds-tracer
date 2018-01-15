@@ -148,10 +148,24 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>com.netease.edu</groupId>
             <artifactId>edu-base-util</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.netease.edu</groupId>
+            <artifactId>agent-commons</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.netease.edu.web</groupId>
+            <artifactId>edu-base-web</artifactId>
+        </dependency>
+
+
+
 
         <dependency>
             <groupId>org.apache.commons</groupId>

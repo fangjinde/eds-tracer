@@ -3,8 +3,10 @@ package com.netease.edu.boot.hystrixtest.api.controller;/**
  */
 
 import com.netease.edu.boot.hystrix.annotation.EduHystrixCommand;
+import com.netease.edu.boot.hystrixtest.service.impl.EchoLogic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,28 +21,34 @@ import java.util.Map;
 @RestController
 public class ApiStratchController {
 
+    @Autowired
+    EchoLogic echoLogic;
+
     Logger logger = LoggerFactory.getLogger(ApiStratchController.class);
 
-    @RequestMapping(path = "/testDoubleFallback")
-    @EduHystrixCommand(fallbackMethod = "doubleFallback1")
-    public String testDoubleFallback(@RequestParam(value = "error", required = false) Integer error) {
-        if (error != null && error >= 1) {
-            throw new RuntimeException("test error");
-        }
-        return "testDouble ok";
+    @RequestMapping(path = "/echoWithoutFallback")
+    public String echoWithoutFallback(@RequestParam(value = "testCase", required = false) Integer testCase) {
+        return echoLogic.innerEcho(testCase);
     }
 
-    @EduHystrixCommand(fallbackMethod = "doubleFallback2")
-    public String doubleFallback1(Integer error, Throwable e) {
+
+    @RequestMapping(path = "/echo")
+    @EduHystrixCommand(fallbackMethod = "fallback1")
+    public String echo(@RequestParam(value = "testCase", required = false) Integer testCase) {
+      return echoLogic.innerEcho(testCase);
+    }
+
+    @EduHystrixCommand(fallbackMethod = "fallback2")
+    public String fallback1(Integer testCase, Throwable e) {
         logger.warn("fallback on error:", e);
-        if (error != null && error >= 2) {
+        if (testCase != null && testCase >= 2) {
             throw new RuntimeException("doubleFallback1 error", e);
         }
 
         return "doubleFallback1 ok";
     }
 
-    public String doubleFallback2(Integer error, Throwable e) {
+    public String fallback2(Integer error, Throwable e) {
         logger.warn("fallback on error:", e);
         if (error != null && error >= 3) {
             throw new RuntimeException("doubleFallback1 error", e);

@@ -7,10 +7,7 @@ import com.netease.edu.boot.hystrix.aop.aspectj.DefaultHystrixCommandDwrAspect;
 import com.netease.edu.boot.hystrix.aop.aspectj.DefaultHystrixCommandUIControllerAspect;
 import com.netease.edu.boot.hystrix.core.*;
 import com.netease.edu.boot.hystrix.core.constants.HystrixBeanNameContants;
-import com.netease.edu.boot.hystrix.support.DefaultHystrixIgnoreSuperExceptionProvider;
-import com.netease.edu.boot.hystrix.support.DubboReferenceRegistryProcessor;
-import com.netease.edu.boot.hystrix.support.HystrixDynamicPropertiesSpringEnvironmentAdapter;
-import com.netease.edu.boot.hystrix.support.OriginApplicationNameControllerResolver;
+import com.netease.edu.boot.hystrix.support.*;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -26,6 +23,24 @@ import javax.servlet.http.HttpServletRequest;
  */
 @Configuration
 public class EduHystrixAutoConfiguration {
+
+    @Bean(name=HystrixBeanNameContants.HYSTRIX_COMMAND_ASPECT_RESULT_EXCEPTION_CHECKERS)
+    @ConditionalOnMissingBean(name=HystrixBeanNameContants.HYSTRIX_COMMAND_ASPECT_RESULT_EXCEPTION_CHECKERS)
+    public ResultExceptionChecker hystrixCommandAspectResultExceptionCheckers(){
+        return new ResultExceptionCheckerComposite();
+    }
+
+    @Bean
+    @ConditionalOnClass(name={"com.netease.edu.agent.mobile.common.vo.MobReturnVo"})
+    public ResultExceptionChecker mobReturnVoResultExceptionChecker(){
+        return new MobReturnVoResultExceptionChecker();
+    }
+
+    @Bean
+    @ConditionalOnClass(name={"com.netease.edu.web.viewer.ResponseView"})
+    public ResultExceptionChecker responseViewResultExceptionChecker(){
+        return new ResponseViewResultExceptionChecker();
+    }
 
     @Bean
     @ConditionalOnMissingBean

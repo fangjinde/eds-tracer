@@ -5,6 +5,7 @@ package com.netease.edu.boot.hystrix.support;/**
 import com.google.common.base.Optional;
 import com.netease.edu.boot.hystrix.annotation.EduHystrixCommand;
 import com.netease.edu.boot.hystrix.core.*;
+import com.netease.edu.boot.hystrix.core.constants.HystrixBeanNameContants;
 import com.netease.edu.boot.hystrix.core.exception.CommandExecuteException;
 import com.netflix.hystrix.*;
 import com.netflix.hystrix.contrib.javanica.exception.FallbackDefinitionException;
@@ -12,6 +13,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 
+import javax.annotation.Resource;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -44,12 +46,14 @@ public class HystrixCommandAspectSimpleSupport {
         this.originApplicationNameResolver = originApplicationNameResolver;
     }
 
+
     ResultExceptionChecker<Object> resultChecker;
 
     public ResultExceptionChecker<Object> getResultChecker() {
         return resultChecker;
     }
 
+    @Resource(name= HystrixBeanNameContants.HYSTRIX_COMMAND_ASPECT_RESULT_EXCEPTION_CHECKERS)
     public void setResultChecker(ResultExceptionChecker<Object> resultChecker) {
         this.resultChecker = resultChecker;
     }
