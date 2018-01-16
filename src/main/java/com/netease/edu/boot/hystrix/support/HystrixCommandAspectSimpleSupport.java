@@ -46,14 +46,13 @@ public class HystrixCommandAspectSimpleSupport {
         this.originApplicationNameResolver = originApplicationNameResolver;
     }
 
-
     ResultExceptionChecker<Object> resultChecker;
 
     public ResultExceptionChecker<Object> getResultChecker() {
         return resultChecker;
     }
 
-    @Resource(name= HystrixBeanNameContants.HYSTRIX_COMMAND_ASPECT_RESULT_EXCEPTION_CHECKERS)
+    @Resource(name = HystrixBeanNameContants.HYSTRIX_COMMAND_ASPECT_RESULT_EXCEPTION_CHECKERS)
     public void setResultChecker(ResultExceptionChecker<Object> resultChecker) {
         this.resultChecker = resultChecker;
     }
@@ -61,11 +60,11 @@ public class HystrixCommandAspectSimpleSupport {
     public Object methodsWithHystrix(final ProceedingJoinPoint joinPoint) throws Throwable {
         Method method = getMethodFromTarget(joinPoint);
         return invokeWithHystrix(method, joinPoint.getTarget(), joinPoint.getArgs(),
-                                 getCommandActionFromJoinPoint(joinPoint));
+                                 getCommandActionFromJoinPoint(joinPoint), null);
     }
 
     private Object invokeWithHystrix(final Method method, final Object target, final Object[] args,
-                                     CommandAction<Object> methodCommandWrapper) {
+                                     CommandAction<Object> methodCommandWrapper, FallbackMethod lastestFallbackMethod) {
         //ThreadPoolKey默认：RemoteAppcationName+Class+Method+ArgumentTypes
         String defaultCommandGroupKey = target.getClass().getName();
         String methodSignature = HystrixKeyUtils.getMethodSignature(method, target);
@@ -108,15 +107,19 @@ public class HystrixCommandAspectSimpleSupport {
             };
         }
 
-        CommandAction<Object> fallbackAction = getFallbackAction(method, target, args, methodCommandWrapper);
+        CommandAction<Object> fallbackAction = getFallbackAction(method, target, args, methodCommandWrapper,
+                                                                 lastestFallbackMethod);
         return EduHystrixExecutor.executeWithHystrix(methodCommandWrapper, fallbackAction, setter, resultChecker);
 
     }
 
     private CommandAction<Object> getFallbackAction(final Method method, final Object target, final Object[] args,
-                                                    final CommandAction<Object> methodCommandAction) {
+                                                    final CommandAction<Object> methodCommandAction,
+                                                    FallbackMethod lastestFallbackMethod) {
 
-        final FallbackMethod fallbackMethod = getFallbackMethod(target.getClass(), method, false);
+        final FallbackMethod fallbackMethod = getFallbackMethod(target.getClass(), method,
+                                                                (lastestFallbackMethod != null
+                                                                 && lastestFallbackMethod.isExtended()) ? true : false);
 
         CommandAction<Object> fallbackAction = null;
         if (fallbackMethod.isPresent()) {
@@ -124,14 +127,7 @@ public class HystrixCommandAspectSimpleSupport {
             final Method fMethod = fallbackMethod.getMethod();
             if (fMethod.isAnnotationPresent(EduHystrixCommand.class)) {
                 fMethod.setAccessible(true);
-                return new CommandAction<Object>() {
-
-                    @Override
-                    public Object execute() throws CommandExecuteException {
-                        return invokeWithHystrix(fMethod, target, args,
-                                                 getPlainFallbackCommandAction(fallbackMethod, target, args));
-                    }
-                };
+                return getCompositeFallbackCommandAction(target,args,fallbackMethod,fMethod);
 
             } else {
 
@@ -141,6 +137,24 @@ public class HystrixCommandAspectSimpleSupport {
 
         }
         return fallbackAction;
+    }
+
+    private CommandAction<Object> getCompositeFallbackCommandAction(final Object target, final Object[] args,
+                                                                    final FallbackMethod fallbackMethod,
+                                                                    final Method fMethod) {
+        return new CommandAction<Object>() {
+
+            @Override
+            public Object execute() throws CommandExecuteException {
+                try {
+                    return invokeWithHystrix(fMethod, target, args,
+                                             getPlainFallbackCommandAction(fallbackMethod, target, args),
+                                             fallbackMethod);
+                } catch (RuntimeException e) {
+                    throw new CommandExecuteException(e);
+                }
+            }
+        };
     }
 
     private CommandAction<Object> getPlainFallbackCommandAction(final FallbackMethod fallbackMethod,
@@ -166,6 +180,10 @@ public class HystrixCommandAspectSimpleSupport {
                     }
 
                     return result;
+                } catch (InvocationTargetException e) {
+                    throw new CommandExecuteException(e.getTargetException());
+                } catch (IllegalAccessException e) {
+                    throw new CommandExecuteException(e);
                 } catch (Throwable e) {
                     throw new CommandExecuteException(e);
                 }
@@ -206,12 +224,15 @@ public class HystrixCommandAspectSimpleSupport {
 
             @Override
             public Object execute() throws CommandExecuteException {
+
+                Object result = null;
                 try {
-                    Object result = joinPoint.proceed();
-                    return result;
+                    result = joinPoint.proceed();
                 } catch (Throwable e) {
                     throw new CommandExecuteException(e);
                 }
+                return result;
+
             }
         };
 

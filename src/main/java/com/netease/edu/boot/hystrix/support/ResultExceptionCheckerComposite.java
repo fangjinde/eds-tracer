@@ -30,10 +30,12 @@ public class ResultExceptionCheckerComposite implements ResultExceptionChecker,A
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-      Map<String,ResultExceptionChecker> checkerBeanMap=  applicationContext.getBeansOfType(ResultExceptionChecker.class, false, true);
+      Map<String,ResultExceptionChecker> checkerBeanMap=  applicationContext.getBeansOfType(ResultExceptionChecker.class, false, false);
       if (MapUtils.isNotEmpty(checkerBeanMap)) {
           for (ResultExceptionChecker checker :checkerBeanMap.values()){
-              checkers.add(checker);
+              if (!this.equals(checker)){
+                  checkers.add(checker);
+              }
           }
       }
     }

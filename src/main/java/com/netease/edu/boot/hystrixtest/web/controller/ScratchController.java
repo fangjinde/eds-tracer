@@ -1,5 +1,5 @@
-package com.netease.edu.boot.hystrixtest.api.controller;/**
- * Created by hzfjd on 17/12/25.
+package com.netease.edu.boot.hystrixtest.web.controller;/**
+ * Created by hzfjd on 18/1/16.
  */
 
 import com.netease.edu.boot.hystrix.annotation.EduHystrixCommand;
@@ -14,16 +14,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author hzfjd
- * @create 17/12/25
+ * @create 18/1/16
  */
 @RestController
-@RequestMapping(path="/api")
-public class ApiStratchController {
+@RequestMapping(path="/web")
+public class ScratchController {
 
     @Autowired
     EchoLogic echoLogic;
 
-    Logger logger = LoggerFactory.getLogger(ApiStratchController.class);
+    Logger logger = LoggerFactory.getLogger(ScratchController.class);
 
     @RequestMapping(path = "/echoWithoutFallback")
     public ResponseView echoWithoutFallback(@RequestParam(value = "testCase", required = false) Integer testCase) {
@@ -59,5 +59,4 @@ public class ApiStratchController {
             throw new RuntimeException("fallback2 can't handle", e);
         }
     }
-
 }
