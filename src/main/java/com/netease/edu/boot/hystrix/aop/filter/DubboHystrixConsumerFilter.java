@@ -43,7 +43,7 @@ public class DubboHystrixConsumerFilter implements Filter {
         String groupKey = invoker.getInterface().getName();
         String methodSignature = HystrixKeyUtils.getMethodSignature(invoker.getInterface(), invocation.getMethodName(),
                                                                     invocation.getParameterTypes());
-        String commandKey = HystrixKeyUtils.getCommandKey(HystrixKeyPrefixEnum.CONSUMER.getPrefix(), methodSignature);
+        String commandKey = HystrixKeyUtils.getCommandKey(HystrixKeyPrefixEnum.CONSUMER.getPrefix(), methodSignature,null);
         String threadPoolKey = commandKey;
 
         HystrixCommand.Setter setter = HystrixCommand.Setter.withGroupKey(

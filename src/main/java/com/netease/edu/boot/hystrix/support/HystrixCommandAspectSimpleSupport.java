@@ -70,16 +70,16 @@ public class HystrixCommandAspectSimpleSupport {
         String methodSignature = HystrixKeyUtils.getMethodSignature(method, target);
 
         HystrixKeyParam hystrixKeyParam = new HystrixKeyParam(sidePrefix, methodSignature);
-        String defaultCommandKey = hystrixKeyParam.generateCommandKey();
-        String defaultThreadPoolKey = defaultCommandKey;
 
         if (originApplicationNameResolver != null) {
             String originApplicationName = originApplicationNameResolver.getOriginApplicationName();
             if (StringUtils.isNotBlank(originApplicationName)) {
                 hystrixKeyParam.setOriginApplicationName(originApplicationName);
-                defaultThreadPoolKey = hystrixKeyParam.generateThreadPoolKey();
+
             }
         }
+        String defaultCommandKey = hystrixKeyParam.generateCommandKey();
+        String defaultThreadPoolKey = defaultCommandKey;
 
         //TODO EduDefaultProperties和EduHystrixCommand的其他属性配置支持,后续看需要在加.
 

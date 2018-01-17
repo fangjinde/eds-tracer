@@ -31,7 +31,7 @@ public class DubboHystrixProviderFilter implements Filter {
         String groupKey = invoker.getInterface().getName();
         String rawCommandKey = HystrixKeyUtils.getMethodSignature(invoker.getInterface(), invocation.getMethodName(),
                                                                   invocation.getParameterTypes());
-        String commandKey = HystrixKeyUtils.getCommandKey(HystrixKeyPrefixEnum.API_PROVIDER.getPrefix(), rawCommandKey);
+        String commandKey = HystrixKeyUtils.getCommandKey(HystrixKeyPrefixEnum.API_PROVIDER.getPrefix(), rawCommandKey,originApplicationName);
         String threadPoolKey = HystrixKeyUtils.getThreadPoolKey(HystrixKeyPrefixEnum.API_PROVIDER.getPrefix(), rawCommandKey,
                                                                 originApplicationName);
 

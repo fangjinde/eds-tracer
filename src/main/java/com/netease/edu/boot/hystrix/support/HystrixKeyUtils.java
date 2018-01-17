@@ -89,8 +89,8 @@ public class HystrixKeyUtils {
        return getMethodSignature(targetType.getName(),methodName, paraClassSimpleNames);
     }
 
-    public static String getCommandKey(String prefix,String methodSignature){
-       return new HystrixKeyParam(prefix, methodSignature).generateCommandKey();
+    public static String getCommandKey(String prefix,String methodSignature,String originApplicationName){
+       return new HystrixKeyParam(prefix,originApplicationName, methodSignature).generateCommandKey();
     }
 
     public static String getThreadPoolKey(String prefix,String methodSignature,String originApplicationName){

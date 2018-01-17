@@ -70,7 +70,12 @@ public class HystrixKeyParam {
     }
 
     public String generateCommandKey() {
-        return new StringBuilder(sidePrefix).append(".").append(methodSignature).toString();
+        StringBuilder sb = new StringBuilder(sidePrefix).append(".");
+        if (StringUtils.isNotBlank(originApplicationName)) {
+            sb.append(originApplicationName).append(OriginApplicationConstants.SEPARATOR);
+        }
+        sb.append(methodSignature);
+        return sb.toString();
     }
 
     public String generateThreadPoolKey() {

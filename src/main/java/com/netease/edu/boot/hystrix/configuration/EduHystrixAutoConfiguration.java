@@ -127,7 +127,7 @@ public class EduHystrixAutoConfiguration {
     @Bean(name = HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_FRONT_CONTROLLER_ASPECT_BEAN_NAME)
     @ConditionalOnMissingBean(name = {
             HystrixBeanNameContants.HYSTRIX_COMMAND_APPLICATION_FRONT_CONTROLLER_ASPECT_BEAN_NAME })
-    public DefaultHystrixCommandUIControllerAspect defaultHystrixCommandFrontControllerAspect() {
+    public DefaultHystrixCommandUIControllerAspect defaultHystrixCommandUIControllerAspect() {
         return new DefaultHystrixCommandUIControllerAspect();
     }
 }
