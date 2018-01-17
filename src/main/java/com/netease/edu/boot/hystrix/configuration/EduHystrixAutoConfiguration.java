@@ -8,9 +8,11 @@ import com.netease.edu.boot.hystrix.aop.aspectj.DefaultHystrixCommandUIControlle
 import com.netease.edu.boot.hystrix.core.*;
 import com.netease.edu.boot.hystrix.core.constants.HystrixBeanNameContants;
 import com.netease.edu.boot.hystrix.support.*;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsStreamServlet;
+import org.springframework.boot.actuate.endpoint.Endpoint;
+import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.cloud.client.actuator.HasFeatures;
+import org.springframework.cloud.netflix.hystrix.HystrixStreamEndpoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.DispatcherServlet;
@@ -28,6 +30,23 @@ public class EduHystrixAutoConfiguration {
     @ConditionalOnMissingBean(name = HystrixBeanNameContants.HYSTRIX_COMMAND_ASPECT_RESULT_EXCEPTION_CHECKERS)
     public ResultExceptionChecker hystrixCommandAspectResultExceptionCheckers() {
         return new ResultExceptionCheckerComposite();
+    }
+
+    @Configuration
+    @ConditionalOnProperty(value = "hystrix.stream.endpoint.enabled", matchIfMissing = true)
+    @ConditionalOnWebApplication
+    @ConditionalOnClass({ Endpoint.class, HystrixMetricsStreamServlet.class })
+    protected static class HystrixWebConfiguration {
+
+        @Bean
+        public HystrixStreamEndpoint hystrixStreamEndpoint() {
+            return new HystrixStreamEndpoint();
+        }
+
+        @Bean
+        public HasFeatures hystrixFeature() {
+            return HasFeatures.namedFeature("Hystrix Stream Servlet", HystrixStreamEndpoint.class);
+        }
     }
 
     class DefaultResultExceptionCheckers {

@@ -81,7 +81,7 @@ public class HystrixCommandAspectSimpleSupport {
             }
         }
 
-        //TODO 增加DefaultProperties的支持,看需要吧.
+        //TODO EduDefaultProperties和EduHystrixCommand的其他属性配置支持,后续看需要在加.
 
         HystrixCommand.Setter setter = HystrixCommand.Setter.withGroupKey(
                 HystrixCommandGroupKey.Factory.asKey(defaultCommandGroupKey)).andCommandKey(
