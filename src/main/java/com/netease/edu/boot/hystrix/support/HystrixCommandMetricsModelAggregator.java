@@ -2,18 +2,22 @@ package com.netease.edu.boot.hystrix.support;/**
  * Created by hzfjd on 18/1/17.
  */
 
-import com.netease.sentry.javaagent.collector.api.SinglePrimaryKeyAggregator;
+import com.netease.edu.boot.hystrix.core.HystrixKeyParam;
+import com.netease.sentry.javaagent.collector.api.MultiPrimaryKeyAggregator;
+import com.netease.sentry.javaagent.collector.api.PrimaryKey;
 import com.netflix.hystrix.HystrixCommandMetrics;
+import com.netflix.hystrix.HystrixCommandProperties;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author hzfjd
  * @create 18/1/17
  */
 public class HystrixCommandMetricsModelAggregator
-        extends SinglePrimaryKeyAggregator<HystrixCommandMetricsSentryHolder> {
+        extends MultiPrimaryKeyAggregator<HystrixCommandMetricsModelAggregator.HystrixCommandMetricsSentryHolder> {
 
     private String modelName;
 
@@ -22,20 +26,21 @@ public class HystrixCommandMetricsModelAggregator
     }
 
     @Override
-    protected Map<String, Object> constructItemRow(String key, HystrixCommandMetricsSentryHolder o2) {
+    protected Map<String, Object> constructItemRow(PrimaryKey key, HystrixCommandMetricsSentryHolder o2) {
         HystrixCommandMetrics hystrixCommandMetrics = o2.getHystrixCommandMetrics();
         if (hystrixCommandMetrics == null) {
             return null;
         }
         Map<String, Object> row = new HashMap<String, Object>();
-        row.put("Key", hystrixCommandMetrics.getCommandKey().name());
+        row.put("Cmd", key.get(0));
+        row.put("Origin", key.get(1));
         // total
         row.put("TMT", hystrixCommandMetrics.getTotalTimeMean());
         row.put("TMT90", hystrixCommandMetrics.getTotalTimePercentile(90));
         row.put("TMT95", hystrixCommandMetrics.getTotalTimePercentile(95));
         row.put("TMT99", hystrixCommandMetrics.getTotalTimePercentile(99));
         // concurrency
-        row.put("CC", hystrixCommandMetrics.getCurrentConcurrentExecutionCount());
+        row.put("Cc", hystrixCommandMetrics.getCurrentConcurrentExecutionCount());
         // tps
         row.put("Total", hystrixCommandMetrics.getHealthCounts().getTotalRequests());
         row.put("Suc", hystrixCommandMetrics.getHealthCounts().getTotalRequests()
@@ -43,9 +48,15 @@ public class HystrixCommandMetricsModelAggregator
         row.put("Fail", hystrixCommandMetrics.getHealthCounts().getErrorCount());
         //rate
         row.put("FailRate", hystrixCommandMetrics.getHealthCounts().getErrorPercentage());
-        row.put("FrTH", hystrixCommandMetrics.getProperties().circuitBreakerErrorThresholdPercentage().get());
+        row.put("FrTh", hystrixCommandMetrics.getProperties().circuitBreakerErrorThresholdPercentage().get());
         // timeout
         row.put("Timeout", hystrixCommandMetrics.getProperties().executionTimeoutInMilliseconds().get());
+        //
+        boolean isoSemaphore = HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE.equals(
+                hystrixCommandMetrics.getProperties().executionIsolationStrategy().get());
+        row.put("Iso", isoSemaphore ? "S" : "T");
+        row.put("CcTh",
+                isoSemaphore ? hystrixCommandMetrics.getProperties().executionIsolationSemaphoreMaxConcurrentRequests().get() : "unknow");
         // vanilla
         row.put("EMT", hystrixCommandMetrics.getExecutionTimeMean());
         row.put("EMT90", hystrixCommandMetrics.getExecutionTimePercentile(90));
@@ -65,8 +76,35 @@ public class HystrixCommandMetricsModelAggregator
         return modelName;
     }
 
-    public void updateMetrics(HystrixCommandMetrics data){
+    private String getOriginApplicationNameWithDefault(String originApplicationName) {
+        if (originApplicationName == null || originApplicationName.length() == 0) {
+            return "none";
+        }
+        return originApplicationName;
+    }
+
+    public void updateMetrics(HystrixCommandMetrics data, HystrixKeyParam hystrixKeyParam) {
         //永远记录采样点的那个数据
-        getValue(data.getCommandKey().name()).setHystrixCommandMetrics(data);
+        getValue(hystrixKeyParam.generateByPrefixAndMethodSignature(), getOriginApplicationNameWithDefault(
+                hystrixKeyParam.getOriginApplicationName())).setHystrixCommandMetrics(
+                data);
+    }
+
+    @Override
+    protected int primaryKeyLength() {
+        return 2;
+    }
+
+    public static class HystrixCommandMetricsSentryHolder {
+
+        AtomicReference<HystrixCommandMetrics> hystrixCommandMetricsHolder;
+
+        public HystrixCommandMetrics getHystrixCommandMetrics() {
+            return hystrixCommandMetricsHolder.get();
+        }
+
+        public void setHystrixCommandMetrics(HystrixCommandMetrics hystrixCommandMetrics) {
+            hystrixCommandMetricsHolder.set(hystrixCommandMetrics);
+        }
     }
 }

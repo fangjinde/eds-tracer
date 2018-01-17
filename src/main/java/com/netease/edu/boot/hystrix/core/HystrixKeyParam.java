@@ -53,15 +53,15 @@ public class HystrixKeyParam {
     public static HystrixKeyParam parseFromKey(String key) {
         String prefix = HystrixKeyPrefixEnum.getPrefix(key);
         String remain = null;
-        String methodSignature=null;
+        String methodSignature = key;
         if (StringUtils.isNotBlank(prefix) && StringUtils.isNotBlank(key)) {
             remain = key.substring(prefix.length() + 1);
-            methodSignature=remain;
-            if (StringUtils.isNotBlank(remain)){
-                int originAppNameIndex= remain.indexOf(OriginApplicationConstants.SEPARATOR);
-                if (originAppNameIndex>=0){
-                    String originApplicationName=remain.substring(0,originAppNameIndex);
-                     methodSignature=remain.substring(originAppNameIndex+1);
+            methodSignature = remain;
+            if (StringUtils.isNotBlank(remain)) {
+                int originAppNameIndex = remain.indexOf(OriginApplicationConstants.SEPARATOR);
+                if (originAppNameIndex >= 0) {
+                    String originApplicationName = remain.substring(0, originAppNameIndex);
+                    methodSignature = remain.substring(originAppNameIndex + 1);
                     return new HystrixKeyParam(prefix, originApplicationName, methodSignature);
                 }
             }
@@ -69,8 +69,21 @@ public class HystrixKeyParam {
         return new HystrixKeyParam(prefix, null, methodSignature);
     }
 
+    private String getNotNullSidePrefix() {
+        return sidePrefix == null ? "" : sidePrefix;
+    }
+
+    public String generateByPrefixAndMethodSignature() {
+        StringBuilder sb = new StringBuilder(getNotNullSidePrefix()).append(".");
+        if (StringUtils.isNotBlank(originApplicationName)) {
+            sb.append(originApplicationName).append(OriginApplicationConstants.SEPARATOR);
+        }
+        sb.append(methodSignature);
+        return sb.toString();
+    }
+
     public String generateCommandKey() {
-        StringBuilder sb = new StringBuilder(sidePrefix).append(".");
+        StringBuilder sb = new StringBuilder(getNotNullSidePrefix()).append(".");
         if (StringUtils.isNotBlank(originApplicationName)) {
             sb.append(originApplicationName).append(OriginApplicationConstants.SEPARATOR);
         }
@@ -79,7 +92,7 @@ public class HystrixKeyParam {
     }
 
     public String generateThreadPoolKey() {
-        StringBuilder sb = new StringBuilder(sidePrefix).append(".");
+        StringBuilder sb = new StringBuilder(getNotNullSidePrefix()).append(".");
         if (StringUtils.isNotBlank(originApplicationName)) {
             sb.append(originApplicationName).append(OriginApplicationConstants.SEPARATOR);
         }
