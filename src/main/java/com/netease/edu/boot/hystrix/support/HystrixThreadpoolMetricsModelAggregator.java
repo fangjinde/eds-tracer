@@ -2,10 +2,13 @@ package com.netease.edu.boot.hystrix.support;/**
  * Created by hzfjd on 18/1/17.
  */
 
+import com.alibaba.fastjson.JSON;
 import com.netease.edu.boot.hystrix.core.HystrixKeyParam;
 import com.netease.sentry.javaagent.collector.api.MultiPrimaryKeyAggregator;
 import com.netease.sentry.javaagent.collector.api.PrimaryKey;
 import com.netflix.hystrix.HystrixThreadPoolMetrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +20,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class HystrixThreadpoolMetricsModelAggregator
         extends MultiPrimaryKeyAggregator<HystrixThreadpoolMetricsModelAggregator.HystrixThreadpoolMetricsSentryHolder> {
+
+    private Logger logger = LoggerFactory.getLogger(HystrixThreadpoolMetricsModelAggregator.class);
 
     private String modelName;
 
@@ -75,18 +80,20 @@ public class HystrixThreadpoolMetricsModelAggregator
         getValue(hystrixKeyParam.generateByPrefixAndMethodSignature(), getOriginApplicationNameWithDefault(
                 hystrixKeyParam.getOriginApplicationName())).setHystrixThreadPoolMetrics(
                 data);
+        logger.warn(String.format("HystrixCommandMetrics: %s \n HystrixKeyParam: %s \n", JSON.toJSONString(data),
+                                  JSON.toJSONString(hystrixKeyParam)));
     }
 
     public static class HystrixThreadpoolMetricsSentryHolder {
 
-        AtomicReference<HystrixThreadPoolMetrics> hystrixThreadPoolMetricsHolder;
+        AtomicReference<HystrixThreadPoolMetrics> hystrixThreadPoolMetricsAtomicReference = new AtomicReference<HystrixThreadPoolMetrics>();
 
         public HystrixThreadPoolMetrics getHystrixThreadPoolMetrics() {
-            return hystrixThreadPoolMetricsHolder.get();
+            return hystrixThreadPoolMetricsAtomicReference.get();
         }
 
         public void setHystrixThreadPoolMetrics(HystrixThreadPoolMetrics hystrixThreadPoolMetrics) {
-            hystrixThreadPoolMetricsHolder.set(hystrixThreadPoolMetrics);
+            hystrixThreadPoolMetricsAtomicReference.set(hystrixThreadPoolMetrics);
         }
     }
 }

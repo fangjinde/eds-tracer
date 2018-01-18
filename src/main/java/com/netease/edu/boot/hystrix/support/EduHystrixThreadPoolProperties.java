@@ -17,6 +17,7 @@ import static com.netflix.hystrix.strategy.properties.HystrixPropertiesChainedPr
  * 2. 增加忽略originApplicationName的CommandKey属性查询
  * 3. 增加包含SidePrefix的default Key的属性查询
  * 4. 原default查询
+ *
  * @author hzfjd
  * @create 18/1/9
  */
@@ -72,23 +73,35 @@ public class EduHystrixThreadPoolProperties extends HystrixThreadPoolProperties 
                                                         String instanceProperty, Integer builderOverrideValue,
                                                         Integer defaultValue) {
 
+        return buildChainBuilder(forInteger(), propertyPrefix, key, instanceProperty, builderOverrideValue,
+                                 defaultValue).build();
+    }
+
+    private static <PV> HystrixPropertiesChainedProperty.ChainBuilder<PV> buildChainBuilder(
+            HystrixPropertiesChainedProperty.ChainBuilder<PV> cb, String propertyPrefix,
+            HystrixThreadPoolKey key,
+            String instanceProperty, PV builderOverrideValue,
+            PV defaultValue) {
         HystrixKeyParam hystrixKeyParam = HystrixKeyParam.parseFromKey(key.name());
-        String commandKey = hystrixKeyParam.generateCommandKey();
-        String sidePrefix = hystrixKeyParam.getSidePrefix();
 
-        HystrixPropertiesChainedProperty.ChainBuilder<Integer> cb = forInteger()
-                .add(propertyPrefix + ".threadpool." + key.name() + "." + instanceProperty, builderOverrideValue);
-
-        if (!key.name().equals(commandKey)) {
-            cb.add(propertyPrefix + ".threadpool." + commandKey + "." + instanceProperty, builderOverrideValue);
-        }
-        if (StringUtils.isNotBlank(sidePrefix)) {
-            cb.add(propertyPrefix + ".threadpool." + sidePrefix + ".default." + instanceProperty, defaultValue);
+        if (StringUtils.isBlank(hystrixKeyParam.getOriginApplicationName())) {
+            cb.add(propertyPrefix + ".threadpool." + key.name() + "." + instanceProperty, builderOverrideValue);
+        } else {
+            String keyWithoutOrigin = hystrixKeyParam.generateByPrefixAndMethodSignature();
+            cb.add(propertyPrefix + ".threadpool." + key.name() + "." + instanceProperty, null);
+            cb.add(propertyPrefix + ".threadpool." + keyWithoutOrigin + "." + instanceProperty, builderOverrideValue);
         }
 
-        cb.add(propertyPrefix + ".threadpool.default." + instanceProperty, defaultValue);
+        if (StringUtils.isBlank(hystrixKeyParam.getSidePrefix())) {
+            cb.add(propertyPrefix + ".threadpool.default." + instanceProperty, defaultValue);
 
-        return cb.build();
+        } else {
+            cb.add(propertyPrefix + ".threadpool." + hystrixKeyParam.getSidePrefix() + ".default." + instanceProperty,
+                   null);
+            cb.add(propertyPrefix + ".threadpool.default." + instanceProperty, defaultValue);
+        }
+
+        return cb;
     }
 
     /**

@@ -14,10 +14,11 @@ import org.slf4j.LoggerFactory;
 import static com.netflix.hystrix.strategy.properties.HystrixPropertiesChainedProperty.*;
 
 /**
- *  * 增加属性查找fallback.
+ * * 增加属性查找fallback.
  * 1. 原完整key查询,包括SidePrefix,MethodSignature
  * 2. 增加包含SidePrefix的default Key的属性查询
  * 3. 原default查询
+ *
  * @author hzfjd
  * @create 18/1/9
  */
@@ -453,14 +454,8 @@ public class EduHystrixCommandProperties extends HystrixCommandProperties {
                                                         String instanceProperty, Boolean builderOverrideValue,
                                                         Boolean defaultValue) {
 
-        String sidePrefix = HystrixKeyParam.parseFromKey(key.name()).getSidePrefix();
-        ChainBuilder<Boolean> cb = forBoolean()
-                .add(propertyPrefix + ".command." + key.name() + "." + instanceProperty, builderOverrideValue);
-        if (StringUtils.isNotBlank(sidePrefix)) {
-            cb.add(propertyPrefix + ".command." + sidePrefix + ".default." + instanceProperty, defaultValue);
-        }
-
-        cb.add(propertyPrefix + ".command.default." + instanceProperty, defaultValue);
+        ChainBuilder<Boolean> cb = buildChainBuilder(forBoolean(), propertyPrefix, key, instanceProperty,
+                                                     builderOverrideValue, defaultValue);
         return cb.build();
 
     }
@@ -468,14 +463,8 @@ public class EduHystrixCommandProperties extends HystrixCommandProperties {
     private static HystrixProperty<Integer> getProperty(String propertyPrefix, HystrixCommandKey key,
                                                         String instanceProperty, Integer builderOverrideValue,
                                                         Integer defaultValue) {
-        String sidePrefix = HystrixKeyParam.parseFromKey(key.name()).getSidePrefix();
-        ChainBuilder<Integer> cb = forInteger()
-                .add(propertyPrefix + ".command." + key.name() + "." + instanceProperty, builderOverrideValue);
-        if (StringUtils.isNotBlank(sidePrefix)) {
-            cb.add(propertyPrefix + ".command." + sidePrefix + ".default." + instanceProperty, defaultValue);
-        }
-
-        cb.add(propertyPrefix + ".command.default." + instanceProperty, defaultValue);
+        ChainBuilder<Integer> cb = buildChainBuilder(forInteger(), propertyPrefix, key, instanceProperty,
+                                                     builderOverrideValue, defaultValue);
         return cb.build();
     }
 
@@ -483,15 +472,35 @@ public class EduHystrixCommandProperties extends HystrixCommandProperties {
     private static HystrixProperty<String> getProperty(String propertyPrefix, HystrixCommandKey key,
                                                        String instanceProperty, String builderOverrideValue,
                                                        String defaultValue) {
-        String sidePrefix = HystrixKeyParam.parseFromKey(key.name()).getSidePrefix();
-        ChainBuilder<String> cb = forString()
-                .add(propertyPrefix + ".command." + key.name() + "." + instanceProperty, builderOverrideValue);
-        if (StringUtils.isNotBlank(sidePrefix)) {
-            cb.add(propertyPrefix + ".command." + sidePrefix + ".default." + instanceProperty, defaultValue);
+        ChainBuilder<String> cb = buildChainBuilder(forString(), propertyPrefix, key, instanceProperty,
+                                                    builderOverrideValue, defaultValue);
+        return cb.build();
+    }
+
+    private static <PV> ChainBuilder<PV> buildChainBuilder(ChainBuilder<PV> cb, String propertyPrefix,
+                                                           HystrixCommandKey key,
+                                                           String instanceProperty, PV builderOverrideValue,
+                                                           PV defaultValue) {
+        HystrixKeyParam hystrixKeyParam = HystrixKeyParam.parseFromKey(key.name());
+
+        if (StringUtils.isBlank(hystrixKeyParam.getOriginApplicationName())) {
+            cb.add(propertyPrefix + ".command." + key.name() + "." + instanceProperty, builderOverrideValue);
+        } else {
+            String keyWithoutOrigin = hystrixKeyParam.generateByPrefixAndMethodSignature();
+            cb.add(propertyPrefix + ".command." + key.name() + "." + instanceProperty, null);
+            cb.add(propertyPrefix + ".command." + keyWithoutOrigin + "." + instanceProperty, builderOverrideValue);
         }
 
-        cb.add(propertyPrefix + ".command.default." + instanceProperty, defaultValue);
-        return cb.build();
+        if (StringUtils.isBlank(hystrixKeyParam.getSidePrefix())) {
+            cb.add(propertyPrefix + ".command.default." + instanceProperty, defaultValue);
+
+        } else {
+            cb.add(propertyPrefix + ".command." + hystrixKeyParam.getSidePrefix() + ".default." + instanceProperty,
+                   null);
+            cb.add(propertyPrefix + ".command.default." + instanceProperty, defaultValue);
+        }
+
+        return cb;
     }
 
     private static HystrixProperty<ExecutionIsolationStrategy> getProperty(final String propertyPrefix,
@@ -523,20 +532,11 @@ public class EduHystrixCommandProperties extends HystrixCommandProperties {
             if (builderOverrideValue != null) {
                 overrideValue = builderOverrideValue.name();
             }
-//            property = forString()
-//                    .add(propertyPrefix + ".command." + key.name() + "." + instanceProperty, overrideValue)
-//                    .add(propertyPrefix + ".command.default." + instanceProperty, defaultValue.name())
-//                    .build();
 
+            ChainBuilder<String> cb = buildChainBuilder(forString(), propertyPrefix, key, instanceProperty,
+                                                        overrideValue, defaultValue.name());
 
-            String sidePrefix = HystrixKeyParam.parseFromKey(key.name()).getSidePrefix();
-            ChainBuilder<String> cb = forString()
-                    .add(propertyPrefix + ".command." + key.name() + "." + instanceProperty, overrideValue);
-            if (StringUtils.isNotBlank(sidePrefix)) {
-                cb.add(propertyPrefix + ".command." + sidePrefix + ".default." + instanceProperty, defaultValue.name());
-            }
-            cb.add(propertyPrefix + ".command.default." + instanceProperty, defaultValue.name());
-            property= cb.build();
+            property = cb.build();
 
             // initialize the enum value from the property
             parseProperty();

@@ -2,11 +2,14 @@ package com.netease.edu.boot.hystrix.support;/**
  * Created by hzfjd on 18/1/17.
  */
 
+import com.alibaba.fastjson.JSON;
 import com.netease.edu.boot.hystrix.core.HystrixKeyParam;
 import com.netease.sentry.javaagent.collector.api.MultiPrimaryKeyAggregator;
 import com.netease.sentry.javaagent.collector.api.PrimaryKey;
 import com.netflix.hystrix.HystrixCommandMetrics;
 import com.netflix.hystrix.HystrixCommandProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class HystrixCommandMetricsModelAggregator
         extends MultiPrimaryKeyAggregator<HystrixCommandMetricsModelAggregator.HystrixCommandMetricsSentryHolder> {
 
+    private Logger logger = LoggerFactory.getLogger(HystrixCommandMetricsModelAggregator.class);
     private String modelName;
 
     public HystrixCommandMetricsModelAggregator(String modelName) {
@@ -88,6 +92,10 @@ public class HystrixCommandMetricsModelAggregator
         getValue(hystrixKeyParam.generateByPrefixAndMethodSignature(), getOriginApplicationNameWithDefault(
                 hystrixKeyParam.getOriginApplicationName())).setHystrixCommandMetrics(
                 data);
+
+        logger.warn(String.format("HystrixCommandMetrics: %s \n HystrixKeyParam: %s \n", JSON.toJSONString(data),
+                                  JSON.toJSONString(hystrixKeyParam)));
+
     }
 
     @Override
@@ -97,14 +105,14 @@ public class HystrixCommandMetricsModelAggregator
 
     public static class HystrixCommandMetricsSentryHolder {
 
-        AtomicReference<HystrixCommandMetrics> hystrixCommandMetricsHolder;
+        AtomicReference<HystrixCommandMetrics> hystrixCommandMetricsAtomicReference = new AtomicReference<HystrixCommandMetrics>();
 
         public HystrixCommandMetrics getHystrixCommandMetrics() {
-            return hystrixCommandMetricsHolder.get();
+            return hystrixCommandMetricsAtomicReference.get();
         }
 
         public void setHystrixCommandMetrics(HystrixCommandMetrics hystrixCommandMetrics) {
-            hystrixCommandMetricsHolder.set(hystrixCommandMetrics);
+            hystrixCommandMetricsAtomicReference.set(hystrixCommandMetrics);
         }
     }
 }
