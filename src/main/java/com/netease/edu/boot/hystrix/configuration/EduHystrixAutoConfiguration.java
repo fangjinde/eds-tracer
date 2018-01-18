@@ -8,6 +8,7 @@ import com.netease.edu.boot.hystrix.aop.aspectj.DefaultHystrixCommandUIControlle
 import com.netease.edu.boot.hystrix.core.*;
 import com.netease.edu.boot.hystrix.core.constants.HystrixBeanNameContants;
 import com.netease.edu.boot.hystrix.support.*;
+import com.netease.sentry.javaagent.collector.api.Collector;
 import org.springframework.boot.actuate.endpoint.Endpoint;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.cloud.client.actuator.HasFeatures;
@@ -47,7 +48,21 @@ public class EduHystrixAutoConfiguration {
         }
     }
 
-    class DefaultResultExceptionCheckers {
+    @Configuration
+    @ConditionalOnProperty(value = "hystrix.stream.sentry.enabled", matchIfMissing = true)
+    @ConditionalOnClass({ Collector.class })
+    public class EduHystrixStreamSentryConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean
+        public EduHystrixStreamSentrySynchronizer eduHystrixStreamSentrySynchronizer() {
+            return new EduHystrixStreamSentrySynchronizer();
+        }
+
+    }
+
+    @Configuration
+    public class DefaultResultExceptionCheckers {
 
         @Bean
         @ConditionalOnClass(name = { "com.netease.edu.agent.mobile.common.vo.MobReturnVo" })
