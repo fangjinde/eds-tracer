@@ -13,69 +13,49 @@ import com.netflix.hystrix.metric.consumer.HystrixDashboardStream;
  * @author hzfjd
  * @create 18/1/17
  */
-public class HystrixMetricsSentryCollector extends Collector {
+public abstract class HystrixMetricsSentryCollector extends Collector {
 
-    private String collectorName;
-
-    public HystrixMetricsSentryCollector(String collectorName) {
-        this.collectorName = collectorName;
-    }
-
-    @Override
-    public boolean isCollectOnStart() {
-        return true;
-    }
-
-    //AP COMMAND
-    private static HystrixMetricsSentryCollector           AP_COMMAND_COLLECTOR      = new HystrixMetricsSentryCollector(
-            "EduApCommandCollector");
+    //AP Collector
+    private static HystrixMetricsSentryCollector           AP_COMMAND_COLLECTOR      = new HystrixMetricsSentryApCollector();
+    // Command Aggregator
     private static HystrixCommandMetricsModelAggregator    AP_COMMAND_AGGREGATOR     = new HystrixCommandMetricsModelAggregator(
             "EduApCommandAggregator");
-    //AP THREAD
-    private static HystrixMetricsSentryCollector           AP_THREAD_POOL_COLLECTOR  = new HystrixMetricsSentryCollector(
-            "EduApThreadPoolCollector");
+    //THREAD Aggregator
     private static HystrixThreadpoolMetricsModelAggregator AP_THREAD_POOL_AGGREGATOR = new HystrixThreadpoolMetricsModelAggregator(
             "EduApThreadPoolAggregator");
 
-    //UP COMMAND
-    private static HystrixMetricsSentryCollector        UP_COMMAND_COLLECTOR  = new HystrixMetricsSentryCollector(
-            "EduUpCommandCollector");
+    //UP Collector
+    private static HystrixMetricsSentryCollector        UP_COMMAND_COLLECTOR  = new HystrixMetricsSentryUpCollector(
+    );
+    // Command Aggregator
     private static HystrixCommandMetricsModelAggregator UP_COMMAND_AGGREGATOR = new HystrixCommandMetricsModelAggregator(
             "EduUpCommandAggregator");
 
-    //UP THREAD
-    private static HystrixMetricsSentryCollector           UP_THREAD_POOL_COLLECTOR  = new HystrixMetricsSentryCollector(
-            "EduUpThreadPoolCollector");
+    //THREAD Aggregator
     private static HystrixThreadpoolMetricsModelAggregator UP_THREAD_POOL_AGGREGATOR = new HystrixThreadpoolMetricsModelAggregator(
             "EduUpThreadPoolAggregator");
 
-    //Consumer COMMAND
-    private static HystrixMetricsSentryCollector        C_COMMAND_COLLECTOR  = new HystrixMetricsSentryCollector(
-            "EduConsumerCommandCollector");
+    //Consumer Collector
+    private static HystrixMetricsSentryCollector        C_COMMAND_COLLECTOR  = new HystrixMetricsSentryConsumerCollector(
+    );
+    // Command Aggregator
     private static HystrixCommandMetricsModelAggregator C_COMMAND_AGGREGATOR = new HystrixCommandMetricsModelAggregator(
             "EduConsumerCommandAggregator");
 
-    //Consumer THREAD
-    private static HystrixMetricsSentryCollector           C_THREAD_POOL_COLLECTOR  = new HystrixMetricsSentryCollector(
-            "EduConsumerThreadPoolCollector");
+    //THREAD Aggregator
     private static HystrixThreadpoolMetricsModelAggregator C_THREAD_POOL_AGGREGATOR = new HystrixThreadpoolMetricsModelAggregator(
             "EduConsumerThreadPoolAggregator");
 
     static {
         //AP
         AP_COMMAND_COLLECTOR.addModelAggregator(AP_COMMAND_AGGREGATOR);
-        AP_THREAD_POOL_COLLECTOR.addModelAggregator(AP_THREAD_POOL_AGGREGATOR);
+        AP_COMMAND_COLLECTOR.addModelAggregator(AP_THREAD_POOL_AGGREGATOR);
         //UP
         UP_COMMAND_COLLECTOR.addModelAggregator(UP_COMMAND_AGGREGATOR);
-        UP_THREAD_POOL_COLLECTOR.addModelAggregator(UP_THREAD_POOL_AGGREGATOR);
+        UP_COMMAND_COLLECTOR.addModelAggregator(UP_THREAD_POOL_AGGREGATOR);
         //Consumer
         C_COMMAND_COLLECTOR.addModelAggregator(C_COMMAND_AGGREGATOR);
-        C_THREAD_POOL_COLLECTOR.addModelAggregator(C_THREAD_POOL_AGGREGATOR);
-    }
-
-    @Override
-    public String getCollectorName() {
-        return collectorName;
+        C_COMMAND_COLLECTOR.addModelAggregator(C_THREAD_POOL_AGGREGATOR);
     }
 
     public static void onNext(HystrixDashboardStream.DashboardData data) {
@@ -99,6 +79,33 @@ public class HystrixMetricsSentryCollector extends Collector {
             } else if (HystrixKeyPrefixEnum.CONSUMER.getPrefix().equals(hystrixKeyParam.getSidePrefix())) {
 
             }
+        }
+    }
+
+    /**
+     * getCollectorName()必须在构造前指定,否则Controller的构造函数中的CollectorManager.register(this)无法正常工作.
+     */
+    public static class HystrixMetricsSentryApCollector extends HystrixMetricsSentryCollector {
+
+        @Override
+        public String getCollectorName() {
+            return "EduApCommandCollector";
+        }
+    }
+
+    public static class HystrixMetricsSentryUpCollector extends HystrixMetricsSentryCollector {
+
+        @Override
+        public String getCollectorName() {
+            return "EduUpCommandCollector";
+        }
+    }
+
+    public static class HystrixMetricsSentryConsumerCollector extends HystrixMetricsSentryCollector {
+
+        @Override
+        public String getCollectorName() {
+            return "EduConsumerCommandCollector";
         }
     }
 

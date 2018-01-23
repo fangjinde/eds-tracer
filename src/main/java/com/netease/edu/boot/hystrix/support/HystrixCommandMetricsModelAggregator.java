@@ -31,6 +31,17 @@ public class HystrixCommandMetricsModelAggregator
 
     @Override
     protected Map<String, Object> constructItemRow(PrimaryKey key, HystrixCommandMetricsSentryHolder o2) {
+        try {
+            return innverConstructItemRow(key, o2);
+        } catch (RuntimeException e) {
+            logger.error(String.format("key=%s, value=%s", JSON.toJSONString(key), JSON.toJSONString(o2)), e);
+            return null;
+        }
+
+    }
+
+    private Map<String, Object> innverConstructItemRow(PrimaryKey key, HystrixCommandMetricsSentryHolder o2) {
+        logger.warn(String.format("key=%s, value=%s", JSON.toJSONString(key), JSON.toJSONString(o2)));
         HystrixCommandMetrics hystrixCommandMetrics = o2.getHystrixCommandMetrics();
         if (hystrixCommandMetrics == null) {
             return null;
