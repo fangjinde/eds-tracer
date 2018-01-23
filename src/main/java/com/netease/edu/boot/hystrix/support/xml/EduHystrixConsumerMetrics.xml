@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graph id="EduHystrixConsumerMetrics" title="EduHystrixConsumerMetrics" viewCountEachRow="1" viewHighth="100">
+    <view id="EduHystrixConsumerCollector.EduConsumerCommandAggregator" title="Command Metrics" type="sumtable"
+          modelName="EduHystrixConsumerCollector.EduConsumerCommandAggregator" groupby="Cmd as 方法名">
+        <dataItem function="AVG(TMT)" as="TMT"/>
+        <dataItem function="AVG(TMT90)" as="TMT90"/>
+        <dataItem function="AVG(TMT95)" as="TMT95"/>
+        <dataItem function="AVG(TMT99)" as="TMT99"/>
+        <dataItem function="MAX(Cc)" as="并发"/>
+        <dataItem function="SUM(Total)" as="Total"/>
+        <dataItem function="SUM(Suc)" as="Suc"/>
+        <dataItem function="SUM(Fail)" as="Fail"/>
+        <dataItem function="MAX(FailRate)" as="FailRate"/>
+        <dataItem function="LAST(FrTh)" as="FrTh"/>
+        <dataItem function="LAST(Timeout)" as="Timeout"/>
+        <dataItem function="LAST(Iso)" as="ISO"/>
+        <dataItem function="LAST(CcTh)" as="并发Th"/>
+        <dataItem function="AVG(EMT)" as="EMT"/>
+        <dataItem function="AVG(EMT90)" as="EMT90"/>
+        <dataItem function="AVG(EMT95)" as="EMT95"/>
+        <dataItem function="AVG(EMT99)" as="EMT99"/>
+    </view>
+    <view id="EduHystrixConsumerCollector.EduConsumerThreadPoolAggregator" title="Thread Pool Metrics" type="sumtable"
+          modelName="EduHystrixConsumerCollector.EduConsumerThreadPoolAggregator" groupby="Thread as 线程名">
+        <dataItem function="LAST(Active)" as="Active"/>
+        <dataItem function="LAST(CorePool)" as="CorePool"/>
+        <dataItem function="LAST(Pool)" as="Pool"/>
+        <dataItem function="LAST(LargestPool)" as="LargestPool"/>
+        <dataItem function="LAST(MaxPool)" as="MaxPool"/>
+        <dataItem function="LAST(Queue)" as="Queue"/>
+        <dataItem function="LAST(Task)" as="Task"/>
+        <dataItem function="LAST(CompletedTask)" as="CompletedTask"/>
+    </view>
+</graph>
