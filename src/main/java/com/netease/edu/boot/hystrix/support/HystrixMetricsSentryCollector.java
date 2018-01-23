@@ -21,6 +21,11 @@ public class HystrixMetricsSentryCollector extends Collector {
         this.collectorName = collectorName;
     }
 
+    @Override
+    public boolean isCollectOnStart() {
+        return true;
+    }
+
     //AP COMMAND
     private static HystrixMetricsSentryCollector           AP_COMMAND_COLLECTOR      = new HystrixMetricsSentryCollector(
             "EduApCommandCollector");
@@ -96,7 +101,5 @@ public class HystrixMetricsSentryCollector extends Collector {
             }
         }
     }
-
-
 
 }
