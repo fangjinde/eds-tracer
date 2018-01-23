@@ -2,7 +2,6 @@ package com.netease.edu.boot.hystrix.support;/**
  * Created by hzfjd on 18/1/17.
  */
 
-import com.alibaba.fastjson.JSON;
 import com.netease.edu.boot.hystrix.core.HystrixKeyParam;
 import com.netease.sentry.javaagent.collector.api.MultiPrimaryKeyAggregator;
 import com.netease.sentry.javaagent.collector.api.PrimaryKey;
@@ -44,7 +43,9 @@ public class HystrixThreadpoolMetricsModelAggregator
         }
         Map<String, Object> row = new HashMap<String, Object>();
         row.put("Thread", primaryKey.get(0));
-        row.put("Origin", primaryKey.get(1));
+        if (primaryKeyLength() >= 2) {
+            row.put("Origin", primaryKey.get(1));
+        }
         // total
         row.put("Active", hystrixThreadPoolMetrics.getCurrentActiveCount());
         row.put("CorePool", hystrixThreadPoolMetrics.getCurrentCorePoolSize());
@@ -77,11 +78,14 @@ public class HystrixThreadpoolMetricsModelAggregator
 
     public void updateMetrics(HystrixThreadPoolMetrics data, HystrixKeyParam hystrixKeyParam) {
         //永远记录采样点的那个数据
-        getValue(hystrixKeyParam.generateByPrefixAndMethodSignature(), getOriginApplicationNameWithDefault(
-                hystrixKeyParam.getOriginApplicationName())).setHystrixThreadPoolMetrics(
-                data);
-        logger.warn(String.format("HystrixCommandMetrics: %s \n HystrixKeyParam: %s \n", JSON.toJSONString(data),
-                                  JSON.toJSONString(hystrixKeyParam)));
+        HystrixThreadpoolMetricsSentryHolder value = null;
+        if (primaryKeyLength() >= 2) {
+            value = getValue(hystrixKeyParam.generateByPrefixAndMethodSignature(), getOriginApplicationNameWithDefault(
+                    hystrixKeyParam.getOriginApplicationName()));
+        } else {
+            value = getValue(hystrixKeyParam.generateByPrefixAndMethodSignature());
+        }
+        value.setHystrixThreadPoolMetrics(data);
     }
 
     public static class HystrixThreadpoolMetricsSentryHolder {
@@ -94,6 +98,19 @@ public class HystrixThreadpoolMetricsModelAggregator
 
         public void setHystrixThreadPoolMetrics(HystrixThreadPoolMetrics hystrixThreadPoolMetrics) {
             hystrixThreadPoolMetricsAtomicReference.set(hystrixThreadPoolMetrics);
+        }
+    }
+
+    public static class HystrixThreadpoolNoOriginMetricsModelAggregator
+            extends HystrixThreadpoolMetricsModelAggregator {
+
+        public HystrixThreadpoolNoOriginMetricsModelAggregator(String modelName) {
+            super(modelName);
+        }
+
+        @Override
+        protected int primaryKeyLength() {
+            return 1;
         }
     }
 }

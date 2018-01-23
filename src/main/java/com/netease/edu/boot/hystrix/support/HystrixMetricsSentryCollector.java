@@ -28,11 +28,11 @@ public abstract class HystrixMetricsSentryCollector extends Collector {
     private static HystrixMetricsSentryCollector        CONSUMER_COMMAND_COLLECTOR = new HystrixMetricsSentryConsumerCollector(
     );
     // Command Aggregator
-    private static HystrixCommandMetricsModelAggregator C_COMMAND_AGGREGATOR       = new HystrixCommandMetricsModelAggregator(
+    private static HystrixCommandMetricsModelAggregator C_COMMAND_AGGREGATOR       = new HystrixCommandMetricsModelAggregator.HystrixCommandNoOriginMetricsModelAggregator(
             "EduConsumerCommandAggregator");
 
     //THREAD Aggregator
-    private static HystrixThreadpoolMetricsModelAggregator C_THREAD_POOL_AGGREGATOR = new HystrixThreadpoolMetricsModelAggregator(
+    private static HystrixThreadpoolMetricsModelAggregator C_THREAD_POOL_AGGREGATOR = new HystrixThreadpoolMetricsModelAggregator.HystrixThreadpoolNoOriginMetricsModelAggregator(
             "EduConsumerThreadPoolAggregator");
 
     static {

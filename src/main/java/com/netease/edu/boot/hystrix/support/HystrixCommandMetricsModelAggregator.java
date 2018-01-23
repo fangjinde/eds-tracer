@@ -34,21 +34,23 @@ public class HystrixCommandMetricsModelAggregator
         try {
             return innverConstructItemRow(key, o2);
         } catch (RuntimeException e) {
-            logger.error(String.format("key=%s, value=%s", JSON.toJSONString(key), JSON.toJSONString(o2)), e);
+            logger.warn(String.format("HystrixCommandMetricsModelAggregator constructItemRow error. key=%s, value=%s",
+                                      JSON.toJSONString(key), JSON.toJSONString(o2)), e);
             return null;
         }
 
     }
 
     private Map<String, Object> innverConstructItemRow(PrimaryKey key, HystrixCommandMetricsSentryHolder o2) {
-        logger.warn(String.format("key=%s, value=%s", JSON.toJSONString(key), JSON.toJSONString(o2)));
         HystrixCommandMetrics hystrixCommandMetrics = o2.getHystrixCommandMetrics();
         if (hystrixCommandMetrics == null) {
             return null;
         }
         Map<String, Object> row = new HashMap<String, Object>();
         row.put("Cmd", key.get(0));
-        row.put("Origin", key.get(1));
+        if (key.getKeyLength() >= 2) {
+            row.put("Origin", key.get(1));
+        }
         // total
         row.put("TMT", hystrixCommandMetrics.getTotalTimeMean());
         row.put("TMT90", hystrixCommandMetrics.getTotalTimePercentile(90));
@@ -71,7 +73,7 @@ public class HystrixCommandMetricsModelAggregator
                 hystrixCommandMetrics.getProperties().executionIsolationStrategy().get());
         row.put("Iso", isoSemaphore ? "S" : "T");
         row.put("CcTh",
-                isoSemaphore ? hystrixCommandMetrics.getProperties().executionIsolationSemaphoreMaxConcurrentRequests().get() : "unknow");
+                isoSemaphore ? hystrixCommandMetrics.getProperties().executionIsolationSemaphoreMaxConcurrentRequests().get() : "unknown");
         // vanilla
         row.put("EMT", hystrixCommandMetrics.getExecutionTimeMean());
         row.put("EMT90", hystrixCommandMetrics.getExecutionTimePercentile(90));
@@ -100,12 +102,15 @@ public class HystrixCommandMetricsModelAggregator
 
     public void updateMetrics(HystrixCommandMetrics data, HystrixKeyParam hystrixKeyParam) {
         //永远记录采样点的那个数据
-        getValue(hystrixKeyParam.generateByPrefixAndMethodSignature(), getOriginApplicationNameWithDefault(
-                hystrixKeyParam.getOriginApplicationName())).setHystrixCommandMetrics(
+        HystrixCommandMetricsSentryHolder value = null;
+        if (primaryKeyLength() >= 2) {
+            value = getValue(hystrixKeyParam.generateByPrefixAndMethodSignature(), getOriginApplicationNameWithDefault(
+                    hystrixKeyParam.getOriginApplicationName()));
+        } else {
+            value = getValue(hystrixKeyParam.generateByPrefixAndMethodSignature());
+        }
+        value.setHystrixCommandMetrics(
                 data);
-
-        logger.warn(String.format("HystrixCommandMetrics: %s \n HystrixKeyParam: %s \n", JSON.toJSONString(data),
-                                  JSON.toJSONString(hystrixKeyParam)));
 
     }
 
@@ -124,6 +129,18 @@ public class HystrixCommandMetricsModelAggregator
 
         public void setHystrixCommandMetrics(HystrixCommandMetrics hystrixCommandMetrics) {
             hystrixCommandMetricsAtomicReference.set(hystrixCommandMetrics);
+        }
+    }
+
+    public static class HystrixCommandNoOriginMetricsModelAggregator extends HystrixCommandMetricsModelAggregator {
+
+        public HystrixCommandNoOriginMetricsModelAggregator(String modelName) {
+            super(modelName);
+        }
+
+        @Override
+        protected int primaryKeyLength() {
+            return 1;
         }
     }
 }
