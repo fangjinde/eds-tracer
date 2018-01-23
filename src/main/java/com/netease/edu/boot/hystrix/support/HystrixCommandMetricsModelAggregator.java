@@ -73,7 +73,7 @@ public class HystrixCommandMetricsModelAggregator
                 hystrixCommandMetrics.getProperties().executionIsolationStrategy().get());
         row.put("Iso", isoSemaphore ? "S" : "T");
         row.put("CcTh",
-                isoSemaphore ? hystrixCommandMetrics.getProperties().executionIsolationSemaphoreMaxConcurrentRequests().get() : "unknown");
+                isoSemaphore ? hystrixCommandMetrics.getProperties().executionIsolationSemaphoreMaxConcurrentRequests().get() : -1);
         // vanilla
         row.put("EMT", hystrixCommandMetrics.getExecutionTimeMean());
         row.put("EMT90", hystrixCommandMetrics.getExecutionTimePercentile(90));
