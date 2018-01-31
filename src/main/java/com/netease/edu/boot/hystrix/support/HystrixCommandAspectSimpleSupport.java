@@ -86,9 +86,7 @@ public class HystrixCommandAspectSimpleSupport {
         HystrixCommand.Setter setter = HystrixCommand.Setter.withGroupKey(
                 HystrixCommandGroupKey.Factory.asKey(defaultCommandGroupKey)).andCommandKey(
                 HystrixCommandKey.Factory.asKey(defaultCommandKey)).andThreadPoolKey(
-                HystrixThreadPoolKey.Factory.asKey(defaultThreadPoolKey)).andCommandPropertiesDefaults(
-                HystrixCommandProperties.Setter().withExecutionIsolationStrategy(
-                        HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE));
+                HystrixThreadPoolKey.Factory.asKey(defaultThreadPoolKey));
 
         // reflect to invoke in normal
         if (methodCommandWrapper == null) {

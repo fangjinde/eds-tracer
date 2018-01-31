@@ -49,9 +49,7 @@ public class DubboHystrixConsumerFilter implements Filter {
         HystrixCommand.Setter setter = HystrixCommand.Setter.withGroupKey(
                 HystrixCommandGroupKey.Factory.asKey(groupKey)).andCommandKey(
                 HystrixCommandKey.Factory.asKey(commandKey)).andThreadPoolKey(
-                HystrixThreadPoolKey.Factory.asKey(threadPoolKey)).andCommandPropertiesDefaults(
-                HystrixCommandProperties.Setter().withExecutionIsolationStrategy(
-                        HystrixCommandProperties.ExecutionIsolationStrategy.THREAD));
+                HystrixThreadPoolKey.Factory.asKey(threadPoolKey));
 
         CommandAction<Result> commandAction = DubboHystrixFilterSupport.getCommandAction(invoker, invocation);
 

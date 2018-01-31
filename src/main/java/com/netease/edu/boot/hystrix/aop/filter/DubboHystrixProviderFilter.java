@@ -38,9 +38,7 @@ public class DubboHystrixProviderFilter implements Filter {
         HystrixCommand.Setter setter = HystrixCommand.Setter.withGroupKey(
                 HystrixCommandGroupKey.Factory.asKey(groupKey)).andCommandKey(
                 HystrixCommandKey.Factory.asKey(commandKey)).andThreadPoolKey(
-                HystrixThreadPoolKey.Factory.asKey(threadPoolKey)).andCommandPropertiesDefaults(
-                HystrixCommandProperties.Setter().withExecutionIsolationStrategy(
-                        HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE));
+                HystrixThreadPoolKey.Factory.asKey(threadPoolKey));
 
         ResultExceptionChecker<Result> resultChecker = new ResultExceptionChecker<Result>() {
             @Override
