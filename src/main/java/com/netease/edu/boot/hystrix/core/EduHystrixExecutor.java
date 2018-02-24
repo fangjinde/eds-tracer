@@ -78,6 +78,17 @@ public class EduHystrixExecutor {
             }
         };
 
-        return hystrixCommand.execute();
+        try{
+            return hystrixCommand.execute();
+        }catch (HystrixBadRequestException bre){
+           Throwable cause= bre.getCause();
+            if (cause instanceof RuntimeException){
+                throw (RuntimeException)cause;
+            }else{
+                throw new RuntimeException("biz throw HystrixBadRequestException without any Runtime cause",cause);
+            }
+        }
+
+
     }
 }

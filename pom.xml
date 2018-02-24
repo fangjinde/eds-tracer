@@ -4,7 +4,7 @@
 
     <groupId>com.netease.edu.boot</groupId>
     <artifactId>edu-hystrix-spring-boot-starter</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.3.1</version>
     <packaging>jar</packaging>
 
     <name>edu-hystrix-spring-boot-starter</name>
