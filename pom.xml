@@ -4,7 +4,7 @@
 
     <groupId>com.netease.edu.boot</groupId>
     <artifactId>edu-hystrix-spring-boot-starter</artifactId>
-    <version>1.0.3.1</version>
+    <version>1.0.3.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>edu-hystrix-spring-boot-starter</name>
@@ -28,7 +28,7 @@
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
-                <version>Camden.SR7</version>
+                <version>Finchley.M6</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
