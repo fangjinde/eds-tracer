@@ -21,7 +21,7 @@ import com.netflix.hystrix.*;
  * @create 18/1/2
  */
 
-@Activate(group = Constants.PROVIDER)
+@Activate(group = Constants.PROVIDER, order = -9000)
 public class DubboHystrixProviderFilter implements Filter {
 
     @Override
