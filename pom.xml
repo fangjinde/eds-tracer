@@ -12,18 +12,22 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <sonar-scan-execution-phase>site</sonar-scan-execution-phase>
-        <jacoco.output>file</jacoco.output>
-        <sonar-project-env-suffix-branch>scratch</sonar-project-env-suffix-branch>
-        <sonar-project-env-suffix-id>scratch</sonar-project-env-suffix-id>
-        <sonar-project-artifactId>${project.artifactId}</sonar-project-artifactId>
-        <jacocoCoverageDir>**</jacocoCoverageDir>
         <edu-second-party-base.version>1.0.40</edu-second-party-base.version>
         <edu-third-party-base.version>1.0.3</edu-third-party-base.version>
+        <!--<spring-cloud-netflix.version>1.2.7.RELEASE</spring-cloud-netflix.version>-->
+        <spring-cloud-sleuth.version>2.0.0.M7</spring-cloud-sleuth.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-sleuth-dependencies</artifactId>
+                <version>${spring-cloud-sleuth.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
 
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
@@ -32,11 +36,12 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
             <dependency>
                 <!-- Import dependency management from Spring Boot -->
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
-                <version>1.4.5.RELEASE</version>
+                <version>1.5.10.RELEASE</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -58,9 +63,15 @@
             </dependency>
 
             <dependency>
-                <groupId>com.netflix.hystrix</groupId>
-                <artifactId>hystrix-serialization</artifactId>
-                <version>1.5.6</version>
+                <groupId>com.netease.edu.boot</groupId>
+                <artifactId>edu-hystrix-spring-boot-starter</artifactId>
+                <version>1.0.3.1-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.netease.sentry</groupId>
+                <artifactId>sentry-javaagent-collector</artifactId>
+                <version>1.2.7</version>
             </dependency>
 
             <dependency>
@@ -73,12 +84,6 @@
                 <groupId>cglib</groupId>
                 <artifactId>cglib-nodep</artifactId>
                 <version>2.2.2</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.netease.sentry</groupId>
-                <artifactId>sentry-javaagent-collector</artifactId>
-                <version>1.2.7</version>
             </dependency>
 
 
@@ -97,33 +102,23 @@
 
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-config</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-feign</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-eureka</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-hystrix</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.netflix.hystrix</groupId>
-            <artifactId>hystrix-serialization</artifactId>
+            <artifactId>spring-cloud-starter-sleuth</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-bus-amqp</artifactId>
+            <artifactId>spring-cloud-starter-zipkin</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.auto.value</groupId>
+            <artifactId>auto-value</artifactId>
+            <version>1.5.1</version>
         </dependency>
 
         <dependency>
@@ -131,6 +126,33 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+
+        <!--<dependency>-->
+        <!--<groupId>com.netease.edu</groupId>-->
+        <!--<artifactId>edu-base-util</artifactId>-->
+        <!--<exclusions>-->
+        <!--<exclusion>-->
+        <!--<groupId>org.springframework.amqp</groupId>-->
+        <!--<artifactId>spring-rabbit</artifactId>-->
+        <!--</exclusion>-->
+        <!--<exclusion>-->
+        <!--<groupId>com.rabbitmq</groupId>-->
+        <!--<artifactId>amqp-client</artifactId>-->
+        <!--</exclusion>-->
+        <!--&lt;!&ndash;<exclusion>&ndash;&gt;-->
+        <!--&lt;!&ndash;<groupId>org.springframework.amqp</groupId>&ndash;&gt;-->
+        <!--&lt;!&ndash;<artifactId>spring-amqp</artifactId>&ndash;&gt;-->
+        <!--&lt;!&ndash;</exclusion>&ndash;&gt;-->
+
+        <!--</exclusions>-->
+        <!--</dependency>-->
+
+        <dependency>
+            <groupId>com.netease.edu</groupId>
+            <artifactId>agent-commons</artifactId>
+        </dependency>
+
 
         <dependency>
             <groupId>cglib</groupId>
@@ -152,22 +174,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
-        <dependency>
-            <groupId>com.netease.edu</groupId>
-            <artifactId>edu-base-util</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.netease.edu</groupId>
-            <artifactId>agent-commons</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.netease.edu.web</groupId>
-            <artifactId>edu-base-web</artifactId>
-        </dependency>
-
 
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -221,4 +227,56 @@
             <url>http://mvn.hz.netease.com/artifactory/libs-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
+
+
+    <repositories>
+
+        <repository>
+            <id>spring-snapshots2</id>
+            <url>https://repo.spring.io/snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>spring-milestones2</id>
+            <url>https://repo.spring.io/milestone</url>
+        </repository>
+
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/libs-milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>spring-snapshots</id>
+            <name>Spring Snapshots</name>
+            <url>https://repo.spring.io/libs-snapshot-local</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+        <!--<repository>-->
+        <!--<id>spring-milestones</id>-->
+        <!--<name>Spring Milestones</name>-->
+        <!--<url>https://repo.spring.io/libs-milestone-local</url>-->
+        <!--<snapshots>-->
+        <!--<enabled>false</enabled>-->
+        <!--</snapshots>-->
+        <!--</repository>-->
+        <repository>
+            <id>spring-releases</id>
+            <name>Spring Releases</name>
+            <url>https://repo.spring.io/release</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>

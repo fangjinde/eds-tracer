@@ -1,4 +1,3 @@
-eduexception=com.netease.edu.util.dubbo.filter.EduDubboExceptionFilter
-dubboHystrixConsumerFilter=com.netease.edu.boot.hystrix.aop.filter.DubboHystrixConsumerFilter
-dubboHystrixProviderFilter=com.netease.edu.boot.hystrix.aop.filter.DubboHystrixProviderFilter
+braveTraceProviderFilter=com.netease.edu.boot.trace.instrument.dubbo.DubboProviderTraceFilter
+braveTraceConsumerFilter=com.netease.edu.boot.trace.instrument.dubbo.DubboConsumerTraceFilter
 
