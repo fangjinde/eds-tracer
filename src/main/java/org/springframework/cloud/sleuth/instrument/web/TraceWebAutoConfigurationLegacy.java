@@ -50,7 +50,7 @@ public class TraceWebAutoConfigurationLegacy {
     @ConditionalOnMissingBean(
             SkipPatternProvider.class)
     @EnableConfigurationProperties(SleuthWebProperties.class)
-    protected static class SkipPatternProviderConfig {
+    static class SkipPatternProviderConfig {
 
         @Bean
         @ConditionalOnBean(ManagementServerProperties.class)

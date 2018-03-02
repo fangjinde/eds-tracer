@@ -11,6 +11,7 @@ public class DubboServerParser extends DubboParser {
     String path = adapter.getRemoteAddress(rpcContext);
     if (path != null) {
       customizer.tag("consumer.address", path);
+      customizer.tag("consumer.methodName",adapter.getMethodName(rpcContext));
     }
   }
 
