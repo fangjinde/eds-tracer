@@ -1,7 +1,6 @@
 package com.netease.edu.boot.trace.instrument.dubbo;
 
 import brave.SpanCustomizer;
-import com.alibaba.dubbo.common.utils.StringUtils;
 import com.alibaba.dubbo.rpc.Result;
 import com.alibaba.dubbo.rpc.RpcContext;
 
@@ -23,7 +22,7 @@ public class DubboClientParser extends DubboParser {
             customizer.tag("consumer.result", "normal");
         } else {
             customizer.tag("consumer.result", "exception");
-            customizer.tag("consumer.exception", StringUtils.toString(rpcResult.getException()));
+            customizer.tag("consumer.exception",rpcResult.getException().getMessage());
         }
     }
 }
