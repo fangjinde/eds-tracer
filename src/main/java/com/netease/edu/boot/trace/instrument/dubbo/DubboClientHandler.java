@@ -3,7 +3,6 @@ package com.netease.edu.boot.trace.instrument.dubbo;
 import brave.Span;
 import brave.Tracer;
 import brave.propagation.CurrentTraceContext;
-import brave.propagation.SamplingFlags;
 import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
 import com.alibaba.dubbo.rpc.Result;
@@ -56,7 +55,7 @@ public class DubboClientHandler {
     if (parent != null) {
       return tracer.newChild(parent);
     }
-    return tracer.newTrace(SamplingFlags.NOT_SAMPLED);
+    return tracer.newTrace();
   }
 
   public void handleReceive(Result rpcResult, Span span) {

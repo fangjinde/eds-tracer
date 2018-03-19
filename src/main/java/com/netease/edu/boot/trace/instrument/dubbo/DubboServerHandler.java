@@ -37,9 +37,6 @@ public class DubboServerHandler {
   }
 
   Span nextSpan(TraceContextOrSamplingFlags extracted) {
-    if (extracted.sampled() == null) {
-      extracted = extracted.sampled(false);
-    }
     return extracted.context() != null
         ? tracer.joinSpan(extracted.context())
         : tracer.nextSpan(extracted);
