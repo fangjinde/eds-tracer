@@ -1,4 +1,4 @@
-package com.netease.edu.boot.trace.utils;/**
+package com.netease.edu.eds.trace.utils;/**
  * Created by hzfjd on 18/3/2.
  */
 

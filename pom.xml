@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.netease.edu.boot</groupId>
-    <artifactId>edu-trace-spring-boot-starter</artifactId>
+    <artifactId>eds-tracer</artifactId>
     <version>1.0.0-incubating-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>edu-trace-spring-boot-starter</name>
+    <name>eds-tracer</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -137,27 +137,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
-
-        <!--<dependency>-->
-        <!--<groupId>com.netease.edu</groupId>-->
-        <!--<artifactId>edu-base-util</artifactId>-->
-        <!--<exclusions>-->
-        <!--<exclusion>-->
-        <!--<groupId>org.springframework.amqp</groupId>-->
-        <!--<artifactId>spring-rabbit</artifactId>-->
-        <!--</exclusion>-->
-        <!--<exclusion>-->
-        <!--<groupId>com.rabbitmq</groupId>-->
-        <!--<artifactId>amqp-client</artifactId>-->
-        <!--</exclusion>-->
-        <!--&lt;!&ndash;<exclusion>&ndash;&gt;-->
-        <!--&lt;!&ndash;<groupId>org.springframework.amqp</groupId>&ndash;&gt;-->
-        <!--&lt;!&ndash;<artifactId>spring-amqp</artifactId>&ndash;&gt;-->
-        <!--&lt;!&ndash;</exclusion>&ndash;&gt;-->
-
-        <!--</exclusions>-->
-        <!--</dependency>-->
 
         <dependency>
             <groupId>com.netease.edu</groupId>

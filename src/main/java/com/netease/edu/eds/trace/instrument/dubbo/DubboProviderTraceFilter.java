@@ -1,4 +1,4 @@
-package com.netease.edu.boot.trace.instrument.dubbo;
+package com.netease.edu.eds.trace.instrument.dubbo;
 
 import brave.Span;
 import brave.propagation.TraceContext;

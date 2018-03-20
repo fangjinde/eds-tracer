@@ -1,4 +1,4 @@
-package com.netease.edu.boot.trace.instrument.dubbo;
+package com.netease.edu.eds.trace.instrument.dubbo;
 
 public class DubboServerAdapter extends DubboAdapter {
 }

@@ -1,7 +1,8 @@
-package com.netease.edu.boot.trace.instrument.dubbo;
+package com.netease.edu.eds.trace.instrument.dubbo;
 
 import brave.Tracing;
 import com.google.auto.value.AutoValue;
+import com.netease.edu.boot.trace.instrument.dubbo.AutoValue_DubboTracing;
 
 @AutoValue
 public abstract class DubboTracing {

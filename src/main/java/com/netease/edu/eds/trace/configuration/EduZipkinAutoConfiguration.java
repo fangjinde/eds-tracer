@@ -1,4 +1,4 @@
-package com.netease.edu.boot.trace.configuration;/**
+package com.netease.edu.eds.trace.configuration;/**
 
 
 

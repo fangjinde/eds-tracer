@@ -1,4 +1,4 @@
-package com.netease.edu.boot.trace.sentry;/**
+package com.netease.edu.eds.trace.sentry;/**
  * Created by hzfjd on 18/3/20.
  */
 

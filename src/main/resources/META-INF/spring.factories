@@ -2,7 +2,7 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 org.springframework.cloud.sleuth.instrument.web.TraceWebAutoConfigurationLegacy,\
 org.springframework.cloud.sleuth.instrument.web.TraceWebServletAutoConfigurationLegacy,\
-com.netease.edu.boot.trace.configuration.TraceBaseAutoConfiguration,\
-com.netease.edu.boot.trace.configuration.EduZipkinAutoConfiguration,\
-com.netease.edu.boot.trace.configuration.TraceDubboAutoConfiguration
+com.netease.edu.eds.trace.configuration.TraceBaseAutoConfiguration,\
+com.netease.edu.eds.trace.configuration.EduZipkinAutoConfiguration,\
+com.netease.edu.eds.trace.configuration.TraceDubboAutoConfiguration
 
