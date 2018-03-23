@@ -1,3 +1,2 @@
-braveTraceProviderFilter=com.netease.edu.eds.trace.instrument.dubbo.DubboProviderTraceFilter
-braveTraceConsumerFilter=com.netease.edu.eds.trace.instrument.dubbo.DubboConsumerTraceFilter
+DubboTraceFilter=com.netease.edu.eds.trace.instrument.dubbo.DubboTraceFilter
 

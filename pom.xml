@@ -159,6 +159,11 @@
             <artifactId>agent-commons</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.netease.edu</groupId>
+            <artifactId>edu-base-persist</artifactId>
+        </dependency>
+
 
         <dependency>
             <groupId>cglib</groupId>
@@ -168,6 +173,10 @@
         <dependency>
             <groupId>com.github.sgroschupf</groupId>
             <artifactId>zkclient</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.zipkin.java</groupId>
+            <artifactId>zipkin</artifactId>
         </dependency>
 
         <dependency>
