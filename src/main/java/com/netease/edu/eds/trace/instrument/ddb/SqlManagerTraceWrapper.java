@@ -37,7 +37,7 @@ public class SqlManagerTraceWrapper implements SqlManager {
      * @return
      */
     @Override public DBResource executeQuery(String sql, List<Object> params) {
-        return tracedExecute(sql, params, (sqlIn, paramsIn) -> target.executeQuery(sql, params));
+        return tracedExecute(sql, params, (sqlIn, paramsIn) -> target.executeQuery(sqlIn, paramsIn));
     }
 
     static interface SqlCommand<T> {
@@ -97,18 +97,18 @@ public class SqlManagerTraceWrapper implements SqlManager {
                              (sqlIn, paramsIn) -> target.queryList(sqlIn, dbObjectHandler, dbListHandler, paramsIn));
     }
 
-    @Override public <T> List<T> queryList(String var1, DBObjectHandler<T> var2, Object... var3) {
-        return tracedExecute(var1, Arrays.asList(var3), (sqlIn, paramsIn) -> target.queryList(sqlIn, var2, paramsIn));
+    @Override public <T> List<T> queryList(String sql, DBObjectHandler<T> dbObjectHandler, Object... params) {
+        return tracedExecute(sql, Arrays.asList(params), (sqlIn, paramsIn) -> target.queryList(sqlIn, dbObjectHandler, paramsIn));
     }
 
-    @Override public <T> List<T> queryList(String var1, DBObjectHandler<T> var2, DBListHandler<T> var3,
-                                           Object... var4) {
-        return tracedExecute(var1, Arrays.asList(var4),
-                             (sqlIn, paramsIn) -> target.queryList(sqlIn, var2, var3, paramsIn));
+    @Override public <T> List<T> queryList(String sql, DBObjectHandler<T> dbObjectHandler, DBListHandler<T> dbListHandler,
+                                           Object... params) {
+        return tracedExecute(sql, Arrays.asList(params),
+                             (sqlIn, paramsIn) -> target.queryList(sqlIn, dbObjectHandler, dbListHandler, paramsIn));
     }
 
-    @Override public DBResource executeQuery(String var1, Object... var2) {
-        return tracedExecute(var1, Arrays.asList(var2),
+    @Override public DBResource executeQuery(String sql, Object... params) {
+        return tracedExecute(sql, Arrays.asList(params),
                              (sqlIn, paramsIn) -> target.executeQuery(sqlIn, paramsIn));
     }
 
@@ -120,80 +120,80 @@ public class SqlManagerTraceWrapper implements SqlManager {
         target.closeDBResource(var1);
     }
 
-    @Override public boolean updateRecord(String var1, Object... var2) {
-        return tracedExecute(var1, Arrays.asList(var2),
+    @Override public boolean updateRecord(String sql, Object... params) {
+        return tracedExecute(sql, Arrays.asList(params),
                              (sqlIn, paramsIn) -> target.updateRecord(sqlIn, paramsIn));
     }
 
-    @Override public String querySingleColInOneRecord(String var1, List<Object> var2) {
-        return tracedExecute(var1, var2,
+    @Override public String querySingleColInOneRecord(String sql, List<Object> params) {
+        return tracedExecute(sql, params,
                              (sqlIn, paramsIn) -> target.querySingleColInOneRecord(sqlIn, paramsIn));
     }
 
-    @Override public String querySingleColInOneRecord(String var1, Object... var2) {
-        return tracedExecute(var1, Arrays.asList(var2),
+    @Override public String querySingleColInOneRecord(String sql, Object... params) {
+        return tracedExecute(sql, Arrays.asList(params),
                              (sqlIn, paramsIn) -> target.querySingleColInOneRecord(sqlIn, paramsIn));
     }
 
-    @Override public boolean addRecord(String var1, List<Object> var2) {
+    @Override public boolean addRecord(String sql, List<Object> params) {
 
-        return tracedExecute(var1, var2,
+        return tracedExecute(sql, params,
                              (sqlIn, paramsIn) -> target.addRecord(sqlIn, paramsIn));
 
     }
 
-    @Override public boolean addRecord(String var1, Object... var2) {
-        return tracedExecute(var1, Arrays.asList(var2),
+    @Override public boolean addRecord(String sql, Object... params) {
+        return tracedExecute(sql, Arrays.asList(params),
                              (sqlIn, paramsIn) -> target.addRecord(sqlIn, paramsIn));
     }
 
-    @Override public Long[] queryObjectIds(String var1, List<Object> var2) {
-        return tracedExecute(var1, var2,
+    @Override public Long[] queryObjectIds(String sql, List<Object> params) {
+        return tracedExecute(sql, params,
                              (sqlIn, paramsIn) -> target.queryObjectIds(sqlIn, paramsIn));
     }
 
-    @Override public Long[] queryObjectIds(String var1, Object... var2) {
-        return tracedExecute(var1, Arrays.asList(var2),
+    @Override public Long[] queryObjectIds(String sql, Object... params) {
+        return tracedExecute(sql, Arrays.asList(params),
                              (sqlIn, paramsIn) -> target.queryObjectIds(sqlIn, paramsIn));
     }
 
-    @Override public <T> T queryObject(String var1, DBObjectHandler<T> var2, List<Object> var3) {
-        return tracedExecute(var1, var3,
-                             (sqlIn, paramsIn) -> target.queryObject(sqlIn, var2, paramsIn));
+    @Override public <T> T queryObject(String sql, DBObjectHandler<T> dbObjectHandler, List<Object> params) {
+        return tracedExecute(sql, params,
+                             (sqlIn, paramsIn) -> target.queryObject(sqlIn, dbObjectHandler, paramsIn));
     }
 
-    @Override public <T> T queryObject(String var1, DBObjectHandler<T> var2, Object... var3) {
-        return tracedExecute(var1, Arrays.asList(var3),
-                             (sqlIn, paramsIn) -> target.queryObject(sqlIn, var2, paramsIn));
+    @Override public <T> T queryObject(String sql, DBObjectHandler<T> dbObjectHandler, Object... params) {
+        return tracedExecute(sql, Arrays.asList(params),
+                             (sqlIn, paramsIn) -> target.queryObject(sqlIn, dbObjectHandler, paramsIn));
     }
 
-    @Override public Long queryObjectId(String var1, List<Object> var2) {
-        return tracedExecute(var1, var2,
+    @Override public Long queryObjectId(String sql, List<Object> params) {
+        return tracedExecute(sql, params,
                              (sqlIn, paramsIn) -> target.queryObjectId(sqlIn, paramsIn));
     }
 
-    @Override public Long queryObjectId(String var1, Object... var2) {
-        return tracedExecute(var1, Arrays.asList(var2),
+    @Override public Long queryObjectId(String sql, Object... params) {
+        return tracedExecute(sql, Arrays.asList(params),
                              (sqlIn, paramsIn) -> target.queryObjectId(sqlIn, paramsIn));
     }
 
-    @Override public boolean updateRecord(String var1, List<Object> var2) {
-        return tracedExecute(var1, var2,
+    @Override public boolean updateRecord(String sql, List<Object> params) {
+        return tracedExecute(sql, params,
                              (sqlIn, paramsIn) -> target.updateRecord(sqlIn, paramsIn));
     }
 
-    @Override public int updateRecords(String var1, Object... var2) {
-        return tracedExecute(var1, Arrays.asList(var2),
+    @Override public int updateRecords(String sql, Object... params) {
+        return tracedExecute(sql, Arrays.asList(params),
                              (sqlIn, paramsIn) -> target.updateRecords(sqlIn, paramsIn));
     }
 
-    @Override public boolean existRecord(String var1, List<Object> var2) {
-        return tracedExecute(var1, var2,
+    @Override public boolean existRecord(String sql, List<Object> params) {
+        return tracedExecute(sql, params,
                              (sqlIn, paramsIn) -> target.existRecord(sqlIn, paramsIn));
     }
 
-    @Override public boolean existRecord(String var1, Object... var2) {
-        return tracedExecute(var1, Arrays.asList(var2),
+    @Override public boolean existRecord(String sql, Object... params) {
+        return tracedExecute(sql, Arrays.asList(params),
                              (sqlIn, paramsIn) -> target.existRecord(sqlIn, paramsIn));
     }
 
