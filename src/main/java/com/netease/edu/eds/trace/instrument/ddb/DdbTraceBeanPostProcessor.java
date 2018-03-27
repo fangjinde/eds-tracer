@@ -2,6 +2,7 @@ package com.netease.edu.eds.trace.instrument.ddb;/**
  * Created by hzfjd on 18/3/23.
  */
 
+import com.netease.dbsupport.transaction.IDBTransactionManager;
 import com.netease.framework.dbsupport.SqlManager;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -58,6 +59,11 @@ public class DdbTraceBeanPostProcessor extends InstantiationAwareBeanPostProcess
         if (bean instanceof SqlManager && !(bean instanceof SqlManagerTraceWrapper)) {
             return new SqlManagerTraceWrapper((SqlManager) bean, ddbTracing);
         }
+
+        if (bean instanceof IDBTransactionManager && !(bean instanceof IDBTransactionManagerTraceWrapper)) {
+            return new IDBTransactionManagerTraceWrapper((IDBTransactionManager) bean, ddbTracing);
+        }
+
         return bean;
     }
 

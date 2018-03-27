@@ -12,10 +12,6 @@ import java.sql.Connection;
  */
 public class ConnectionManagerDDBImplTraceProxy extends ConnectionManagerDDBImpl {
 
-    @Override public long genID(Connection _connection, String _tableName) {
-        return super.genID(_connection, _tableName);
-    }
-
     @Override public Connection getConnection() {
         return super.getConnection();
     }

@@ -29,17 +29,6 @@ public class SqlManagerTraceWrapper implements SqlManager {
         this.ddbTracing = ddbTracing;
     }
 
-    /**
-     * 所有查询操作入口
-     *
-     * @param sql
-     * @param params
-     * @return
-     */
-    @Override public DBResource executeQuery(String sql, List<Object> params) {
-        return tracedExecute(sql, params, (sqlIn, paramsIn) -> target.executeQuery(sqlIn, paramsIn));
-    }
-
     static interface SqlCommand<T> {
 
         T execute(String sql, List<Object> params);
@@ -61,6 +50,17 @@ public class SqlManagerTraceWrapper implements SqlManager {
             spanInScope.close();
             ddbTracing.tracing().tracer().withSpanInScope(previousSpan);
         }
+    }
+
+    /**
+     * 所有查询操作入口
+     *
+     * @param sql
+     * @param params
+     * @return
+     */
+    @Override public DBResource executeQuery(String sql, List<Object> params) {
+        return tracedExecute(sql, params, (sqlIn, paramsIn) -> target.executeQuery(sqlIn, paramsIn));
     }
 
     /**
@@ -98,10 +98,12 @@ public class SqlManagerTraceWrapper implements SqlManager {
     }
 
     @Override public <T> List<T> queryList(String sql, DBObjectHandler<T> dbObjectHandler, Object... params) {
-        return tracedExecute(sql, Arrays.asList(params), (sqlIn, paramsIn) -> target.queryList(sqlIn, dbObjectHandler, paramsIn));
+        return tracedExecute(sql, Arrays.asList(params),
+                             (sqlIn, paramsIn) -> target.queryList(sqlIn, dbObjectHandler, paramsIn));
     }
 
-    @Override public <T> List<T> queryList(String sql, DBObjectHandler<T> dbObjectHandler, DBListHandler<T> dbListHandler,
+    @Override public <T> List<T> queryList(String sql, DBObjectHandler<T> dbObjectHandler,
+                                           DBListHandler<T> dbListHandler,
                                            Object... params) {
         return tracedExecute(sql, Arrays.asList(params),
                              (sqlIn, paramsIn) -> target.queryList(sqlIn, dbObjectHandler, dbListHandler, paramsIn));
