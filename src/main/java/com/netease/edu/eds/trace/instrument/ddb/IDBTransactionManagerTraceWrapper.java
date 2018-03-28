@@ -44,10 +44,12 @@ public class IDBTransactionManagerTraceWrapper implements IDBTransactionManager 
         target.setAutoCommit(b);
 
         // add trace
-        Span ddbTransactionSpan = ddbTracing.tracing().tracer().nextSpan();
-        Tracer.SpanInScope spanInScope = ddbTracing.tracing().tracer().withSpanInScope(ddbTransactionSpan);
-        currentSpanInScope.set(spanInScope);
-        ddbTransactionSpan.kind(Span.Kind.CLIENT).name("ddb_transaction").start();
+        if (!b) {
+            Span ddbTransactionSpan = ddbTracing.tracing().tracer().nextSpan();
+            Tracer.SpanInScope spanInScope = ddbTracing.tracing().tracer().withSpanInScope(ddbTransactionSpan);
+            currentSpanInScope.set(spanInScope);
+            ddbTransactionSpan.kind(Span.Kind.CLIENT).name("ddb_transaction").start();
+        }
 
     }
 
@@ -74,7 +76,7 @@ public class IDBTransactionManagerTraceWrapper implements IDBTransactionManager 
     }
 
     @Override public void rollback() {
-        
+
         target.rollback();
 
         //add trace
