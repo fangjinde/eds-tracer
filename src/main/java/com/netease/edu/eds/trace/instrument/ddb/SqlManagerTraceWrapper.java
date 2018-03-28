@@ -4,15 +4,20 @@ package com.netease.edu.eds.trace.instrument.ddb;/**
 
 import brave.Span;
 import brave.Tracer;
+import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
+import com.netease.edu.eds.trace.utils.SpanStringUtils;
 import com.netease.framework.dbsupport.SqlManager;
 import com.netease.framework.dbsupport.callback.DBListHandler;
 import com.netease.framework.dbsupport.callback.DBObjectHandler;
 import com.netease.framework.dbsupport.impl.DBResource;
+import org.apache.commons.lang.StringUtils;
 
 import java.sql.Connection;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author hzfjd
@@ -24,6 +29,9 @@ public class SqlManagerTraceWrapper implements SqlManager {
 
     private DdbTracing ddbTracing;
 
+    private static final String SQL_IN_PATTERN        = "in[\\s]+\\(((?!select|SELECT)[^\\)])+\\)";
+    private static final  Pattern pattern = Pattern.compile(SQL_IN_PATTERN);
+
     public SqlManagerTraceWrapper(SqlManager target, DdbTracing ddbTracing) {
         this.target = target;
         this.ddbTracing = ddbTracing;
@@ -34,16 +42,78 @@ public class SqlManagerTraceWrapper implements SqlManager {
         T execute(String sql, List<Object> params);
     }
 
+    private String getSpanName(String sql) {
+        return SpanStringUtils.filterSpanName(sql);
+    }
+
+
+    private StringBuilder getSqlDetail(String sql, List<Object> params) {
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.isEmpty(sql)) {
+            return sb;
+        }
+
+        sql = sql.toLowerCase();
+        if (sql.length() > 200) {
+            shortenSqlForInCondition(sb, sql);
+        } else {
+            sb.append(sql);
+        }
+        sb.append(" params: ").append(params);
+
+        return sb;
+    }
+
+    private void shortenSqlForInCondition(StringBuilder sb, String sql) {
+
+        Matcher matcher = pattern.matcher(sql);
+        int head = 0;
+        int start;
+        int newEnd;
+        int end ;
+        int count;
+        int maxCount = 5;
+        while (matcher.find()) {
+            count = 0;
+            start = matcher.start();
+            end = matcher.end();
+            newEnd = end;
+            for (int i = start; i < end; ++i) {
+                if (',' == sql.charAt(i)) {
+                    count++;
+                    if (count == maxCount) {
+                        newEnd = i;
+                        break;
+                    }
+                }
+            }
+
+            if (newEnd < end) {
+                sb.append(sql, head, newEnd).append("...)");
+            } else {
+                sb.append(sql, head, end);
+            }
+
+            head = end;
+        }
+
+        if (head < sql.length()) {
+            sb.append(sql, head, sql.length());
+        }
+
+    }
+
+
     private <T> T tracedExecute(String sql, List<Object> params, SqlCommand<T> sqlCommand) {
         Span previousSpan = ddbTracing.tracing().tracer().currentSpan();
         Span ddbSpan = ddbTracing.tracing().tracer().nextSpan();
         Tracer.SpanInScope spanInScope = ddbTracing.tracing().tracer().withSpanInScope(ddbSpan);
-        ddbSpan.kind(Span.Kind.CLIENT).name(sql).start();
+        ddbSpan.kind(Span.Kind.CLIENT).name(getSpanName(sql)).tag("sql_detail",getSqlDetail(sql,params).toString()).start();
 
         try {
             return sqlCommand.execute(sql, params);
         } catch (RuntimeException e) {
-            ddbSpan.tag("ddb_error", e.getMessage());
+            ddbSpan.tag("ddb_error", ExceptionStringUtils.getStackTraceString(e));
             throw e;
         } finally {
             ddbSpan.finish();
