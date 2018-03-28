@@ -169,7 +169,7 @@ public class ConnectionTraceWrapper implements Connection {
     }
 
     @Override public Clob createClob() throws SQLException {
-        return target.createNClob();
+        return target.createClob();
     }
 
     @Override public Blob createBlob() throws SQLException {
