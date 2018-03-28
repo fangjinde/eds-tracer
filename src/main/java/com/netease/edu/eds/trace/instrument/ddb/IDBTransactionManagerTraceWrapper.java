@@ -3,6 +3,7 @@ package com.netease.edu.eds.trace.instrument.ddb;/**
  */
 
 import brave.Span;
+import brave.Tracer;
 import com.netease.dbsupport.transaction.IDBTransactionManager;
 
 import java.sql.Connection;
@@ -15,6 +16,7 @@ public class IDBTransactionManagerTraceWrapper implements IDBTransactionManager 
 
     private IDBTransactionManager target;
     private DdbTracing            ddbTracing;
+    private static ThreadLocal<Tracer.SpanInScope> currentSpanInScope = new ThreadLocal<>();
 
     public IDBTransactionManagerTraceWrapper(IDBTransactionManager target, DdbTracing ddbTracing) {
         this.target = target;
@@ -38,31 +40,45 @@ public class IDBTransactionManagerTraceWrapper implements IDBTransactionManager 
     }
 
     @Override public void setAutoCommit(boolean b) {
+
         target.setAutoCommit(b);
-        if (!b) {
-            tagTransactionStatus("begin");
-        }
+
+        // add trace
+        Span ddbTransactionSpan = ddbTracing.tracing().tracer().nextSpan();
+        Tracer.SpanInScope spanInScope = ddbTracing.tracing().tracer().withSpanInScope(ddbTransactionSpan);
+        currentSpanInScope.set(spanInScope);
+        ddbTransactionSpan.kind(Span.Kind.CLIENT).name("ddb_transaction").start();
+
     }
 
     @Override public void commit() {
 
         target.commit();
-        tagTransactionStatus("commit");
 
+        //add trace
+        finishSpanWithTransactionStatus("commit");
+
+    }
+
+    private void finishSpanWithTransactionStatus(String transactionResult) {
+        Span ddbTransactionSpan = ddbTracing.tracing().tracer().currentSpan();
+        if (ddbTransactionSpan != null && !ddbTransactionSpan.isNoop()) {
+            ddbTransactionSpan.tag("transaction_result", transactionResult);
+            ddbTransactionSpan.finish();
+        }
+
+        Tracer.SpanInScope spanInScope = currentSpanInScope.get();
+        if (spanInScope != null) {
+            spanInScope.close();
+        }
     }
 
     @Override public void rollback() {
+        
         target.rollback();
-        tagTransactionStatus("rollback");
-    }
 
-    private void tagTransactionStatus(String status) {
-        Span span = ddbTracing.tracing().tracer().currentSpan();
-        if (span == null || span.isNoop()) {
-            return;
-        }
-        span.tag("ddb_transaction", status);
-        span.tag("ddb_tran_tid", String.valueOf(Thread.currentThread().getId()));
+        //add trace
+        finishSpanWithTransactionStatus("rollback");
     }
 
     @Override public void clear() {
