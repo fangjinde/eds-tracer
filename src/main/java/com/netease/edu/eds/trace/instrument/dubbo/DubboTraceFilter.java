@@ -13,6 +13,7 @@ import com.alibaba.dubbo.remoting.exchange.ResponseCallback;
 import com.alibaba.dubbo.rpc.*;
 import com.alibaba.dubbo.rpc.protocol.dubbo.FutureAdapter;
 import com.alibaba.dubbo.rpc.support.RpcUtils;
+import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
 import zipkin2.Endpoint;
 
 import java.net.InetSocketAddress;
@@ -100,12 +101,8 @@ public final class DubboTraceFilter implements Filter {
     }
 
     static void onError(Throwable error, SpanCustomizer span) {
-        String message = error.getMessage();
-        if (message == null) message = error.getClass().getSimpleName();
-        if (error instanceof RpcException) {
-            span.tag("dubbo.error_code", Integer.toString(((RpcException) error).getCode()));
-        }
-        span.tag("error", message);
+        span.tag("has_error", String.valueOf(true));
+        span.tag("dubbo_error", ExceptionStringUtils.getStackTraceString(error));
     }
 
     static final Propagation.Getter<Map<String, String>, String> GETTER =

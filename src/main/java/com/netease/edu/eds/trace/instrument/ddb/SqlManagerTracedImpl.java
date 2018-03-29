@@ -140,6 +140,7 @@ public class SqlManagerTracedImpl extends SqlManagerImpl {
         try {
             return sqlCommand.execute(sql, params);
         } catch (RuntimeException e) {
+            ddbSpan.tag("has_error", String.valueOf(true));
             ddbSpan.tag("ddb_error", ExceptionStringUtils.getStackTraceString(e));
             throw e;
         } finally {
