@@ -2,6 +2,7 @@ package com.netease.edu.eds.trace.instrument.ddb;/**
  * Created by hzfjd on 18/3/22.
  */
 
+import java.net.URI;
 import java.sql.*;
 import java.util.Map;
 import java.util.Properties;
@@ -13,10 +14,34 @@ import java.util.concurrent.Executor;
  */
 public class ConnectionTraceWrapper implements Connection {
 
+    private String ddbUrl;
+    private String host;
+    private int port = -1;
+
     private Connection target;
 
-    public ConnectionTraceWrapper(Connection target) {
+    public ConnectionTraceWrapper(Connection target, String ddbUrl) {
         this.target = target;
+        this.ddbUrl = ddbUrl;
+        if (!ddbUrl.startsWith("ddb://")) {
+            String fullUrl = "ddb://" + ddbUrl;
+            URI uri = URI.create(fullUrl);
+            this.host = uri.getHost();
+            this.port = uri.getPort();
+        }
+
+    }
+
+    public String getDdbUrl() {
+        return ddbUrl;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public int getPort() {
+        return port;
     }
 
     @Override public Statement createStatement() throws SQLException {

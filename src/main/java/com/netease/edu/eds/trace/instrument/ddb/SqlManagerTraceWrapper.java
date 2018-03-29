@@ -20,17 +20,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Deprecated caused by wrapper mode defect. see SqlManagerTracedImpl.class
+ *
  * @author hzfjd
  * @create 18/3/22
  */
+@Deprecated
 public class SqlManagerTraceWrapper implements SqlManager {
 
     private SqlManager target;
 
     private DdbTracing ddbTracing;
 
-    private static final String SQL_IN_PATTERN        = "in[\\s]+\\(((?!select|SELECT)[^\\)])+\\)";
-    private static final  Pattern pattern = Pattern.compile(SQL_IN_PATTERN);
+    private static final String  SQL_IN_PATTERN = "in[\\s]+\\(((?!select|SELECT)[^\\)])+\\)";
+    private static final Pattern pattern        = Pattern.compile(SQL_IN_PATTERN);
 
     public SqlManagerTraceWrapper(SqlManager target, DdbTracing ddbTracing) {
         this.target = target;
@@ -45,7 +48,6 @@ public class SqlManagerTraceWrapper implements SqlManager {
     private String getSpanName(String sql) {
         return SpanStringUtils.filterSpanName(sql);
     }
-
 
     private StringBuilder getSqlDetail(String sql, List<Object> params) {
         StringBuilder sb = new StringBuilder();
@@ -70,7 +72,7 @@ public class SqlManagerTraceWrapper implements SqlManager {
         int head = 0;
         int start;
         int newEnd;
-        int end ;
+        int end;
         int count;
         int maxCount = 5;
         while (matcher.find()) {
@@ -103,12 +105,12 @@ public class SqlManagerTraceWrapper implements SqlManager {
 
     }
 
-
     private <T> T tracedExecute(String sql, List<Object> params, SqlCommand<T> sqlCommand) {
         Span previousSpan = ddbTracing.tracing().tracer().currentSpan();
         Span ddbSpan = ddbTracing.tracing().tracer().nextSpan();
         Tracer.SpanInScope spanInScope = ddbTracing.tracing().tracer().withSpanInScope(ddbSpan);
-        ddbSpan.kind(Span.Kind.CLIENT).name(getSpanName(sql)).tag("sql_detail",getSqlDetail(sql,params).toString()).start();
+        ddbSpan.kind(Span.Kind.CLIENT).name(getSpanName(sql)).tag("sql_detail",
+                                                                  getSqlDetail(sql, params).toString()).start();
 
         try {
             return sqlCommand.execute(sql, params);

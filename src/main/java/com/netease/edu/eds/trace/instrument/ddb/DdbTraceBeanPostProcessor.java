@@ -3,7 +3,6 @@ package com.netease.edu.eds.trace.instrument.ddb;/**
  */
 
 import com.netease.dbsupport.transaction.IDBTransactionManager;
-import com.netease.framework.dbsupport.SqlManager;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.FactoryBean;
@@ -56,13 +55,19 @@ public class DdbTraceBeanPostProcessor extends InstantiationAwareBeanPostProcess
 
     private Object createTraceWrapperIfNecessary(Object bean, String beanName) {
 
-        if (bean instanceof SqlManager && !(bean instanceof SqlManagerTraceWrapper)) {
-            return new SqlManagerTraceWrapper((SqlManager) bean, ddbTracing);
-        }
+        //        if (bean instanceof SqlManager && !(bean instanceof SqlManagerTraceWrapper)) {
+        //            return new SqlManagerTraceWrapper((SqlManager) bean, ddbTracing);
+        //        }
 
         if (bean instanceof IDBTransactionManager && !(bean instanceof IDBTransactionManagerTraceWrapper)) {
             return new IDBTransactionManagerTraceWrapper((IDBTransactionManager) bean, ddbTracing);
         }
+
+        //        if (bean instanceof ConnectionManagerDDBImpl && !(bean instanceof ConnectionManagerDDBImplTraceWrapper)) {
+        //            ConnectionManagerDDBImpl connectionManagerDDBImpl = (ConnectionManagerDDBImpl) bean;
+        //            String ddbUrl = connectionManagerDDBImpl.getUrl();
+        //            return new ConnectionManagerDDBImplTraceWrapper(connectionManagerDDBImpl, ddbUrl);
+        //        }
 
         return bean;
     }

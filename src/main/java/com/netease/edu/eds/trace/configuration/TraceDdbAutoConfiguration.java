@@ -3,6 +3,7 @@ package com.netease.edu.eds.trace.configuration;/**
  */
 
 import brave.Tracing;
+import com.netease.edu.eds.trace.instrument.ddb.DdbTraceBeanFactoryPostProcessor;
 import com.netease.edu.eds.trace.instrument.ddb.DdbTraceBeanPostProcessor;
 import com.netease.edu.eds.trace.instrument.ddb.DdbTracing;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -33,5 +34,11 @@ public class TraceDdbAutoConfiguration {
     @ConditionalOnMissingBean
     public static DdbTraceBeanPostProcessor ddbTraceBeanPostProcessor() {
         return new DdbTraceBeanPostProcessor();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public static DdbTraceBeanFactoryPostProcessor ddbTraceBeanFactoryPostProcessor() {
+        return new DdbTraceBeanFactoryPostProcessor();
     }
 }

@@ -7,17 +7,20 @@ import com.netease.dbsupport.IConnectionManager;
 import java.sql.Connection;
 
 /**
+ * using subclass ConnectionManagerDDBTracedImpl instead.
+ *
  * @author hzfjd
  * @create 18/3/28
  */
+@Deprecated
 public class ConnectionManagerDDBImplTraceWrapper implements IConnectionManager {
 
     private IConnectionManager target;
-    private DdbTracing         ddbTracing;
+    private String             ddbUrl;
 
-    public ConnectionManagerDDBImplTraceWrapper(IConnectionManager target, DdbTracing ddbTracing) {
+    public ConnectionManagerDDBImplTraceWrapper(IConnectionManager target, String ddbUrl) {
         this.target = target;
-        this.ddbTracing = ddbTracing;
+        this.ddbUrl = ddbUrl;
 
     }
 
@@ -26,7 +29,7 @@ public class ConnectionManagerDDBImplTraceWrapper implements IConnectionManager 
     }
 
     @Override public Connection getConnection() {
-        return target.getConnection();
+        return new ConnectionTraceWrapper(target.getConnection(), ddbUrl);
     }
 
     @Override public long genID(Connection connection, String s) {
