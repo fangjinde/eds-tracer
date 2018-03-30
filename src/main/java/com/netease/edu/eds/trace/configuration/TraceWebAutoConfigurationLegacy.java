@@ -16,6 +16,7 @@
 package com.netease.edu.eds.trace.configuration;
 
 import brave.Tracing;
+import brave.http.HttpTracing;
 import com.netease.edu.eds.trace.instrument.http.SkipUriMatcher;
 import com.netease.edu.eds.trace.instrument.http.SkipUriMatcherRegexImpl;
 import org.springframework.boot.actuate.autoconfigure.ManagementServerProperties;
@@ -48,6 +49,15 @@ import java.util.regex.Pattern;
 @AutoConfigureAfter(TraceHttpAutoConfiguration.class)
 @EnableConfigurationProperties(SleuthWebProperties.class)
 public class TraceWebAutoConfigurationLegacy {
+
+
+
+    @Bean
+    @ConditionalOnProperty(name = "spring.sleuth.http.legacy.enabled", havingValue = "false", matchIfMissing = true)
+    public HttpTracing sleuthHttpTracing(Tracing tracing) {
+        return HttpTracing.newBuilder(tracing).build();
+    }
+
 
     @Configuration
     @ConditionalOnClass(ManagementServerProperties.class)
