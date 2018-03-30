@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.sleuth.instrument.web;
+package com.netease.edu.eds.trace.configuration;
 
+import brave.http.HttpTracing;
+import com.netease.edu.eds.trace.instrument.http.SpanCustomizingHandlerInterceptor;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
@@ -33,14 +36,17 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 
     @Autowired BeanFactory beanFactory;
 
-    @Bean
-    public TraceHandlerInterceptorLegacy traceHandlerInterceptor(BeanFactory beanFactory) {
-        return new TraceHandlerInterceptorLegacy(beanFactory);
+    private static final String TRACE_HANDLER_INTERCEPTOR_BEAN_NAME = "traceHandlerInterceptor";
+
+    @Bean(name = TRACE_HANDLER_INTERCEPTOR_BEAN_NAME)
+    public HandlerInterceptor traceHandlerInterceptor(HttpTracing httpTracing) {
+        return new SpanCustomizingHandlerInterceptor();
     }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(this.beanFactory.getBean(TraceHandlerInterceptorLegacy.class));
+        registry.addInterceptor(
+                this.beanFactory.getBean(TRACE_HANDLER_INTERCEPTOR_BEAN_NAME, HandlerInterceptor.class));
     }
 }
 

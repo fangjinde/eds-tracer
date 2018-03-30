@@ -59,7 +59,12 @@ import java.util.regex.Pattern;
  * @see org.springframework.cloud.sleuth.TraceKeys
  * @see org.springframework.cloud.sleuth.instrument.web.TraceWebServletAutoConfiguration#traceFilter
  * @since 1.0.0
+ *
+ *
+ * @author hzfjd
+ * use brave's TracingFilter instead.
  */
+@Deprecated
 @Order(TraceFilterLegacy.ORDER)
 public class TraceFilterLegacy extends GenericFilterBean {
 

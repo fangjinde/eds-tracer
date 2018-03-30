@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.sleuth.instrument.web;
+package com.netease.edu.eds.trace.configuration;
 
-import brave.Tracer;
 import brave.http.HttpTracing;
-import org.springframework.beans.factory.BeanFactory;
+import com.netease.edu.eds.trace.instrument.http.SkipUriMatcher;
+import com.netease.edu.eds.trace.instrument.http.TracingFilter;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.cloud.sleuth.ErrorParser;
-import org.springframework.cloud.sleuth.SpanNamer;
+import org.springframework.cloud.sleuth.instrument.web.TraceHttpAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.Ordered;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import static javax.servlet.DispatcherType.*;
@@ -59,31 +58,33 @@ public class TraceWebServletAutoConfigurationLegacy {
 
     }
 
-    @Bean TraceWebAspect traceWebAspect(Tracer tracer, SpanNamer spanNamer, ErrorParser errorParser) {
-        return new TraceWebAspect(tracer, spanNamer, errorParser);
-    }
 
     @Bean
-    @ConditionalOnClass(name = "org.springframework.data.rest.webmvc.support.DelegatingHandlerMapping")
-    public TraceSpringDataBeanPostProcessor traceSpringDataBeanPostProcessor(
-            BeanFactory beanFactory) {
-        return new TraceSpringDataBeanPostProcessor(beanFactory);
-    }
-
-    @Bean
-    public FilterRegistrationBean traceWebFilter(
-            TraceFilterLegacy traceFilter) {
-        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(traceFilter);
-        filterRegistrationBean.setDispatcherTypes(ASYNC, ERROR, FORWARD, INCLUDE, REQUEST);
-        filterRegistrationBean.setOrder(TraceFilterLegacy.ORDER);
+    public FilterRegistrationBean traceFilter(HttpTracing httpTracing,SkipUriMatcher skipUriMatcher){
+        FilterRegistrationBean filterRegistrationBean=new FilterRegistrationBean(TracingFilter.create(httpTracing,skipUriMatcher));
+        filterRegistrationBean.setDispatcherTypes(ASYNC,ERROR,FORWARD,INCLUDE,REQUEST);
+        filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE+1);
         return filterRegistrationBean;
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    public TraceFilterLegacy traceFilter(BeanFactory beanFactory,
-                                   SkipPatternProvider skipPatternProvider) {
-        return new TraceFilterLegacy(beanFactory, skipPatternProvider.skipPattern());
-    }
+
+//    @Bean
+//    public FilterRegistrationBean traceWebFilter(
+//            TraceFilterLegacy traceFilter) {
+//        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(traceFilter);
+//        filterRegistrationBean.setDispatcherTypes(ASYNC, ERROR, FORWARD, INCLUDE, REQUEST);
+//        filterRegistrationBean.setOrder(TraceFilterLegacy.ORDER);
+//        return filterRegistrationBean;
+//    }
+
+//    @Bean
+//    @ConditionalOnMissingBean
+//    public TraceFilterLegacy traceFilter(BeanFactory beanFactory,
+//                                   SkipPatternProvider skipPatternProvider) {
+//        return new TraceFilterLegacy(beanFactory, skipPatternProvider.skipPattern());
+//    }
+
+
+    //TracingFilter
 }
 
