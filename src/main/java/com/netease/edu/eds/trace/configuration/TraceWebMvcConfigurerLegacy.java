@@ -17,7 +17,7 @@
 package com.netease.edu.eds.trace.configuration;
 
 import brave.http.HttpTracing;
-import com.netease.edu.eds.trace.instrument.http.SpanCustomizingHandlerInterceptor;
+import brave.spring.webmvc.SpanCustomizingHandlerInterceptor;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
