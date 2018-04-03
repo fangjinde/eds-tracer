@@ -195,8 +195,9 @@
         </dependency>
 
         <dependency>
-           <groupId>com.netease.edu.web</groupId>
-           <artifactId>edu-base-web</artifactId>
+            <groupId>com.netease.edu.web</groupId>
+            <artifactId>edu-base-web</artifactId>
+            <scope>provided</scope>
         </dependency>
 
 

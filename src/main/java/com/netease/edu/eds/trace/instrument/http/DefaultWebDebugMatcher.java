@@ -3,10 +3,6 @@ package com.netease.edu.eds.trace.instrument.http;/**
  */
 
 import brave.internal.Nullable;
-import com.netease.edu.web.config.EduWebProjectConfig;
-import com.netease.edu.web.cookie.utils.CookieUtils;
-import com.netease.edu.web.cookie.utils.NeteaseEduCookieManager;
-import com.netease.edu.web.utils.WebUser;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
@@ -15,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.web.util.UrlPathHelper;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
@@ -94,7 +89,7 @@ public class DefaultWebDebugMatcher implements WebDebugMatcher {
     private final UrlPathHelper urlPathHelper = new UrlPathHelper();
 
     @Autowired
-    ObjectProvider<EduWebProjectConfig> eduWebProjectConfigObjectProvider;
+    ObjectProvider<WebUserMatcher> webUserMatcherObjectProvider;
 
     @Override public boolean matches(HttpServletRequest request) {
 
@@ -119,27 +114,9 @@ public class DefaultWebDebugMatcher implements WebDebugMatcher {
 
         }
 
-        if (StringUtils.isNotBlank(loginId)) {
-            Map<String, Cookie> cookieMap = CookieUtils.readCookieToMap(request);
-            boolean isMockUrs = true;
-            EduWebProjectConfig eduWebProjectConfig = eduWebProjectConfigObjectProvider.getIfAvailable();
-            if (eduWebProjectConfig != null) {
-                isMockUrs = eduWebProjectConfig.isMockUrs();
-            }
-            WebUser webUser = NeteaseEduCookieManager.getWebUserFromStudyCookie(cookieMap,
-
-                                                                                isMockUrs);
-            if (webUser == null) {
-                return false;
-            }
-
-            if (!loginId.equals(webUser.getLoginId())) {
-                return false;
-            }
-            if (loginType != null && !loginType.equals(webUser.getLoginType())) {
-                return false;
-            }
-
+        WebUserMatcher webUserMatcher = webUserMatcherObjectProvider.getIfAvailable();
+        if (webUserMatcher != null && !webUserMatcher.matches(request, loginId, loginType)) {
+            return false;
         }
 
         return true;

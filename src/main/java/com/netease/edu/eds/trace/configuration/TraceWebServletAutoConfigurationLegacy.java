@@ -17,10 +17,7 @@
 package com.netease.edu.eds.trace.configuration;
 
 import brave.http.HttpTracing;
-import com.netease.edu.eds.trace.instrument.http.DefaultWebDebugMatcher;
-import com.netease.edu.eds.trace.instrument.http.SkipUriMatcher;
-import com.netease.edu.eds.trace.instrument.http.TracingFilter;
-import com.netease.edu.eds.trace.instrument.http.WebDebugMatcher;
+import com.netease.edu.eds.trace.instrument.http.*;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -61,6 +58,21 @@ public class TraceWebServletAutoConfigurationLegacy {
     protected static class TraceWebMvcAutoConfiguration {
 
     }
+
+    @ConditionalOnClass(name = { "com.netease.edu.web.cookie.utils.NeteaseEduCookieManager",
+                                 "com.netease.edu.web.utils.WebUser",
+                                 "com.netease.edu.web.config.EduWebProjectConfig" })
+    @Configuration
+    public static class WebAppTraceConfiguration{
+        @Bean
+        @ConditionalOnMissingBean
+        public WebUserMatcher webUserMatcher() {
+            return new EduWebUserMatcher();
+
+        }
+    }
+
+
 
     @Bean
     @ConditionalOnMissingBean
