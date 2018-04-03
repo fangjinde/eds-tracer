@@ -10,6 +10,7 @@ import com.netease.edu.web.utils.WebUser;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.web.util.UrlPathHelper;
@@ -34,10 +35,66 @@ public class DefaultWebDebugMatcher implements WebDebugMatcher {
     private String              loginId;//auxiliary
     private String debugMark = "debug";
 
+    public Map<String, String> getHttpHeaders() {
+        return httpHeaders;
+    }
+
+    public void setHttpHeaders(Map<String, String> httpHeaders) {
+        this.httpHeaders = httpHeaders;
+    }
+
+    public Map<String, String> getHttpParams() {
+        return httpParams;
+    }
+
+    public void setHttpParams(Map<String, String> httpParams) {
+        this.httpParams = httpParams;
+    }
+
+    public String getHttpMethod() {
+        return httpMethod;
+    }
+
+    public void setHttpMethod(String httpMethod) {
+        this.httpMethod = httpMethod;
+    }
+
+    public String getHttpUri() {
+        return httpUri;
+    }
+
+    public void setHttpUri(String httpUri) {
+        this.httpUri = httpUri;
+    }
+
+    public Integer getLoginType() {
+        return loginType;
+    }
+
+    public void setLoginType(Integer loginType) {
+        this.loginType = loginType;
+    }
+
+    public String getLoginId() {
+        return loginId;
+    }
+
+    public void setLoginId(String loginId) {
+        this.loginId = loginId;
+    }
+
+    public String getDebugMark() {
+        return debugMark;
+    }
+
+    public void setDebugMark(String debugMark) {
+        this.debugMark = debugMark;
+    }
+
     private final UrlPathHelper urlPathHelper = new UrlPathHelper();
 
     @Autowired
-    private EduWebProjectConfig eduWebProjectConfig;
+    ObjectProvider<EduWebProjectConfig> eduWebProjectConfigObjectProvider;
 
     @Override public boolean matches(HttpServletRequest request) {
 
@@ -64,9 +121,14 @@ public class DefaultWebDebugMatcher implements WebDebugMatcher {
 
         if (StringUtils.isNotBlank(loginId)) {
             Map<String, Cookie> cookieMap = CookieUtils.readCookieToMap(request);
+            boolean isMockUrs = true;
+            EduWebProjectConfig eduWebProjectConfig = eduWebProjectConfigObjectProvider.getIfAvailable();
+            if (eduWebProjectConfig != null) {
+                isMockUrs = eduWebProjectConfig.isMockUrs();
+            }
             WebUser webUser = NeteaseEduCookieManager.getWebUserFromStudyCookie(cookieMap,
 
-                                                                                eduWebProjectConfig.isMockUrs());
+                                                                                isMockUrs);
             if (webUser == null) {
                 return false;
             }

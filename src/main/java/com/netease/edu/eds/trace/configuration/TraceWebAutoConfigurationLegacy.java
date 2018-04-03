@@ -99,6 +99,7 @@ public class TraceWebAutoConfigurationLegacy {
 
         @Bean
         @ConditionalOnMissingBean(ManagementServerProperties.class)
+        @RefreshScope
         public SkipUriMatcher defaultSkipPatternBeanIfManagementServerPropsArePresent(
                 SleuthWebProperties sleuthWebProperties) {
             return new SkipUriMatcherRegexImpl(defaultSkipPattern(sleuthWebProperties.getSkipPattern(),

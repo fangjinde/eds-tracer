@@ -12,6 +12,6 @@ import brave.http.HttpServerParser;
 public class HttpServerParserCustomed extends HttpServerParser {
 
     @Override protected <Req> String spanName(HttpAdapter<Req, ?> adapter, Req req) {
-        return adapter.path(req);
+        return adapter.method(req) + " " + adapter.path(req);
     }
 }
