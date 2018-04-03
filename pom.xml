@@ -103,6 +103,7 @@
                 <version>1.2.7</version>
             </dependency>
 
+
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
@@ -191,6 +192,11 @@
         <dependency>
             <groupId>com.netease.edu</groupId>
             <artifactId>edu-base-persist</artifactId>
+        </dependency>
+
+        <dependency>
+           <groupId>com.netease.edu.web</groupId>
+           <artifactId>edu-base-web</artifactId>
         </dependency>
 
 

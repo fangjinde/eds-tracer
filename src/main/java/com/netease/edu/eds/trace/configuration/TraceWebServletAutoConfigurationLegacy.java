@@ -17,13 +17,17 @@
 package com.netease.edu.eds.trace.configuration;
 
 import brave.http.HttpTracing;
+import com.netease.edu.eds.trace.instrument.http.DefaultWebDebugMatcher;
 import com.netease.edu.eds.trace.instrument.http.SkipUriMatcher;
 import com.netease.edu.eds.trace.instrument.http.TracingFilter;
+import com.netease.edu.eds.trace.instrument.http.WebDebugMatcher;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.sleuth.instrument.web.TraceHttpAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,32 +62,38 @@ public class TraceWebServletAutoConfigurationLegacy {
 
     }
 
+    @Bean
+    @ConditionalOnMissingBean
+    @RefreshScope
+    public WebDebugMatcher webDebugMatcher() {
+        return new DefaultWebDebugMatcher();
+    }
 
     @Bean
-    public FilterRegistrationBean traceFilter(HttpTracing httpTracing,SkipUriMatcher skipUriMatcher){
-        FilterRegistrationBean filterRegistrationBean=new FilterRegistrationBean(TracingFilter.create(httpTracing,skipUriMatcher));
-        filterRegistrationBean.setDispatcherTypes(ASYNC,ERROR,FORWARD,INCLUDE,REQUEST);
-        filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE+1);
+    public FilterRegistrationBean traceFilter(HttpTracing httpTracing, SkipUriMatcher skipUriMatcher,
+                                              WebDebugMatcher webDebugMatcher) {
+        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(
+                TracingFilter.create(httpTracing, skipUriMatcher, webDebugMatcher));
+        filterRegistrationBean.setDispatcherTypes(ASYNC, ERROR, FORWARD, INCLUDE, REQUEST);
+        filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         return filterRegistrationBean;
     }
 
+    //    @Bean
+    //    public FilterRegistrationBean traceWebFilter(
+    //            TraceFilterLegacy traceFilter) {
+    //        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(traceFilter);
+    //        filterRegistrationBean.setDispatcherTypes(ASYNC, ERROR, FORWARD, INCLUDE, REQUEST);
+    //        filterRegistrationBean.setOrder(TraceFilterLegacy.ORDER);
+    //        return filterRegistrationBean;
+    //    }
 
-//    @Bean
-//    public FilterRegistrationBean traceWebFilter(
-//            TraceFilterLegacy traceFilter) {
-//        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(traceFilter);
-//        filterRegistrationBean.setDispatcherTypes(ASYNC, ERROR, FORWARD, INCLUDE, REQUEST);
-//        filterRegistrationBean.setOrder(TraceFilterLegacy.ORDER);
-//        return filterRegistrationBean;
-//    }
-
-//    @Bean
-//    @ConditionalOnMissingBean
-//    public TraceFilterLegacy traceFilter(BeanFactory beanFactory,
-//                                   SkipPatternProvider skipPatternProvider) {
-//        return new TraceFilterLegacy(beanFactory, skipPatternProvider.skipPattern());
-//    }
-
+    //    @Bean
+    //    @ConditionalOnMissingBean
+    //    public TraceFilterLegacy traceFilter(BeanFactory beanFactory,
+    //                                   SkipPatternProvider skipPatternProvider) {
+    //        return new TraceFilterLegacy(beanFactory, skipPatternProvider.skipPattern());
+    //    }
 
     //TracingFilter
 }

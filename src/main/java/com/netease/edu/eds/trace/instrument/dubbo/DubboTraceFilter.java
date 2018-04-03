@@ -20,9 +20,7 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-@Activate(group = { Constants.PROVIDER, Constants.CONSUMER }, order = -8990, value = "tracing")
-// http://dubbo.io/books/dubbo-dev-book-en/impls/filter.html
-// public constructor permitted to allow dubbo to instantiate this
+@Activate(group = { Constants.PROVIDER, Constants.CONSUMER }, order = -8990)
 public final class DubboTraceFilter implements Filter {
 
     Tracer                                      tracer;

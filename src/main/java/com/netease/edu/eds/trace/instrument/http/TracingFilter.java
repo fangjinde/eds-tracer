@@ -4,7 +4,6 @@ import brave.Span;
 import brave.SpanCustomizer;
 import brave.Tracer;
 import brave.Tracing;
-import brave.http.HttpServerHandler;
 import brave.http.HttpTracing;
 import brave.propagation.Propagation.Getter;
 import brave.propagation.TraceContext;
@@ -31,12 +30,13 @@ public final class TracingFilter implements Filter {
             };
     static final HttpServletAdapter                 ADAPTER = new HttpServletAdapter();
 
-    public static Filter create(Tracing tracing, SkipUriMatcher skipUriMatcher) {
-        return new TracingFilter(HttpTracing.create(tracing), skipUriMatcher);
+    public static Filter create(Tracing tracing, SkipUriMatcher skipUriMatcher, WebDebugMatcher webDebugMatcher) {
+        return new TracingFilter(HttpTracing.create(tracing), skipUriMatcher, webDebugMatcher);
     }
 
-    public static Filter create(HttpTracing httpTracing, SkipUriMatcher skipUriMatcher) {
-        return new TracingFilter(httpTracing, skipUriMatcher);
+    public static Filter create(HttpTracing httpTracing, SkipUriMatcher skipUriMatcher,
+                                WebDebugMatcher webDebugMatcher) {
+        return new TracingFilter(httpTracing, skipUriMatcher, webDebugMatcher);
     }
 
     private SkipUriMatcher                                             skipUriMatcher;
@@ -46,9 +46,9 @@ public final class TracingFilter implements Filter {
 
     private final UrlPathHelper urlPathHelper = new UrlPathHelper();
 
-    TracingFilter(HttpTracing httpTracing, SkipUriMatcher skipUriMatcher) {
+    TracingFilter(HttpTracing httpTracing, SkipUriMatcher skipUriMatcher, WebDebugMatcher webDebugMatcher) {
         tracer = httpTracing.tracing().tracer();
-        handler = HttpServerHandler.create(httpTracing, ADAPTER);
+        handler = HttpServerHandler.create(httpTracing, ADAPTER, webDebugMatcher);
         extractor = httpTracing.tracing().propagation().extractor(GETTER);
         this.skipUriMatcher = skipUriMatcher;
     }
