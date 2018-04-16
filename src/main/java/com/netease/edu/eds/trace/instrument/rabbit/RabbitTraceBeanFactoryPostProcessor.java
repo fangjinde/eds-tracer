@@ -5,6 +5,7 @@ package com.netease.edu.eds.trace.instrument.rabbit;/**
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 
@@ -22,10 +23,22 @@ public class RabbitTraceBeanFactoryPostProcessor implements BeanDefinitionRegist
         for (String beanName : registry.getBeanDefinitionNames()) {
             BeanDefinition beanDefinition = registry.getBeanDefinition(beanName);
             if (RABBIT_TEMPLATE_CLASS_NAME.equals(beanDefinition.getBeanClassName())) {
-                beanDefinition.setBeanClassName(TracedRabbitTemplate.class.getName());
+                if (beanDefinition instanceof AbstractBeanDefinition) {
+                    AbstractBeanDefinition abstractBeanDefinition = (AbstractBeanDefinition) beanDefinition;
+                    if (abstractBeanDefinition.hasBeanClass()) {
+                        abstractBeanDefinition.setBeanClass(TracedRabbitTemplate.class);
+                    }
+                    abstractBeanDefinition.setBeanClassName(TracedRabbitTemplate.class.getName());
+                }
             }
             if (SIMPLE_MESSAGE_LISTENER_CONTAINER_CLASS_NAME.equals(beanDefinition.getBeanClassName())) {
-                beanDefinition.setBeanClassName(SimpleTracedMessageListenerContainer.class.getName());
+                if (beanDefinition instanceof AbstractBeanDefinition) {
+                    AbstractBeanDefinition abstractBeanDefinition = (AbstractBeanDefinition) beanDefinition;
+                    if (abstractBeanDefinition.hasBeanClass()) {
+                        abstractBeanDefinition.setBeanClass(SimpleTracedMessageListenerContainer.class);
+                    }
+                    abstractBeanDefinition.setBeanClassName(SimpleTracedMessageListenerContainer.class.getName());
+                }
             }
 
         }

@@ -10,6 +10,7 @@ import brave.propagation.TraceContextOrSamplingFlags;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import zipkin2.Endpoint;
 
@@ -22,6 +23,14 @@ import static brave.Span.Kind.CONSUMER;
  * @create 18/4/12
  */
 public class SimpleTracedMessageListenerContainer extends SimpleMessageListenerContainer {
+
+    public SimpleTracedMessageListenerContainer() {
+        super();
+    }
+
+    public SimpleTracedMessageListenerContainer(ConnectionFactory connectionFactory) {
+        super(connectionFactory);
+    }
 
     static final Propagation.Getter<MessageProperties, String> GETTER = new Propagation.Getter<MessageProperties, String>() {
 
@@ -93,6 +102,5 @@ public class SimpleTracedMessageListenerContainer extends SimpleMessageListenerC
         }
         return extracted;
     }
-
 
 }

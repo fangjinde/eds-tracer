@@ -25,8 +25,8 @@ public class EduTraceRabbitAutoconfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public RabbitTracing rabbitTracing() {
-        return RabbitTracing.newBuilder().build();
+    public RabbitTracing rabbitTracing(Tracing tracing) {
+        return RabbitTracing.newBuilder().tracing(tracing).build();
     }
 
     @Bean

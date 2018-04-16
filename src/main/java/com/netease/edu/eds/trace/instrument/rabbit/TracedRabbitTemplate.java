@@ -9,6 +9,7 @@ import brave.propagation.TraceContext;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.BeansException;
@@ -20,6 +21,14 @@ import zipkin2.Endpoint;
  * @create 18/4/12
  */
 public class TracedRabbitTemplate extends RabbitTemplate {
+
+    public TracedRabbitTemplate() {
+        super();
+    }
+
+    public TracedRabbitTemplate(ConnectionFactory connectionFactory) {
+        super(connectionFactory);
+    }
 
     static final Propagation.Setter<MessageProperties, String> SETTER = new Propagation.Setter<MessageProperties, String>() {
 
@@ -48,7 +57,7 @@ public class TracedRabbitTemplate extends RabbitTemplate {
         Span span = tracer.nextSpan().kind(Span.Kind.PRODUCER).name("publish");
         if (!span.isNoop()) {
 
-            RabbitTracing.tagReceivedMessageProperties(span, message.getMessageProperties());
+            RabbitTracing.tagSendMessageInfo(span, exchange, routingKey);
 
             Endpoint.Builder builder = Endpoint.newBuilder();
             if (rabbitTracing.remoteServiceName() != null) {
@@ -65,12 +74,13 @@ public class TracedRabbitTemplate extends RabbitTemplate {
         }
 
         try (Tracer.SpanInScope spanInScope = tracer.withSpanInScope(span)) {
+            injector.inject(span.context(), message.getMessageProperties());
             super.doSend(channel, exchange, routingKey, message, mandatory, correlationData);
         } catch (Exception e) {
             RabbitTracing.tagErrorSpan(span, e);
             throw e;
         } finally {
-            injector.inject(span.context(), message.getMessageProperties());
+
             span.finish();
         }
 

@@ -47,8 +47,12 @@ public abstract class RabbitTracing {
         }
     }
 
+    public static void tagSendMessageInfo(Span span, String exchange, String routingKey) {
+        maybeTag(span, RabbitTracing.RABBIT_EXCHANGE, exchange);
+        maybeTag(span, RabbitTracing.RABBIT_ROUTING_KEY, routingKey);
+    }
 
-   public static void tagReceivedMessageProperties(Span span, MessageProperties messageProperties) {
+    public static void tagReceivedMessageProperties(Span span, MessageProperties messageProperties) {
         maybeTag(span, RabbitTracing.RABBIT_EXCHANGE, messageProperties.getReceivedExchange());
         maybeTag(span, RabbitTracing.RABBIT_ROUTING_KEY, messageProperties.getReceivedRoutingKey());
         maybeTag(span, RabbitTracing.RABBIT_QUEUE, messageProperties.getConsumerQueue());
