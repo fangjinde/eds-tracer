@@ -12,14 +12,18 @@ import com.netease.edu.util.collection.PaginationResult;
 import com.netease.ndir.client.config.SearchConfig;
 import com.netease.ndir.client.config.SortField;
 import com.netease.ndir.client.exception.NDirClientException;
+import com.netease.ndir.common.ResponseCode;
 import com.netease.ndir.common.exception.NDirException;
 import com.netease.ndir.common.search.SearchResultView;
 import com.netease.ndir.common.syntax.NDirQuery;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.utility.JavaModule;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.springframework.beans.factory.BeanFactory;
 import zipkin2.Endpoint;
@@ -38,39 +42,57 @@ public class NdirSearchClientInstrumentation implements TraceAgentInstrumetation
 
     @Override public void premain(Map<String, String> props, Instrumentation inst) {
 
-                new AgentBuilder.Default().type(
-                        ElementMatchers.namedIgnoreCase(
-                                "com.netease.edu.persist.search.service.AbstractNDirBaseSearchDao")).transform(
-                        (builder, typeDescription, classloader, javaModule) ->
-                                builder.method(ElementMatchers.namedIgnoreCase("getByQueryCondition")).intercept(
-                                        MethodDelegation.to(Trace5.class))
-                ).installOn(inst);
+        //        new AgentBuilder.Default().type(
+        //                ElementMatchers.namedIgnoreCase("com.netease.ndir.client.config.SearchConfig")).transform(
+        //                (builder, typeDescription, classloader, javaModule) ->
+        //                        builder.method(ElementMatchers.namedIgnoreCase("setSortFields")).intercept(
+        //                                MethodDelegation.to(Trace3.class))
+        //        ).installOn(inst);
 
+        //                new AgentBuilder.Default().type(
+        //                        ElementMatchers.namedIgnoreCase(
+        //                                "com.netease.edu.persist.search.service.AbstractNDirBaseSearchDao")).transform(
+        //                        (builder, typeDescription, classloader, javaModule) ->
+        //                                builder.method(ElementMatchers.namedIgnoreCase("getByQueryCondition")).intercept(
+        //                                        MethodDelegation.to(Trace5.class))
+        //                ).installOn(inst);
 
         //
 
-        new AgentBuilder.Default().type(
-                ElementMatchers.namedIgnoreCase("com.netease.ndir.client.config.SearchConfig")).transform(
-                (builder, typeDescription, classloader, javaModule) ->
-                        builder.method(ElementMatchers.namedIgnoreCase("setSortFields")).intercept(
-                                MethodDelegation.to(Trace3.class))
-        ).installOn(inst);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.Adapter() {
 
+            @Override public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader,
+                                                   JavaModule module,
+                                                   boolean loaded, DynamicType dynamicType) {
+                System.out.println(
+                        String.format("type: %s loaded by %s will be transformed.", typeDescription.getTypeName(),
+                                      classLoader));
 
-        new AgentBuilder.Default().type(
-                ElementMatchers.namedIgnoreCase("com.netease.ndir.client.NDirSearchClient2")).transform(
-                (builder, typeDescription, classloader, javaModule) ->
-                        builder.method(ElementMatchers.namedIgnoreCase("globalSearch")).intercept(
-                                MethodDelegation.to(Trace6.class))
-        ).installOn(inst);
+            }
+
+            @Override public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded,
+                                          Throwable throwable) {
+
+                System.out.println(
+                        String.format("type: %s loaded by %s can't be transformed cause by error:%s", typeName,
+                                      classLoader, ExceptionStringUtils.getStackTraceString(throwable)));
+            }
+
+        };
 
         //        new AgentBuilder.Default().type(
         //                ElementMatchers.namedIgnoreCase("com.netease.ndir.client.NDirSearchClient2")).transform(
         //                (builder, typeDescription, classloader, javaModule) ->
-        //                        builder.method(ElementMatchers.namedIgnoreCase("execute")).intercept(
-        //                                MethodDelegation.to(TraceInterceptor.class)).method(
-        //                                ElementMatchers.namedIgnoreCase("globalSearch")).intercept(
-        //                                MethodDelegation.to(Trace2.class))).installOn(inst);
+        //                        builder.method(ElementMatchers.namedIgnoreCase("globalSearch")).intercept(
+        //                                MethodDelegation.to(Trace6.class))
+        //        ).with(listener).installOn(inst);
+
+        new AgentBuilder.Default().type(
+                ElementMatchers.namedIgnoreCase("com.netease.ndir.client.NDirSearchClient2")).transform(
+                (builder, typeDescription, classloader, javaModule) ->
+                        builder.method(ElementMatchers.namedIgnoreCase("execute").and(
+                                ElementMatchers.isDeclaredBy(typeDescription))).intercept(
+                                MethodDelegation.to(TraceInterceptor.class))).with(listener).installOn(inst);
     }
 
     //.and(ElementMatchers.takesArguments(1))
@@ -160,7 +182,11 @@ public class NdirSearchClientInstrumentation implements TraceAgentInstrumetation
                 try {
                     return callable.call();
                 } catch (Exception e) {
-                    return null;
+                    if (e instanceof NDirException) {
+                        throw (NDirException) e;
+                    } else {
+                        throw new NDirException(ResponseCode.UNKNOWN, e);
+                    }
                 }
 
             }
@@ -174,7 +200,11 @@ public class NdirSearchClientInstrumentation implements TraceAgentInstrumetation
                 return callable.call();
             } catch (Exception e) {
                 span.tag("ndir_error", ExceptionStringUtils.getStackTraceString(e));
-                return null;
+                if (e instanceof NDirException) {
+                    throw (NDirException) e;
+                } else {
+                    throw new NDirException(ResponseCode.UNKNOWN, e);
+                }
             } finally {
                 span.finish();
             }
