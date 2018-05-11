@@ -12,10 +12,7 @@ import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
-import net.bytebuddy.implementation.bind.annotation.AllArguments;
-import net.bytebuddy.implementation.bind.annotation.Origin;
-import net.bytebuddy.implementation.bind.annotation.SuperCall;
-import net.bytebuddy.implementation.bind.annotation.This;
+import net.bytebuddy.implementation.bind.annotation.*;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -39,7 +36,27 @@ public class RedisTemplateIntrumentation implements TraceAgentInstrumetation {
         new AgentBuilder.Default().type(namedIgnoreCase("org.springframework.data.redis.core.DefaultValueOperations")).transform((builder,
                                                                                                                                   typeDescription,
                                                                                                                                   classloader,
-                                                                                                                                  javaModule) -> builder.method(namedIgnoreCase("set").and(takesArguments(2)).and(isDeclaredBy(typeDescription))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                                                  javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isDeclaredBy(ValueOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+
+        new AgentBuilder.Default().type(namedIgnoreCase("org.springframework.data.redis.core.DefaultHashOperations")).transform((builder,
+                                                                                                                                 typeDescription,
+                                                                                                                                 classloader,
+                                                                                                                                 javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isDeclaredBy(HashOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+
+        new AgentBuilder.Default().type(namedIgnoreCase("org.springframework.data.redis.core.DefaultListOperations")).transform((builder,
+                                                                                                                                 typeDescription,
+                                                                                                                                 classloader,
+                                                                                                                                 javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isDeclaredBy(ListOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+
+        new AgentBuilder.Default().type(namedIgnoreCase("org.springframework.data.redis.core.DefaultSetOperations")).transform((builder,
+                                                                                                                                typeDescription,
+                                                                                                                                classloader,
+                                                                                                                                javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isDeclaredBy(SetOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+
+        new AgentBuilder.Default().type(namedIgnoreCase("org.springframework.data.redis.core.DefaultZSetOperations")).transform((builder,
+                                                                                                                                 typeDescription,
+                                                                                                                                 classloader,
+                                                                                                                                 javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isDeclaredBy(ZSetOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
     }
 
@@ -48,6 +65,7 @@ public class RedisTemplateIntrumentation implements TraceAgentInstrumetation {
         static ObjectMapper objectMapper = new ObjectMapper();
         static String       KEY_TEST     = "keyTest";
 
+        @RuntimeType
         public static Object around(@AllArguments Object[] args, @This Object proxy, @Origin Method method,
 
                                     @SuperCall Callable<Object> callable) {
@@ -75,7 +93,6 @@ public class RedisTemplateIntrumentation implements TraceAgentInstrumetation {
             Span span = redisTracing.tracing().tracer().nextSpan();
             if (!span.isNoop()) {
                 span.kind(Span.Kind.CLIENT).name(method.getDeclaringClass().getSimpleName() + "." + method.getName());
-                // span.remoteEndpoint(Endpoint.newBuilder().ip(uri.getHost()).port(uri.getPort()).build());
                 addNamespaceTag(proxy, span);
 
                 try {
@@ -118,16 +135,14 @@ public class RedisTemplateIntrumentation implements TraceAgentInstrumetation {
                 RedisSerializer redisSerializer = null;
                 if (proxy instanceof ValueOperations) {
                     redisSerializer = ((ValueOperations) proxy).getOperations().getKeySerializer();
-                } else if (proxy instanceof BoundValueOperations) {
-                    redisSerializer = ((BoundValueOperations) proxy).getOperations().getKeySerializer();
                 } else if (proxy instanceof HashOperations) {
                     redisSerializer = ((HashOperations) proxy).getOperations().getKeySerializer();
-                } else if (proxy instanceof BoundHashOperations) {
-                    redisSerializer = ((BoundHashOperations) proxy).getOperations().getKeySerializer();
+                } else if (proxy instanceof ListOperations) {
+                    redisSerializer = ((ListOperations) proxy).getOperations().getKeySerializer();
+                } else if (proxy instanceof SetOperations) {
+                    redisSerializer = ((SetOperations) proxy).getOperations().getKeySerializer();
                 } else if (proxy instanceof ZSetOperations) {
                     redisSerializer = ((ZSetOperations) proxy).getOperations().getKeySerializer();
-                } else if (proxy instanceof BoundZSetOperations) {
-                    redisSerializer = ((BoundZSetOperations) proxy).getOperations().getKeySerializer();
                 }
 
                 addNamespaceTag(redisSerializer, span);
