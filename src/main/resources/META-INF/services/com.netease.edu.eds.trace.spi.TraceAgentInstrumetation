@@ -1,2 +1,3 @@
 com.netease.edu.eds.trace.instrument.ndir.NdirSearchClientInstrumentation
 com.netease.edu.eds.trace.instrument.ndir.NdirIndexClientIntrumentation
+com.netease.edu.eds.trace.instrument.redis.RedisTemplateIntrumentation

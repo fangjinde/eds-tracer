@@ -3,7 +3,7 @@ package com.netease.edu.eds.trace.configuration;/**
  */
 
 import brave.Tracing;
-import com.netease.edu.eds.trace.instrument.ndir.NdirTracing;
+import com.netease.edu.eds.trace.instrument.redis.RedisTracing;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -18,12 +18,12 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ConditionalOnBean(Tracing.class)
-@ConditionalOnProperty(name = "spring.sleuth.ndir.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "spring.sleuth.redis.enabled", havingValue = "true", matchIfMissing = true)
 @AutoConfigureAfter(TraceAutoConfiguration.class)
-public class TraceNdirAutoConfiguration {
+public class TraceRedisAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean NdirTracing ndirTracing(Tracing tracing) {
-        return NdirTracing.newBuilder(tracing).build();
+    @ConditionalOnMissingBean RedisTracing redisTracing(Tracing tracing) {
+        return RedisTracing.newBuilder(tracing).build();
     }
 }
