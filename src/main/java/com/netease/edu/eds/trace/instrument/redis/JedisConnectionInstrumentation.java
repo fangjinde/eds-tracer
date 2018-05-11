@@ -8,7 +8,6 @@ import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bind.annotation.This;
-import net.bytebuddy.matcher.ElementMatchers;
 import redis.clients.jedis.Connection;
 import redis.clients.jedis.Protocol;
 import zipkin2.Endpoint;
@@ -17,7 +16,8 @@ import java.lang.instrument.Instrumentation;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.namedIgnoreCase;
 
 /**
  * @author hzfjd
@@ -30,11 +30,39 @@ public class JedisConnectionInstrumentation implements TraceAgentInstrumetation 
         new AgentBuilder.Default().type(namedIgnoreCase("redis.clients.jedis.Connection")).transform((builder,
                                                                                                       typeDescription,
                                                                                                       classloader,
-                                                                                                      javaModule) -> builder.method(namedIgnoreCase("sendCommand").and(takesArguments(2)).and(ElementMatchers.takesArgument(1,
-                                                                                                                                                                                                                            byte[][].class)).and(isDeclaredBy(typeDescription))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                      javaModule) -> builder.method(namedIgnoreCase("sendCommand").and(isDeclaredBy(typeDescription))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
     }
 
     public static class TraceInterceptor {
+
+        public static Connection sendCommand(@SuperCall Callable<Connection> callable, @This Object proxy,
+                                             final @Argument(0) Protocol.Command cmd) {
+            try {
+                return callable.call();
+            } catch (Exception e) {
+                if (e instanceof RuntimeException) {
+                    throw (RuntimeException) e;
+                } else {
+                    throw new RuntimeException("error while tracing Jedis Connection.sendCommand.", e);
+                }
+            }
+
+        }
+
+        public static Connection sendCommand(@SuperCall Callable<Connection> callable, @This Object proxy,
+                                             final @Argument(0) Protocol.Command cmd,
+                                             final @Argument(1) String... args) {
+            try {
+                return callable.call();
+            } catch (Exception e) {
+                if (e instanceof RuntimeException) {
+                    throw (RuntimeException) e;
+                } else {
+                    throw new RuntimeException("error while tracing Jedis Connection.sendCommand.", e);
+                }
+            }
+
+        }
 
         public static Connection sendCommand(@SuperCall Callable<Connection> callable, @This Object proxy,
                                              final @Argument(0) Protocol.Command cmd,
