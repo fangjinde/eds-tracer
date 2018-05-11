@@ -36,8 +36,9 @@ public class JedisConnectionInstrumentation implements TraceAgentInstrumetation 
 
     public static class TraceInterceptor {
 
-        protected Connection sendCommand(@SuperCall Callable<Connection> callable, @This Object proxy,
-                                         final @Argument(0) Protocol.Command cmd, final @Argument(1) byte[]... args) {
+        public static Connection sendCommand(@SuperCall Callable<Connection> callable, @This Object proxy,
+                                             final @Argument(0) Protocol.Command cmd,
+                                             final @Argument(1) byte[]... args) {
 
             Span span = RedisTraceContext.currentSpan();
             if (span != null && !span.isNoop()) {
