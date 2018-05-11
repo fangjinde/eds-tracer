@@ -36,27 +36,27 @@ public class RedisTemplateIntrumentation implements TraceAgentInstrumetation {
         new AgentBuilder.Default().type(namedIgnoreCase("org.springframework.data.redis.core.DefaultValueOperations")).transform((builder,
                                                                                                                                   typeDescription,
                                                                                                                                   classloader,
-                                                                                                                                  javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isDeclaredBy(ValueOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                                                  javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isOverriddenFrom(ValueOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
         new AgentBuilder.Default().type(namedIgnoreCase("org.springframework.data.redis.core.DefaultHashOperations")).transform((builder,
                                                                                                                                  typeDescription,
                                                                                                                                  classloader,
-                                                                                                                                 javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isDeclaredBy(HashOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                                                 javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isOverriddenFrom(HashOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
         new AgentBuilder.Default().type(namedIgnoreCase("org.springframework.data.redis.core.DefaultListOperations")).transform((builder,
                                                                                                                                  typeDescription,
                                                                                                                                  classloader,
-                                                                                                                                 javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isDeclaredBy(ListOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                                                 javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isOverriddenFrom(ListOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
         new AgentBuilder.Default().type(namedIgnoreCase("org.springframework.data.redis.core.DefaultSetOperations")).transform((builder,
                                                                                                                                 typeDescription,
                                                                                                                                 classloader,
-                                                                                                                                javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isDeclaredBy(SetOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                                                javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isOverriddenFrom(SetOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
         new AgentBuilder.Default().type(namedIgnoreCase("org.springframework.data.redis.core.DefaultZSetOperations")).transform((builder,
                                                                                                                                  typeDescription,
                                                                                                                                  classloader,
-                                                                                                                                 javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isDeclaredBy(ZSetOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                                                 javaModule) -> builder.method(not(namedIgnoreCase("getOperations")).and(isOverriddenFrom(ZSetOperations.class))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
     }
 
@@ -160,7 +160,8 @@ public class RedisTemplateIntrumentation implements TraceAgentInstrumetation {
                     if (keyObject instanceof String) {
                         String withNameSpaceKeyString = (String) keyObject;
                         if (withNameSpaceKeyString.endsWith(KEY_TEST)) {
-                            String namespace = withNameSpaceKeyString.substring(withNameSpaceKeyString.indexOf(KEY_TEST));
+                            String namespace = withNameSpaceKeyString.substring(0,
+                                                                                withNameSpaceKeyString.indexOf(KEY_TEST));
                             if (namespace != null && namespace.length() > 0) {
                                 span.tag("namespace", namespace);
                             }
