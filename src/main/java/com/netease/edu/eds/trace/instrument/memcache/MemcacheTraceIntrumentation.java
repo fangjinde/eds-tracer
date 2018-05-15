@@ -14,7 +14,6 @@ import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
-import net.spy.memcached.MemcachedClientIF;
 import org.springframework.beans.factory.BeanFactory;
 
 import java.lang.instrument.Instrumentation;
@@ -35,7 +34,7 @@ public class MemcacheTraceIntrumentation implements TraceAgentInstrumetation {
         new AgentBuilder.Default().type(namedIgnoreCase("net.spy.memcached.MemcachedClient")).transform((builder,
                                                                                                          typeDescription,
                                                                                                          classloader,
-                                                                                                         javaModule) -> builder.method((isOverriddenFrom(MemcachedClientIF.class).and(not(namedIgnoreCase("getAvailableServers").or(namedIgnoreCase("getUnavailableServers")).or(namedIgnoreCase("getTranscoder")).or(namedIgnoreCase("getNodeLocator")).or(namedIgnoreCase("getVersions")).or(namedIgnoreCase("getStats")).or(namedIgnoreCase("flush")).or(namedIgnoreCase("shutdown")).or(namedIgnoreCase("waitForQueues")).or(namedIgnoreCase("addObserver")).or(namedIgnoreCase("removeObserver")).or(namedIgnoreCase("listSaslMechanisms")))))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                         javaModule) -> builder.method((isDeclaredBy(typeDescription).and(isPublic()).and(not(namedIgnoreCase("getAvailableServers").or(namedIgnoreCase("getUnavailableServers")).or(namedIgnoreCase("getTranscoder")).or(namedIgnoreCase("getNodeLocator")).or(namedIgnoreCase("getVersions")).or(namedIgnoreCase("getStats")).or(namedIgnoreCase("flush")).or(namedIgnoreCase("shutdown")).or(namedIgnoreCase("waitForQueues")).or(namedIgnoreCase("addObserver")).or(namedIgnoreCase("removeObserver")).or(namedIgnoreCase("listSaslMechanisms")).or(namedIgnoreCase("toString")))))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
     }
 
@@ -83,8 +82,6 @@ public class MemcacheTraceIntrumentation implements TraceAgentInstrumetation {
                 }
 
             }
-
-          
 
             span = memcacheTracing.tracing().tracer().nextSpan();
             if (!span.isNoop()) {
