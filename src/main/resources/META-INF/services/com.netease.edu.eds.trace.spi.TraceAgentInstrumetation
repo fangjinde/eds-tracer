@@ -3,3 +3,5 @@ com.netease.edu.eds.trace.instrument.ndir.NdirIndexClientIntrumentation
 com.netease.edu.eds.trace.instrument.redis.RedisTemplateIntrumentation
 com.netease.edu.eds.trace.instrument.redis.JedisConnectionInstrumentation
 com.netease.edu.eds.trace.instrument.redis.JedisClientIntrumentation
+com.netease.edu.eds.trace.instrument.memcache.MemcacheTraceIntrumentation
+com.netease.edu.eds.trace.instrument.memcache.MemcachedConnectionTraceIntrumentation
