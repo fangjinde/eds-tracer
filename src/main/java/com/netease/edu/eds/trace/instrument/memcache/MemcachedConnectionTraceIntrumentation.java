@@ -29,7 +29,7 @@ public class MemcachedConnectionTraceIntrumentation implements TraceAgentInstrum
         new AgentBuilder.Default().type(namedIgnoreCase("net.spy.memcached.MemcachedConnection")).transform((builder,
                                                                                                              typeDescription,
                                                                                                              classloader,
-                                                                                                             javaModule) -> builder.method(namedIgnoreCase("addOperations").or(namedIgnoreCase("addOperation").and(takesArgument(1,
+                                                                                                             javaModule) -> builder.method(namedIgnoreCase("addOperations").or(namedIgnoreCase("addOperation").and(takesArgument(0,
                                                                                                                                                                                                                                  MemcachedNode.class)))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
     }
@@ -37,7 +37,7 @@ public class MemcachedConnectionTraceIntrumentation implements TraceAgentInstrum
     public static class TraceInterceptor {
 
         public static void addOperation(@Argument(0) MemcachedNode node, @Argument(1) Operation o,
-                                        @SuperCall Callable callable) {
+                                        @SuperCall Callable<Void> callable) {
             try {
 
                 Span span = MemcacheTraceContext.currentSpan();
@@ -57,7 +57,7 @@ public class MemcachedConnectionTraceIntrumentation implements TraceAgentInstrum
             }
         }
 
-        public static void addOperations(@Argument(0) Map<MemcachedNode, Operation> ops, @SuperCall Callable callable) {
+        public static void addOperations(@Argument(0) Map<MemcachedNode, Operation> ops, @SuperCall Callable<Void> callable) {
             try {
 
                 Span span = MemcacheTraceContext.currentSpan();
