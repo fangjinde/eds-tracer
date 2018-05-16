@@ -10,6 +10,7 @@ import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
 import com.netease.edu.eds.trace.utils.SpanStringUtils;
 import com.netease.framework.dbsupport.impl.DBResource;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
@@ -24,7 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static net.bytebuddy.matcher.ElementMatchers.namedIgnoreCase;
-import static net.bytebuddy.matcher.ElementMatchers.takesArgument;
+import static net.bytebuddy.matcher.ElementMatchers.takesGenericArgument;
 
 /**
  * @author hzfjd
@@ -34,11 +35,14 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
 
     @Override
     public void premain(Map<String, String> props, Instrumentation inst) {
+
         new AgentBuilder.Default().type(namedIgnoreCase("SqlManagerImpl")).transform((builder, typeDescription,
                                                                                       classloader,
-                                                                                      javaModule) -> builder.method(namedIgnoreCase("allocateRecordId").or(namedIgnoreCase("executeQuery").and(takesArgument(1,
-                                                                                                                                                                                                             List.class))).or(namedIgnoreCase("updateRecords").and(takesArgument(1,
-                                                                                                                                                                                                                                                                                 List.class)))).intercept(MethodDelegation.to(DBTransactionManagerInstrumentation.TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                      javaModule) -> builder.method(namedIgnoreCase("allocateRecordId").or(namedIgnoreCase("executeQuery").and(takesGenericArgument(1,
+                                                                                                                                                                                                                    TypeDescription.Generic.Builder.parameterizedType(List.class,
+                                                                                                                                                                                                                                                                      Object.class).build()))).or(namedIgnoreCase("updateRecords").and(takesGenericArgument(1,
+                                                                                                                                                                                                                                                                                                                                                            TypeDescription.Generic.Builder.parameterizedType(List.class,
+                                                                                                                                                                                                                                                                                                                                                                                                              Object.class).build())))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
     }
 

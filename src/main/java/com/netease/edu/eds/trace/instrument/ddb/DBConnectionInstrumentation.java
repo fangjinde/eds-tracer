@@ -29,7 +29,7 @@ public class DBConnectionInstrumentation implements TraceAgentInstrumetation {
         new AgentBuilder.Default().type(namedIgnoreCase("com.netease.backend.db.DBConnection")).transform((builder,
                                                                                                            typeDescription,
                                                                                                            classloader,
-                                                                                                           javaModule) -> builder.method(namedIgnoreCase("allocateRecordId").and(takesArguments(1)).or(namedIgnoreCase("prepareStatement").and(takesArguments(1))).or(namedIgnoreCase("createStatement").and(takesArguments(0)))).intercept(MethodDelegation.to(DBTransactionManagerInstrumentation.TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                           javaModule) -> builder.method(namedIgnoreCase("allocateRecordId").and(takesArguments(1)).or(namedIgnoreCase("prepareStatement").and(takesArguments(1))).or(namedIgnoreCase("createStatement").and(takesArguments(0)))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
     }
 
