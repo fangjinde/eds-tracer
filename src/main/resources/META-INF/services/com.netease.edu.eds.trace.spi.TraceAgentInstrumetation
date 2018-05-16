@@ -5,3 +5,6 @@ com.netease.edu.eds.trace.instrument.redis.JedisConnectionInstrumentation
 com.netease.edu.eds.trace.instrument.redis.JedisClientIntrumentation
 com.netease.edu.eds.trace.instrument.memcache.MemcacheTraceIntrumentation
 com.netease.edu.eds.trace.instrument.memcache.MemcachedConnectionTraceIntrumentation
+com.netease.edu.eds.trace.instrument.ddb.DBTransactionManagerInstrumentation
+com.netease.edu.eds.trace.instrument.ddb.DBConnectionInstrumentation
+com.netease.edu.eds.trace.instrument.ddb.SqlManagerInstrumentation
