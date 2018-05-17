@@ -3,6 +3,9 @@ package com.netease.edu.eds.trace.instrument.ddb;
 import brave.Span;
 import brave.Tracer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.netease.backend.db.DBResultSet;
+import com.netease.backend.db.common.utils.OneBasedArray;
+import com.netease.backend.db.result.Record;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
@@ -18,6 +21,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.BeanFactory;
 
 import java.lang.instrument.Instrumentation;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -36,13 +40,14 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
     @Override
     public void premain(Map<String, String> props, Instrumentation inst) {
 
-        new AgentBuilder.Default().type(namedIgnoreCase("SqlManagerImpl")).transform((builder, typeDescription,
-                                                                                      classloader,
-                                                                                      javaModule) -> builder.method(namedIgnoreCase("allocateRecordId").or(namedIgnoreCase("executeQuery").and(takesGenericArgument(1,
-                                                                                                                                                                                                                    TypeDescription.Generic.Builder.parameterizedType(List.class,
-                                                                                                                                                                                                                                                                      Object.class).build()))).or(namedIgnoreCase("updateRecords").and(takesGenericArgument(1,
-                                                                                                                                                                                                                                                                                                                                                            TypeDescription.Generic.Builder.parameterizedType(List.class,
-                                                                                                                                                                                                                                                                                                                                                                                                              Object.class).build())))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+        new AgentBuilder.Default().type(namedIgnoreCase("com.netease.framework.dbsupport.impl.SqlManagerImpl")).transform((builder,
+                                                                                                                           typeDescription,
+                                                                                                                           classloader,
+                                                                                                                           javaModule) -> builder.method(namedIgnoreCase("allocateRecordId").or(namedIgnoreCase("executeQuery").and(takesGenericArgument(1,
+                                                                                                                                                                                                                                                         TypeDescription.Generic.Builder.parameterizedType(List.class,
+                                                                                                                                                                                                                                                                                                           Object.class).build()))).or(namedIgnoreCase("updateRecords").and(takesGenericArgument(1,
+                                                                                                                                                                                                                                                                                                                                                                                                 TypeDescription.Generic.Builder.parameterizedType(List.class,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                   Object.class).build())))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
     }
 
@@ -65,8 +70,33 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
             try {
                 DdbTraceContext.setSpan(ddbSpan);
                 T result = callable.call();
-                String retJson = objectMapper.writeValueAsString(result);
-                ddbSpan.tag("return", retJson);
+                String retJson = null;
+
+                if (result instanceof DBResource) {
+                    DBResource dBResource = (DBResource) result;
+                    if (dBResource.getResultSet() instanceof DBResultSet) {
+                        DBResultSet dbResultSet = (DBResultSet) dBResource.getResultSet();
+                        OneBasedArray<Record> records = dbResultSet.getAllRecord();
+                        List<List<Object>> rowsList = new ArrayList<>();
+                        for (int row = 0; row < records.size(); row++) {
+                            Record record = records.get(row);
+                            List<Object> oneRowList = new ArrayList<>();
+                            rowsList.add(oneRowList);
+                            OneBasedArray<Object> values = record.getValues();
+                            for (int col = 0; col < values.size(); col++) {
+                                oneRowList.add(values.get(col));
+                            }
+
+                        }
+                        retJson = objectMapper.writeValueAsString(rowsList);
+                        ddbSpan.tag("return", retJson);
+
+                    }
+                } else {
+                    retJson = objectMapper.writeValueAsString(result);
+                    ddbSpan.tag("return", retJson);
+                }
+
                 return result;
             } catch (Exception e) {
                 ddbSpan.tag("has_error", String.valueOf(true));
@@ -172,7 +202,7 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
             }
         }
 
-        public long allocateRecordId(@Argument(0) String tableName, @SuperCall Callable<Long> callable) {
+        public static long allocateRecordId(@Argument(0) String tableName, @SuperCall Callable<Long> callable) {
 
             DdbTracing ddbTracing = getDdbTracing();
             if (ddbTracing == null) {
@@ -208,8 +238,8 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
 
         }
 
-        public int updateRecords(@Argument(0) String sql, @Argument(1) List<Object> params,
-                                 @SuperCall Callable<Integer> callable) {
+        public static int updateRecords(@Argument(0) String sql, @Argument(1) List<Object> params,
+                                        @SuperCall Callable<Integer> callable) {
             DdbTracing ddbTracing = getDdbTracing();
             if (ddbTracing == null) {
                 return callSuper(callable);
@@ -218,8 +248,8 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
             return tracedExecute(ddbTracing, sql, params, callable);
         }
 
-        public DBResource executeQuery(@Argument(0) String sql, @Argument(1) List<Object> params,
-                                       @SuperCall Callable<DBResource> callable) {
+        public static DBResource executeQuery(@Argument(0) String sql, @Argument(1) List<Object> params,
+                                              @SuperCall Callable<DBResource> callable) {
             DdbTracing ddbTracing = getDdbTracing();
             if (ddbTracing == null) {
                 return callSuper(callable);

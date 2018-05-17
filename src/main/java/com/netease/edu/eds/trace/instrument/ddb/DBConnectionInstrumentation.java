@@ -1,7 +1,10 @@
 package com.netease.edu.eds.trace.instrument.ddb;
 
 import brave.Span;
+import com.netease.backend.db.DBConnContext;
 import com.netease.backend.db.DBConnection;
+import com.netease.backend.db.common.management.DDBURL;
+import com.netease.backend.db.common.management.dbi.DBIContext;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import net.bytebuddy.agent.builder.AgentBuilder;
@@ -9,6 +12,7 @@ import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bind.annotation.This;
+import zipkin2.Endpoint;
 
 import java.lang.instrument.Instrumentation;
 import java.sql.SQLException;
@@ -41,6 +45,19 @@ public class DBConnectionInstrumentation implements TraceAgentInstrumetation {
             if (span != null && !span.isNoop()) {
                 if (proxy instanceof DBConnection) {
                     DBConnection dbConnection = (DBConnection) proxy;
+                    String ddbName = dbConnection.getDdbNameStr();
+                    if (ddbName != null && ddbName.length() > 0) {
+                        DBConnContext dbConnContext = dbConnection.getConnContext(ddbName);
+                        if (dbConnContext != null) {
+                            DBIContext dbiContext = dbConnContext.getContext();
+                            span.tag("ActiveConnNum", String.valueOf(dbiContext.getActiveConnNum()));
+                            span.tag("MaxConn", String.valueOf(dbConnContext.getDBIConfig().getMaxConn()));
+                            span.tag("ClientSoTimeout", String.valueOf(dbiContext.getClientSoTimeout()));
+                            span.tag("SocketTimeout", String.valueOf(dbConnContext.getDBIConfig().getSocketTimeout()));
+                            DDBURL ddburl = dbiContext.getMasterURL();
+                            span.remoteEndpoint(Endpoint.newBuilder().ip(ddburl.getHost()).port(ddburl.getPort()).build());
+                        }
+                    }
 
                 }
 
