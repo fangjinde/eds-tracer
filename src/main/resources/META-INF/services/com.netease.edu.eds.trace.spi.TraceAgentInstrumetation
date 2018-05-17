@@ -8,3 +8,4 @@ com.netease.edu.eds.trace.instrument.memcache.MemcachedConnectionTraceIntrumenta
 com.netease.edu.eds.trace.instrument.ddb.DBTransactionManagerInstrumentation
 com.netease.edu.eds.trace.instrument.ddb.DBConnectionInstrumentation
 com.netease.edu.eds.trace.instrument.ddb.SqlManagerInstrumentation
+com.netease.edu.eds.trace.instrument.async.ThreadPoolExecutorInstrumentation
