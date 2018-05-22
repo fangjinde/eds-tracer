@@ -81,7 +81,7 @@ public class TraceWebServletAutoConfigurationLegacy {
                                                                                                         skipUriMatcher,
                                                                                                         webDebugMatcher));
         filterRegistrationBean.setDispatcherTypes(ASYNC, ERROR, FORWARD, INCLUDE, REQUEST);
-        filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
+        filterRegistrationBean.setOrder(Ordered.LOWEST_PRECEDENCE - 1);
         return filterRegistrationBean;
     }
 
