@@ -48,6 +48,9 @@ public class DeferedInstrumentationSpringApplicationRunListener implements Sprin
     }
 
     private static void innerAddTraceInstrumentations() {
+        if (TraceInstrumentationHolder.getProps() == null || TraceInstrumentationHolder.getInstumentation() == null) {
+            return;
+        }
         logger.info("begin premain with agentArgs:" + TraceInstrumentationHolder.getProps().get("agentArgs"));
         ServiceLoader<TraceAgentInstrumetation> serviceLoader = ServiceLoader.load(TraceAgentInstrumetation.class);
 
