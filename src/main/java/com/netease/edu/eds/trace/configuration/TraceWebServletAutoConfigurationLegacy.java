@@ -9,8 +9,9 @@
 
 package com.netease.edu.eds.trace.configuration;
 
-import static javax.servlet.DispatcherType.*;
-
+import brave.http.HttpTracing;
+import com.netease.edu.eds.trace.constants.BeanNameConstants;
+import com.netease.edu.eds.trace.instrument.http.*;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -25,10 +26,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.Ordered;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.netease.edu.eds.trace.constants.BeanNameConstants;
-import com.netease.edu.eds.trace.instrument.http.*;
-
-import brave.http.HttpTracing;
+import static javax.servlet.DispatcherType.*;
 
 /**
  * {@link org.springframework.boot.autoconfigure.EnableAutoConfiguration Auto-configuration} enables tracing to HTTP
