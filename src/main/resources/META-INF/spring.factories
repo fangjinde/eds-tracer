@@ -12,3 +12,7 @@ com.netease.edu.eds.trace.configuration.EduTraceRabbitAutoconfiguration,\
 com.netease.edu.eds.trace.configuration.TraceAsyncAutoConfiguration,\
 com.netease.edu.eds.trace.configuration.TraceDdbAutoConfiguration
 
+# SpringApplicationRunListener
+org.springframework.boot.SpringApplicationRunListener=\
+com.netease.edu.eds.trace.boot.listener.DeferedInstrumentationSpringApplicationRunListener
+
