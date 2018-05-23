@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.Ordered;
+import org.springframework.core.env.Environment;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import static javax.servlet.DispatcherType.*;
@@ -74,10 +75,11 @@ public class TraceWebServletAutoConfigurationLegacy {
     @Bean
     @ConditionalOnMissingBean(name = BeanNameConstants.TRACE_FILTER)
     public FilterRegistrationBean traceFilter(HttpTracing httpTracing, SkipUriMatcher skipUriMatcher,
-                                              WebDebugMatcher webDebugMatcher) {
+                                              WebDebugMatcher webDebugMatcher, Environment environment) {
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(TracingFilter.create(httpTracing,
                                                                                                         skipUriMatcher,
-                                                                                                        webDebugMatcher));
+                                                                                                        webDebugMatcher,
+                                                                                                        environment));
         filterRegistrationBean.setDispatcherTypes(ASYNC, ERROR, FORWARD, INCLUDE, REQUEST);
         filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         return filterRegistrationBean;

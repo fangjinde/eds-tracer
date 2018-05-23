@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import zipkin2.Endpoint;
 
 import java.net.InetSocketAddress;
@@ -32,6 +33,12 @@ public final class DubboTraceFilter implements Filter {
     Tracer                                      tracer;
     TraceContext.Extractor<Map<String, String>> extractor;
     TraceContext.Injector<Map<String, String>>  injector;
+
+    Environment                                 environment;
+
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
+    }
 
     /**
      * {@link com.alibaba.dubbo.common.extension.ExtensionLoader} supplies the tracing implementation which must be
@@ -72,15 +79,20 @@ public final class DubboTraceFilter implements Filter {
         }
 
         if (!span.isNoop()) {
+
             span.kind(kind).start();
 
             span.kind(kind);
-            span.name(service + "/" + method);
+            span.name(service + "." + method);
 
             InetSocketAddress remoteAddress = rpcContext.getRemoteAddress();
             Endpoint.Builder remoteEndpoint = Endpoint.newBuilder().port(remoteAddress.getPort());
             if (!remoteEndpoint.parseIp(remoteAddress.getAddress())) {
                 remoteEndpoint.parseIp(remoteAddress.getHostName());
+            }
+
+            if (environment != null) {
+                span.tag("env", environment.getProperty("spring.application.name"));
             }
 
             Endpoint ep = remoteEndpoint.build();
