@@ -13,7 +13,6 @@ import brave.http.HttpTracing;
 import com.netease.edu.eds.trace.constants.BeanNameConstants;
 import com.netease.edu.eds.trace.instrument.http.*;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -38,7 +37,6 @@ import static javax.servlet.DispatcherType.*;
  */
 @Configuration
 @ConditionalOnProperty(value = "spring.sleuth.web.enabled", matchIfMissing = true)
-@ConditionalOnBean(HttpTracing.class)
 @AutoConfigureAfter(TraceHttpAutoConfiguration.class)
 public class TraceWebServletAutoConfigurationLegacy {
 

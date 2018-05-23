@@ -5,7 +5,6 @@ package com.netease.edu.eds.trace.configuration;/**
 import brave.Tracing;
 import com.netease.edu.eds.trace.instrument.memcache.MemcacheTracing;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.sleuth.autoconfig.TraceAutoConfiguration;
@@ -17,7 +16,6 @@ import org.springframework.context.annotation.Configuration;
  * @create 18/3/1
  */
 @Configuration
-@ConditionalOnBean(Tracing.class)
 @ConditionalOnProperty(name = "spring.sleuth.memcache.enabled", havingValue = "true", matchIfMissing = true)
 @AutoConfigureAfter(TraceAutoConfiguration.class)
 public class TraceMemcacheAutoConfiguration {

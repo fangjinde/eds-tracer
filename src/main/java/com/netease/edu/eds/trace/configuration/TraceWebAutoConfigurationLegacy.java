@@ -46,7 +46,6 @@ import java.util.regex.Pattern;
  */
 @Configuration
 @ConditionalOnProperty(value = "spring.sleuth.web.enabled", matchIfMissing = true)
-@ConditionalOnBean(Tracing.class)
 @AutoConfigureAfter(TraceHttpAutoConfiguration.class)
 @EnableConfigurationProperties(SleuthWebProperties.class)
 public class TraceWebAutoConfigurationLegacy {
