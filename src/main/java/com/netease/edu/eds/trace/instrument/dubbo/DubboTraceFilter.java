@@ -13,7 +13,11 @@ import com.alibaba.dubbo.remoting.exchange.ResponseCallback;
 import com.alibaba.dubbo.rpc.*;
 import com.alibaba.dubbo.rpc.protocol.dubbo.FutureAdapter;
 import com.alibaba.dubbo.rpc.support.RpcUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import zipkin2.Endpoint;
 
 import java.net.InetSocketAddress;
@@ -22,6 +26,8 @@ import java.util.concurrent.Future;
 
 @Activate(group = { Constants.PROVIDER, Constants.CONSUMER }, order = -8990)
 public final class DubboTraceFilter implements Filter {
+
+    private static Logger                       logger = LoggerFactory.getLogger(DubboTraceFilter.class);
 
     Tracer                                      tracer;
     TraceContext.Extractor<Map<String, String>> extractor;
@@ -38,6 +44,8 @@ public final class DubboTraceFilter implements Filter {
         extractor = dubboTracing.tracing().propagation().extractor(GETTER);
         injector = dubboTracing.tracing().propagation().injector(SETTER);
     }
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
@@ -81,6 +89,9 @@ public final class DubboTraceFilter implements Filter {
 
         boolean isOneway = false, deferFinish = false;
         try (Tracer.SpanInScope scope = tracer.withSpanInScope(span)) {
+
+            onValue("args", invocation.getArguments(), span);
+
             Result result = invoker.invoke(invocation);
             if (result.hasException()) {
                 onError(result.getException(), span);
@@ -91,6 +102,15 @@ public final class DubboTraceFilter implements Filter {
                 deferFinish = true;
                 ((FutureAdapter) future).getFuture().setCallback(new FinishSpanCallback(span));
             }
+
+            if (result != null) {
+                if (result.hasException()) {
+                    onError(result.getException(), span);
+                } else {
+                    onValue("return", result.getValue(), span);
+                }
+            }
+
             return result;
         } catch (Error | RuntimeException e) {
             onError(e, span);
@@ -101,6 +121,15 @@ public final class DubboTraceFilter implements Filter {
             } else if (!deferFinish) {
                 span.finish();
             }
+        }
+    }
+
+    public void onValue(String adviceName, Object value, Span span) {
+        try {
+            span.tag(adviceName, objectMapper.writeValueAsString(value));
+        } catch (JsonProcessingException e) {
+            logger.error("writeValueAsString error:", e);
+            span.tag(adviceName, adviceName + " value json serializing error. ");
         }
     }
 
