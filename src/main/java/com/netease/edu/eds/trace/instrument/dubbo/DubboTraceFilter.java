@@ -28,8 +28,9 @@ public final class DubboTraceFilter implements Filter {
     TraceContext.Injector<Map<String, String>>  injector;
 
     /**
-     * {@link com.alibaba.dubbo.common.extension.ExtensionLoader} supplies the tracing implementation which must be named "tracing". For
-     * example, if using the {@link com.alibaba.dubbo.config.spring.extension.SpringExtensionFactory}, only a bean named "tracing" will be
+     * {@link com.alibaba.dubbo.common.extension.ExtensionLoader} supplies the tracing implementation which must be
+     * named "tracing". For example, if using the
+     * {@link com.alibaba.dubbo.config.spring.extension.SpringExtensionFactory}, only a bean named "tracing" will be
      * injected.
      */
     public void setDubboTracing(DubboTracing dubboTracing) {
@@ -40,7 +41,16 @@ public final class DubboTraceFilter implements Filter {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        if (tracer == null) return invoker.invoke(invocation);
+        if (tracer == null) {
+            return invoker.invoke(invocation);
+        }
+
+        String service = invoker.getInterface().getSimpleName();
+        String method = RpcUtils.getMethodName(invocation);
+
+        if ("MonitorService".equalsIgnoreCase(service)) {
+            return invoker.invoke(invocation);
+        }
 
         RpcContext rpcContext = RpcContext.getContext();
         Kind kind = rpcContext.isProviderSide() ? Kind.SERVER : Kind.CLIENT;
@@ -50,15 +60,11 @@ public final class DubboTraceFilter implements Filter {
             injector.inject(span.context(), invocation.getAttachments());
         } else {
             TraceContextOrSamplingFlags extracted = extractor.extract(invocation.getAttachments());
-            span = extracted.context() != null
-                    ? tracer.joinSpan(extracted.context())
-                    : tracer.nextSpan(extracted);
+            span = extracted.context() != null ? tracer.joinSpan(extracted.context()) : tracer.nextSpan(extracted);
         }
 
         if (!span.isNoop()) {
             span.kind(kind).start();
-            String service = invoker.getInterface().getSimpleName();
-            String method = RpcUtils.getMethodName(invocation);
 
             span.kind(kind);
             span.name(service + "/" + method);
@@ -103,33 +109,33 @@ public final class DubboTraceFilter implements Filter {
         span.tag("dubbo_error", ExceptionStringUtils.getStackTraceString(error));
     }
 
-    static final Propagation.Getter<Map<String, String>, String> GETTER =
-            new Propagation.Getter<Map<String, String>, String>() {
+    static final Propagation.Getter<Map<String, String>, String> GETTER = new Propagation.Getter<Map<String, String>, String>() {
 
-                @Override
-                public String get(Map<String, String> carrier, String key) {
-                    return carrier.get(key);
-                }
+                                                                            @Override
+                                                                            public String get(Map<String, String> carrier,
+                                                                                              String key) {
+                                                                                return carrier.get(key);
+                                                                            }
 
-                @Override
-                public String toString() {
-                    return "Map::get";
-                }
-            };
+                                                                            @Override
+                                                                            public String toString() {
+                                                                                return "Map::get";
+                                                                            }
+                                                                        };
 
-    static final Propagation.Setter<Map<String, String>, String> SETTER =
-            new Propagation.Setter<Map<String, String>, String>() {
+    static final Propagation.Setter<Map<String, String>, String> SETTER = new Propagation.Setter<Map<String, String>, String>() {
 
-                @Override
-                public void put(Map<String, String> carrier, String key, String value) {
-                    carrier.put(key, value);
-                }
+                                                                            @Override
+                                                                            public void put(Map<String, String> carrier,
+                                                                                            String key, String value) {
+                                                                                carrier.put(key, value);
+                                                                            }
 
-                @Override
-                public String toString() {
-                    return "Map::set";
-                }
-            };
+                                                                            @Override
+                                                                            public String toString() {
+                                                                                return "Map::set";
+                                                                            }
+                                                                        };
 
     static final class FinishSpanCallback implements ResponseCallback {
 
@@ -139,11 +145,13 @@ public final class DubboTraceFilter implements Filter {
             this.span = span;
         }
 
-        @Override public void done(Object response) {
+        @Override
+        public void done(Object response) {
             span.finish();
         }
 
-        @Override public void caught(Throwable exception) {
+        @Override
+        public void caught(Throwable exception) {
             onError(exception, span);
             span.finish();
         }
