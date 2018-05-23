@@ -23,7 +23,8 @@ import org.springframework.context.annotation.Configuration;
 public class TraceDubboAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean DubboTracing dubboTracing(Tracing tracing) {
+    @ConditionalOnMissingBean
+    public DubboTracing dubboTracing(Tracing tracing) {
         return DubboTracing.create(tracing);
     }
 }

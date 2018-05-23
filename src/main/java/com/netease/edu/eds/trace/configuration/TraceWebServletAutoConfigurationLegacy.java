@@ -48,7 +48,7 @@ public class TraceWebServletAutoConfigurationLegacy {
     @Configuration
     @ConditionalOnClass(WebMvcConfigurer.class)
     @Import(TraceWebMvcConfigurerLegacy.class)
-    protected static class TraceWebMvcAutoConfiguration {
+    public static class TraceWebMvcAutoConfiguration {
 
     }
 

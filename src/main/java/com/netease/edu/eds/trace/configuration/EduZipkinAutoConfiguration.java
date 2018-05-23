@@ -79,13 +79,13 @@ public class EduZipkinAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    ReporterMetrics sleuthReporterMetrics() {
+    public ReporterMetrics sleuthReporterMetrics() {
         return new TraceSentryReporter();
     }
 
     @Configuration
     @ConditionalOnClass(RefreshScope.class)
-    protected static class RefreshScopedProbabilityBasedSamplerConfiguration {
+    public static class RefreshScopedProbabilityBasedSamplerConfiguration {
 
         @Bean
         @RefreshScope
@@ -97,7 +97,7 @@ public class EduZipkinAutoConfiguration {
 
     @Configuration
     @ConditionalOnMissingClass("org.springframework.cloud.context.config.annotation.RefreshScope")
-    protected static class NonRefreshScopeProbabilityBasedSamplerConfiguration {
+    public static class NonRefreshScopeProbabilityBasedSamplerConfiguration {
 
         @Bean
         @ConditionalOnMissingBean

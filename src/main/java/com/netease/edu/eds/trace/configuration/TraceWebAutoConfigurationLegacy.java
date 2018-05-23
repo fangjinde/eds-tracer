@@ -65,7 +65,7 @@ public class TraceWebAutoConfigurationLegacy {
     @ConditionalOnClass(ManagementServerProperties.class)
     @EnableConfigurationProperties(SleuthWebProperties.class)
     @ConditionalOnMissingBean(SkipUriMatcher.class)
-    static class SkipPatternProviderConfig {
+    public static class SkipPatternProviderConfig {
 
         @Bean
         @ConditionalOnBean(ManagementServerProperties.class)
@@ -82,7 +82,7 @@ public class TraceWebAutoConfigurationLegacy {
          * Sets or appends {@link ManagementServerProperties#getContextPath()} to the skip
          * pattern. If neither is available then sets the default one
          */
-        static Pattern getPatternForManagementServerProperties(
+       public static Pattern getPatternForManagementServerProperties(
                 ManagementServerProperties managementServerProperties,
                 SleuthWebProperties sleuthWebProperties) {
             String skipPattern = sleuthWebProperties.getSkipPattern();

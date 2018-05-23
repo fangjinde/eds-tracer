@@ -14,7 +14,6 @@ import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
-import org.springframework.beans.factory.BeanFactory;
 
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
@@ -62,11 +61,7 @@ public class MemcacheTraceIntrumentation implements TraceAgentInstrumetation {
                 }
             }
 
-            MemcacheTracing memcacheTracing = null;
-            BeanFactory beanFactory = SpringBeanFactorySupport.getBeanFactory();
-            if (beanFactory != null) {
-                memcacheTracing = beanFactory.getBean(MemcacheTracing.class);
-            }
+            MemcacheTracing memcacheTracing = SpringBeanFactorySupport.getBean(MemcacheTracing.class);
 
             if (memcacheTracing == null) {
                 try {

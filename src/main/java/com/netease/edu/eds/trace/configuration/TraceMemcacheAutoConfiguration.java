@@ -23,7 +23,8 @@ import org.springframework.context.annotation.Configuration;
 public class TraceMemcacheAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean MemcacheTracing memcacheTracing(Tracing tracing) {
+    @ConditionalOnMissingBean
+    public MemcacheTracing memcacheTracing(Tracing tracing) {
         return MemcacheTracing.newBuilder(tracing).build();
     }
 }

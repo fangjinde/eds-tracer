@@ -14,7 +14,6 @@ import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
-import org.springframework.beans.factory.BeanFactory;
 import redis.clients.jedis.JedisCommands;
 
 import java.lang.instrument.Instrumentation;
@@ -40,15 +39,14 @@ public class JedisClientIntrumentation implements TraceAgentInstrumetation {
     }
 
     public static class TraceInterceptor {
-        static ObjectMapper objectMapper = new ObjectMapper();
-        @RuntimeType
-        public static Object around(@AllArguments Object[] args, @SuperCall Callable<Object> callable,@Origin Method method){
 
-            RedisTracing redisTracing = null;
-            BeanFactory beanFactory = SpringBeanFactorySupport.getBeanFactory();
-            if (beanFactory != null) {
-                redisTracing = beanFactory.getBean(RedisTracing.class);
-            }
+        static ObjectMapper objectMapper = new ObjectMapper();
+
+        @RuntimeType
+        public static Object around(@AllArguments Object[] args, @SuperCall Callable<Object> callable,
+                                    @Origin Method method) {
+
+            RedisTracing redisTracing = SpringBeanFactorySupport.getBean(RedisTracing.class);
 
             if (redisTracing == null) {
                 try {

@@ -9,7 +9,6 @@ import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
-import org.springframework.beans.factory.BeanFactory;
 
 import java.lang.instrument.Instrumentation;
 import java.util.Map;
@@ -37,11 +36,7 @@ public class DBTransactionManagerInstrumentation implements TraceAgentInstrumeta
         private static ThreadLocal<Tracer.SpanInScope> transactionSpanContext = new ThreadLocal<>();
 
         private static DdbTracing getDdbTracingAndFalltoSuperCallIfMissing(Callable<Void> callable) {
-            DdbTracing ddbTracing = null;
-            BeanFactory beanFactory = SpringBeanFactorySupport.getBeanFactory();
-            if (beanFactory != null) {
-                ddbTracing = beanFactory.getBean(DdbTracing.class);
-            }
+            DdbTracing ddbTracing = SpringBeanFactorySupport.getBean(DdbTracing.class);
 
             if (ddbTracing == null) {
                 callSuper(callable);

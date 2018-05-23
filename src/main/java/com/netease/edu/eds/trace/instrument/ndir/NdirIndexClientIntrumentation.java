@@ -17,7 +17,6 @@ import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.matcher.ElementMatchers;
-import org.springframework.beans.factory.BeanFactory;
 import zipkin2.Endpoint;
 
 import java.lang.instrument.Instrumentation;
@@ -48,11 +47,7 @@ public class NdirIndexClientIntrumentation implements TraceAgentInstrumetation {
                                                    @Argument(1) String url, @SuperCall Runnable runnable)
                 throws NDirException {
 
-            NdirTracing ndirTracing = null;
-            BeanFactory beanFactory = SpringBeanFactorySupport.getBeanFactory();
-            if (beanFactory != null) {
-                ndirTracing = beanFactory.getBean(NdirTracing.class);
-            }
+            NdirTracing ndirTracing = SpringBeanFactorySupport.getBean(NdirTracing.class);
 
             URI uri = null;
             try {

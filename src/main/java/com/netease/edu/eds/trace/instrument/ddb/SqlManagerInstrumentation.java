@@ -18,7 +18,6 @@ import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.BeanFactory;
 
 import java.lang.instrument.Instrumentation;
 import java.util.ArrayList;
@@ -180,12 +179,7 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
         }
 
         private static DdbTracing getDdbTracing() {
-            DdbTracing ddbTracing = null;
-            BeanFactory beanFactory = SpringBeanFactorySupport.getBeanFactory();
-            if (beanFactory != null) {
-                ddbTracing = beanFactory.getBean(DdbTracing.class);
-            }
-
+            DdbTracing ddbTracing = SpringBeanFactorySupport.getBean(DdbTracing.class);
             return ddbTracing;
         }
 

@@ -13,7 +13,6 @@ import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.*;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
@@ -70,11 +69,7 @@ public class RedisTemplateIntrumentation implements TraceAgentInstrumetation {
 
                                     @SuperCall Callable<Object> callable) {
 
-            RedisTracing redisTracing = null;
-            BeanFactory beanFactory = SpringBeanFactorySupport.getBeanFactory();
-            if (beanFactory != null) {
-                redisTracing = beanFactory.getBean(RedisTracing.class);
-            }
+            RedisTracing redisTracing = SpringBeanFactorySupport.getBean(RedisTracing.class);
 
             if (redisTracing == null) {
                 try {
