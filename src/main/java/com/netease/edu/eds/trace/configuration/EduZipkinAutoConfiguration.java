@@ -12,11 +12,14 @@ package com.netease.edu.eds.trace.configuration;/**
 
 import brave.sampler.Sampler;
 import com.netease.edu.eds.trace.sentry.TraceSentryReporter;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.sleuth.autoconfig.TraceAutoConfiguration;
@@ -25,16 +28,17 @@ import org.springframework.cloud.sleuth.sampler.SamplerProperties;
 import org.springframework.cloud.sleuth.zipkin2.DefaultZipkinRestTemplateCustomizer;
 import org.springframework.cloud.sleuth.zipkin2.ZipkinProperties;
 import org.springframework.cloud.sleuth.zipkin2.ZipkinRestTemplateCustomizer;
-import org.springframework.cloud.sleuth.zipkin2.sender.ZipkinSenderConfigurationImportSelector;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import zipkin2.Span;
 import zipkin2.reporter.AsyncReporter;
 import zipkin2.reporter.Reporter;
 import zipkin2.reporter.ReporterMetrics;
 import zipkin2.reporter.Sender;
+import zipkin2.reporter.kafka11.KafkaSender;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,7 +59,6 @@ import java.util.concurrent.TimeUnit;
 @EnableConfigurationProperties({ ZipkinProperties.class, SamplerProperties.class })
 @ConditionalOnProperty(value = "spring.zipkin.enabled", matchIfMissing = true)
 @AutoConfigureBefore(TraceAutoConfiguration.class)
-@Import(ZipkinSenderConfigurationImportSelector.class)
 public class EduZipkinAutoConfiguration {
 
     /**
@@ -69,6 +72,40 @@ public class EduZipkinAutoConfiguration {
                                                                   // memory bounds
                             .messageTimeout(zipkin.getMessageTimeout(),
                                             TimeUnit.SECONDS).metrics(reporterMetrics).build(zipkin.getEncoder());
+    }
+
+    @Configuration
+    @ConditionalOnClass(ByteArraySerializer.class)
+    @ConditionalOnMissingBean(Sender.class)
+    @ConditionalOnProperty(value = "spring.zipkin.sender.type", havingValue = "kafka", matchIfMissing = true)
+    static class ZipkinKafkaSenderConfiguration {
+
+        @Value("${spring.zipkin.kafka.topic:zipkin}")
+        private String topic;
+
+        @Bean
+        Sender kafkaSender(KafkaProperties config) {
+            Map<String, Object> properties = config.buildProducerProperties();
+            properties.put("key.serializer", ByteArraySerializer.class.getName());
+            properties.put("value.serializer", ByteArraySerializer.class.getName());
+            // Kafka expects the input to be a String, but KafkaProperties returns a list
+            Object bootstrapServers = properties.get("bootstrap.servers");
+            if (bootstrapServers instanceof List) {
+                properties.put("bootstrap.servers", join((List) bootstrapServers));
+            }
+            return KafkaSender.newBuilder().topic(this.topic).overrides(properties).build();
+        }
+
+        static String join(List<?> parts) {
+            StringBuilder to = new StringBuilder();
+            for (int i = 0, length = parts.size(); i < length; i++) {
+                to.append(parts.get(i));
+                if (i + 1 < length) {
+                    to.append(',');
+                }
+            }
+            return to.toString();
+        }
     }
 
     @Bean
