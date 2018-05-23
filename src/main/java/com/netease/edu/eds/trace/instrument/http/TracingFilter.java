@@ -83,7 +83,7 @@ public final class TracingFilter implements Filter {
         Span span = handler.handleReceive(extractor, httpRequest);
 
         if (span != null && !span.isNoop() && environment != null) {
-            span.tag("env", environment.getProperty("spring.application.name"));
+            span.tag("env", environment.getProperty("spring.profiles.active"));
         }
 
         // Add attributes for explicit access to customization or span context
