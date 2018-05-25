@@ -1,9 +1,9 @@
 package com.netease.edu.eds.trace.instrument.memcache;
 
 import brave.Span;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
+import com.netease.edu.eds.trace.utils.JsonUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
@@ -42,7 +42,6 @@ public class MemcachedConnectionTraceIntrumentation implements TraceAgentInstrum
 
     public static class TraceInterceptor {
 
-        static ObjectMapper objectMapper = new ObjectMapper();
 
         public static void addOperation(@Argument(0) MemcachedNode node, @Argument(1) Operation o,
                                         @SuperCall Callable<Void> callable) {
@@ -86,7 +85,7 @@ public class MemcachedConnectionTraceIntrumentation implements TraceAgentInstrum
                     }
 
                     if (index > 0) {
-                        span.tag("AllNodes", objectMapper.writeValueAsString(hostLists));
+                        span.tag("AllNodes", JsonUtils.toJson(hostLists));
                     }
 
                 }

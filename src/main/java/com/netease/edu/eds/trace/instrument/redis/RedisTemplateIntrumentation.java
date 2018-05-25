@@ -10,6 +10,7 @@ import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
+import com.netease.edu.eds.trace.utils.JsonUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.*;
@@ -61,8 +62,7 @@ public class RedisTemplateIntrumentation implements TraceAgentInstrumetation {
 
     public static class TraceInterceptor {
 
-        static ObjectMapper objectMapper = new ObjectMapper();
-        static String       KEY_TEST     = "keyTest";
+        static String KEY_TEST = "keyTest";
 
         @RuntimeType
         public static Object around(@AllArguments Object[] args, @This Object proxy, @Origin Method method,
@@ -90,12 +90,8 @@ public class RedisTemplateIntrumentation implements TraceAgentInstrumetation {
                 span.kind(Span.Kind.CLIENT).name(method.getDeclaringClass().getSimpleName() + "." + method.getName());
                 addNamespaceTag(proxy, span);
 
-                try {
-                    String argsJson = objectMapper.writeValueAsString(args);
-                    span.tag("args", argsJson);
-                } catch (JsonProcessingException e) {
-
-                }
+                String argsJson = JsonUtils.toJson(args);
+                span.tag("args", argsJson);
                 span.start();
             }
 

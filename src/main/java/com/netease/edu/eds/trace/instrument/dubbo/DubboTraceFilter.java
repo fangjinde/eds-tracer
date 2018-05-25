@@ -13,9 +13,8 @@ import com.alibaba.dubbo.remoting.exchange.ResponseCallback;
 import com.alibaba.dubbo.rpc.*;
 import com.alibaba.dubbo.rpc.protocol.dubbo.FutureAdapter;
 import com.alibaba.dubbo.rpc.support.RpcUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
+import com.netease.edu.eds.trace.utils.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -52,7 +51,6 @@ public final class DubboTraceFilter implements Filter {
         injector = dubboTracing.tracing().propagation().injector(SETTER);
     }
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
@@ -138,8 +136,8 @@ public final class DubboTraceFilter implements Filter {
 
     public void onValue(String adviceName, Object value, Span span) {
         try {
-            span.tag(adviceName, objectMapper.writeValueAsString(value));
-        } catch (JsonProcessingException e) {
+            span.tag(adviceName, JsonUtils.toJson(value));
+        } catch (Exception e) {
             logger.error("writeValueAsString error:", e);
             span.tag(adviceName, adviceName + " value json serializing error. ");
         }

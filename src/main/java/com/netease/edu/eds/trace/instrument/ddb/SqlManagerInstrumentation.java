@@ -2,7 +2,6 @@ package com.netease.edu.eds.trace.instrument.ddb;
 
 import brave.Span;
 import brave.Tracer;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netease.backend.db.DBResultSet;
 import com.netease.backend.db.common.utils.OneBasedArray;
 import com.netease.backend.db.result.Record;
@@ -10,6 +9,7 @@ import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
+import com.netease.edu.eds.trace.utils.JsonUtils;
 import com.netease.edu.eds.trace.utils.SpanStringUtils;
 import com.netease.framework.dbsupport.impl.DBResource;
 import net.bytebuddy.agent.builder.AgentBuilder;
@@ -55,7 +55,6 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
         private static final String       SQL_IN_PATTERN = "in[\\s]+\\(((?!select|SELECT)[^\\)])+\\)";
         private static final Pattern      pattern        = Pattern.compile(SQL_IN_PATTERN);
 
-        private static final ObjectMapper objectMapper   = new ObjectMapper();
 
         private static <T> T tracedExecute(DdbTracing ddbTracing, String sql, List<Object> params,
                                            Callable<T> callable) {
@@ -87,12 +86,12 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
                             }
 
                         }
-                        retJson = objectMapper.writeValueAsString(rowsList);
+                        retJson = JsonUtils.toJson(rowsList);
                         ddbSpan.tag("return", retJson);
 
                     }
                 } else {
-                    retJson = objectMapper.writeValueAsString(result);
+                    retJson =JsonUtils.toJson(result);
                     ddbSpan.tag("return", retJson);
                 }
 
@@ -211,7 +210,7 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
             try {
                 DdbTraceContext.setSpan(ddbSpan);
                 Long result = callable.call();
-                String retJson = objectMapper.writeValueAsString(result);
+                String retJson = JsonUtils.toJson(result);
                 ddbSpan.tag("return", retJson);
                 return result;
             } catch (Exception e) {

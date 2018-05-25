@@ -8,6 +8,7 @@ import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
+import com.netease.edu.eds.trace.utils.JsonUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
@@ -40,8 +41,6 @@ public class JedisClientIntrumentation implements TraceAgentInstrumetation {
 
     public static class TraceInterceptor {
 
-        static ObjectMapper objectMapper = new ObjectMapper();
-
         @RuntimeType
         public static Object around(@AllArguments Object[] args, @SuperCall Callable<Object> callable,
                                     @Origin Method method) {
@@ -66,12 +65,8 @@ public class JedisClientIntrumentation implements TraceAgentInstrumetation {
             if (!span.isNoop()) {
                 span.kind(Span.Kind.CLIENT).name(method.getDeclaringClass().getSimpleName() + "." + method.getName());
 
-                try {
-                    String argsJson = objectMapper.writeValueAsString(args);
-                    span.tag("args", argsJson);
-                } catch (JsonProcessingException e) {
-
-                }
+                String argsJson = JsonUtils.toJson(args);
+                span.tag("args", argsJson);
                 span.start();
             }
 
