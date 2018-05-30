@@ -78,6 +78,7 @@ public class DBTransactionManagerInstrumentation implements TraceAgentInstrumeta
                 return;
             }
 
+            callSuper(callable);
             // add trace
             if (!b) {
                 Span ddbTransactionSpan = ddbTracing.tracing().tracer().nextSpan();
