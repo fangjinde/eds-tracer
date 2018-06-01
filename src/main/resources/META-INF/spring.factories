@@ -13,6 +13,9 @@ com.netease.edu.eds.trace.configuration.TraceAsyncAutoConfiguration,\
 com.netease.edu.eds.trace.configuration.TraceDdbAutoConfiguration
 
 # SpringApplicationRunListener
-org.springframework.boot.SpringApplicationRunListener=\
-com.netease.edu.eds.trace.boot.listener.DeferedInstrumentationSpringApplicationRunListener
+#org.springframework.boot.SpringApplicationRunListener=\
+#com.netease.edu.eds.trace.boot.listener.DeferedInstrumentationSpringApplicationRunListener
 
+# ApplicationContextInitializer
+org.springframework.context.ApplicationContextInitializer=\
+com.netease.edu.eds.trace.boot.PluginLoaderApplicationContextInitializer
