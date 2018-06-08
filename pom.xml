@@ -309,12 +309,12 @@
 
     <distributionManagement>
         <repository>
-            <id>repo</id>
+            <id>libs-releases</id>
             <name>repo</name>
             <url>http://mvn.hz.netease.com/artifactory/libs-releases</url>
         </repository>
         <snapshotRepository>
-            <id>snapshots</id>
+            <id>libs-snapshots</id>
             <name>snapshots-only</name>
             <url>http://mvn.hz.netease.com/artifactory/libs-snapshots</url>
         </snapshotRepository>

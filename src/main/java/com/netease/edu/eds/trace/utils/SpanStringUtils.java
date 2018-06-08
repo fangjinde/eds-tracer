@@ -2,6 +2,8 @@ package com.netease.edu.eds.trace.utils;/**
  * Created by hzfjd on 18/3/27.
  */
 
+import brave.Span;
+
 /**
  * @author hzfjd
  * @create 18/3/27
@@ -32,6 +34,12 @@ public class SpanStringUtils {
         }
 
         return tag;
+    }
+
+    public static void safeTag(Span span, String name, String value) {
+        if (span != null && !span.isNoop()) {
+            span.tag(name, value);
+        }
     }
 
 }

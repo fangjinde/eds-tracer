@@ -40,7 +40,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 
     @Bean(name = TRACE_HANDLER_INTERCEPTOR_BEAN_NAME)
     public HandlerInterceptor traceHandlerInterceptor(HttpTracing httpTracing) {
-        return new SpanCustomizingHandlerInterceptor();
+        return new spancustomizinghandlerinterceptor();
     }
 
     @Override
