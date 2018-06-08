@@ -6,12 +6,16 @@ package com.netease.edu.eds.trace.utils;
  **/
 public class ExceptionHandler {
 
-    public static void throwExceptionAndMakeSureRuntime(Exception e) {
+    public static void throwExceptionAndMakeSureRuntime(Exception e) throws RuntimeException {
+        throw wrapToRuntimeException(e);
+    }
+
+    public static RuntimeException wrapToRuntimeException(Exception e) {
         if (e instanceof RuntimeException) {
-            throw (RuntimeException) e;
+            return (RuntimeException) e;
 
         } else {
-            throw new RuntimeException("wrap to RuntimeException", e);
+            return new RuntimeException("wrap to RuntimeException", e);
         }
     }
 }
