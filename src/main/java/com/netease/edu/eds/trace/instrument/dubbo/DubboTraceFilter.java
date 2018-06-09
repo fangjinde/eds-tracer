@@ -51,7 +51,6 @@ public final class DubboTraceFilter implements Filter {
         injector = dubboTracing.tracing().propagation().injector(SETTER);
     }
 
-
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         if (tracer == null) {
@@ -100,30 +99,33 @@ public final class DubboTraceFilter implements Filter {
         boolean isOneway = false, deferFinish = false;
         try (Tracer.SpanInScope scope = tracer.withSpanInScope(span)) {
 
-            onValue("args", invocation.getArguments(), span);
+            if (rpcContext.isConsumerSide()) {
+                onValue("args", invocation.getArguments(), span, rpcContext.isConsumerSide());
+            }
 
             Result result = invoker.invoke(invocation);
             if (result.hasException()) {
-                onError(result.getException(), span);
+                onError(result.getException(), span, rpcContext.isConsumerSide());
             }
             isOneway = RpcUtils.isOneway(invoker.getUrl(), invocation);
             Future<Object> future = rpcContext.getFuture(); // the case on async client invocation
             if (future instanceof FutureAdapter) {
                 deferFinish = true;
-                ((FutureAdapter) future).getFuture().setCallback(new FinishSpanCallback(span));
+                ((FutureAdapter) future).getFuture().setCallback(new FinishSpanCallback(span,
+                                                                                        rpcContext.isConsumerSide()));
             }
 
             if (result != null) {
                 if (result.hasException()) {
-                    onError(result.getException(), span);
+                    onError(result.getException(), span, rpcContext.isConsumerSide());
                 } else {
-                    onValue("return", result.getValue(), span);
+                    onValue("return", result.getValue(), span, rpcContext.isConsumerSide());
                 }
             }
 
             return result;
         } catch (Error | RuntimeException e) {
-            onError(e, span);
+            onError(e, span, rpcContext.isConsumerSide());
             throw e;
         } finally {
             if (isOneway) {
@@ -134,18 +136,25 @@ public final class DubboTraceFilter implements Filter {
         }
     }
 
-    public void onValue(String adviceName, Object value, Span span) {
-        try {
-            span.tag(adviceName, JsonUtils.toJson(value));
-        } catch (Exception e) {
-            logger.error("writeValueAsString error:", e);
-            span.tag(adviceName, adviceName + " value json serializing error. ");
+    public void onValue(String adviceName, Object value, Span span, boolean consumerSide) {
+        if (consumerSide) {
+            try {
+
+                span.tag(adviceName, JsonUtils.toJson(value));
+            } catch (Exception e) {
+                logger.error("writeValueAsString error:", e);
+                span.tag(adviceName, adviceName + " value json serializing error. ");
+            }
         }
+
     }
 
-    static void onError(Throwable error, SpanCustomizer span) {
-        span.tag("has_error", String.valueOf(true));
-        span.tag("dubbo_error", ExceptionStringUtils.getStackTraceString(error));
+    static void onError(Throwable error, SpanCustomizer span, boolean consumerSide) {
+        if (consumerSide) {
+            span.tag("has_error", String.valueOf(true));
+            span.tag("dubbo_error", ExceptionStringUtils.getStackTraceString(error));
+        }
+
     }
 
     static final Propagation.Getter<Map<String, String>, String> GETTER = new Propagation.Getter<Map<String, String>, String>() {
@@ -178,10 +187,12 @@ public final class DubboTraceFilter implements Filter {
 
     static final class FinishSpanCallback implements ResponseCallback {
 
-        final Span span;
+        final Span    span;
+        final boolean consumerSide;
 
-        FinishSpanCallback(Span span) {
+        FinishSpanCallback(Span span, boolean consumerSide) {
             this.span = span;
+            this.consumerSide = consumerSide;
         }
 
         @Override
@@ -191,7 +202,7 @@ public final class DubboTraceFilter implements Filter {
 
         @Override
         public void caught(Throwable exception) {
-            onError(exception, span);
+            onError(exception, span, consumerSide);
             span.finish();
         }
     }
