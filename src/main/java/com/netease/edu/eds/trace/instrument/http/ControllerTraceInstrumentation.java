@@ -20,6 +20,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -39,7 +40,7 @@ public class ControllerTraceInstrumentation implements TraceAgentInstrumetation 
 
     @Override
     public void premain(Map<String, String> props, Instrumentation inst) {
-        new AgentBuilder.Default().type(ElementMatchers.isAnnotatedWith(Controller.class).or(ElementMatchers.inheritsAnnotation(Controller.class))
+        new AgentBuilder.Default().type(ElementMatchers.isAnnotatedWith(Controller.class).or(ElementMatchers.isAnnotatedWith(RestController.class))
 
         ).transform((builder, typeDescription, classloader, javaModule) -> builder.method(
 
