@@ -1,12 +1,7 @@
 package com.netease.edu.eds.trace.instrument.rabbit;/**
- * Created by hzfjd on 18/4/12.
- */
+                                                     * Created by hzfjd on 18/4/12.
+                                                     */
 
-import brave.Span;
-import brave.Tracer;
-import brave.propagation.Propagation;
-import brave.propagation.TraceContext;
-import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -14,6 +9,13 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
+
+import com.rabbitmq.client.Channel;
+
+import brave.Span;
+import brave.Tracer;
+import brave.propagation.Propagation;
+import brave.propagation.TraceContext;
 import zipkin2.Endpoint;
 
 /**
@@ -32,32 +34,38 @@ public class TracedRabbitTemplate extends RabbitTemplate {
 
     static final Propagation.Setter<MessageProperties, String> SETTER = new Propagation.Setter<MessageProperties, String>() {
 
-        @Override public void put(MessageProperties carrier, String key, String value) {
-            carrier.setHeader(key, value);
-        }
+                                                                          @Override
+                                                                          public void put(MessageProperties carrier,
+                                                                                          String key, String value) {
+                                                                              carrier.setHeader(key, value);
+                                                                          }
 
-        @Override public String toString() {
-            return "MessageProperties::setHeader";
-        }
-    };
+                                                                          @Override
+                                                                          public String toString() {
+                                                                              return "MessageProperties::setHeader";
+                                                                          }
+                                                                      };
 
-    private RabbitTracing                            rabbitTracing;
-    private TraceContext.Injector<MessageProperties> injector;
+    private RabbitTracing                                      rabbitTracing;
+    private TraceContext.Injector<MessageProperties>           injector;
 
-    @Override public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         super.setBeanFactory(beanFactory);
         rabbitTracing = beanFactory.getBean(RabbitTracing.class);
         injector = rabbitTracing.tracing().propagation().injector(SETTER);
     }
 
-    @Override protected void doSend(Channel channel, String exchange, String routingKey, Message message,
-                                    boolean mandatory, CorrelationData correlationData) throws Exception {
+    @Override
+    protected void doSend(Channel channel, String exchange, String routingKey, Message message, boolean mandatory,
+                          CorrelationData correlationData) throws Exception {
 
         Tracer tracer = rabbitTracing.tracing().tracer();
         Span span = tracer.nextSpan().kind(Span.Kind.PRODUCER).name("publish");
         if (!span.isNoop()) {
 
             RabbitTracing.tagSendMessageInfo(span, exchange, routingKey);
+            RabbitTracing.tagMessagePayload(span, message.toString());
 
             Endpoint.Builder builder = Endpoint.newBuilder();
             if (rabbitTracing.remoteServiceName() != null) {

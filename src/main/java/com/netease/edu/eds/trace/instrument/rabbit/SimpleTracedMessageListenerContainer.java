@@ -1,6 +1,6 @@
 package com.netease.edu.eds.trace.instrument.rabbit;/**
- * Created by hzfjd on 18/4/12.
- */
+                                                     * Created by hzfjd on 18/4/12.
+                                                     */
 
 import brave.Span;
 import brave.Tracer;
@@ -34,20 +34,24 @@ public class SimpleTracedMessageListenerContainer extends SimpleMessageListenerC
 
     static final Propagation.Getter<MessageProperties, String> GETTER = new Propagation.Getter<MessageProperties, String>() {
 
-        @Override public String get(MessageProperties carrier, String key) {
-            return (String) carrier.getHeaders().get(key);
-        }
+                                                                          @Override
+                                                                          public String get(MessageProperties carrier,
+                                                                                            String key) {
+                                                                              return (String) carrier.getHeaders().get(key);
+                                                                          }
 
-        @Override public String toString() {
-            return "MessageProperties::getHeader";
-        }
-    };
+                                                                          @Override
+                                                                          public String toString() {
+                                                                              return "MessageProperties::getHeader";
+                                                                          }
+                                                                      };
 
-    private RabbitTracing rabbitTracing;
+    private RabbitTracing                                      rabbitTracing;
 
-    private TraceContext.Extractor<MessageProperties> extractor;
+    private TraceContext.Extractor<MessageProperties>          extractor;
 
-    @Override protected void doInitialize() throws Exception {
+    @Override
+    protected void doInitialize() throws Exception {
         super.doInitialize();
         rabbitTracing = getApplicationContext().getBean(RabbitTracing.class);
         if (rabbitTracing != null) {
@@ -56,18 +60,20 @@ public class SimpleTracedMessageListenerContainer extends SimpleMessageListenerC
 
     }
 
-    @Override protected void invokeListener(Channel channel, Message message) throws Exception {
+    @Override
+    protected void invokeListener(Channel channel, Message message) throws Exception {
 
         TraceContextOrSamplingFlags extracted = extractTraceContextAndRemoveHeaders(message);
 
         Tracer tracer = rabbitTracing.tracing().tracer();
         // named for BlockingQueueConsumer.nextMessage, which we can't currently see
         Span consumerSpan = tracer.nextSpan(extracted).kind(CONSUMER).name("on-message");
-        //Span listenerSpan = tracer.newChild(consumerSpan.context()).name("on-message");
+        // Span listenerSpan = tracer.newChild(consumerSpan.context()).name("on-message");
 
         if (!consumerSpan.isNoop()) {
             consumerSpan.start();
             RabbitTracing.tagReceivedMessageProperties(consumerSpan, message.getMessageProperties());
+            RabbitTracing.tagMessagePayload(consumerSpan, message.toString());
             Endpoint.Builder builder = Endpoint.newBuilder();
             if (rabbitTracing.remoteServiceName() != null) {
                 builder.serviceName(rabbitTracing.remoteServiceName());

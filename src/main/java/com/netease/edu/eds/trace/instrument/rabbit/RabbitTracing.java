@@ -1,11 +1,13 @@
 package com.netease.edu.eds.trace.instrument.rabbit;/**
- * Created by hzfjd on 18/4/12.
- */
+                                                     * Created by hzfjd on 18/4/12.
+                                                     */
+
+import org.springframework.amqp.core.MessageProperties;
+
+import com.google.auto.value.AutoValue;
 
 import brave.Span;
 import brave.Tracing;
-import com.google.auto.value.AutoValue;
-import org.springframework.amqp.core.MessageProperties;
 
 /**
  * @author hzfjd
@@ -14,10 +16,8 @@ import org.springframework.amqp.core.MessageProperties;
 @AutoValue
 public abstract class RabbitTracing {
 
-    static final String
-            RABBIT_EXCHANGE    = "rabbit.exchange",
-            RABBIT_ROUTING_KEY = "rabbit.routing_key",
-            RABBIT_QUEUE       = "rabbit.queue";
+    static final String RABBIT_EXCHANGE = "rabbit.exchange", RABBIT_ROUTING_KEY = "rabbit.routing_key",
+            RABBIT_QUEUE = "rabbit.queue", RABBIT_PAYLOAD = "rabbit.payload";
 
     public abstract String remoteServiceName();
 
@@ -58,8 +58,14 @@ public abstract class RabbitTracing {
         maybeTag(span, RabbitTracing.RABBIT_QUEUE, messageProperties.getConsumerQueue());
     }
 
+    public static void tagMessagePayload(Span span, String payload) {
+        maybeTag(span, RabbitTracing.RABBIT_PAYLOAD, payload);
+    }
+
     public static void maybeTag(Span span, String tag, String value) {
-        if (value != null) span.tag(tag, value);
+        if (value != null) {
+            span.tag(tag, value);
+        }
     }
 
     public static void tagErrorSpan(Span span, Throwable t) {
