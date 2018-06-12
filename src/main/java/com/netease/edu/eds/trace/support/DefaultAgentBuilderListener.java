@@ -35,8 +35,8 @@ public class DefaultAgentBuilderListener extends AgentBuilder.Listener.Adapter {
     @Override
     public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded,
                         Throwable throwable) {
-        logger.error(String.format("type: %s loaded by %s can't be transformed cause by error:", typeName, classLoader,
-                                   throwable));
+        logger.error(String.format("type: %s loaded by %s can't be transformed cause by error:", typeName, classLoader),
+                     throwable);
     }
 
 }
