@@ -20,6 +20,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +33,7 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static net.bytebuddy.matcher.ElementMatchers.namedIgnoreCase;
-import static net.bytebuddy.matcher.ElementMatchers.takesGenericArgument;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * @author hzfjd
@@ -58,12 +58,16 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
         // Object.class).build())))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
         //
 
+        ElementMatcher.Junction methodSignatureMatcher = namedIgnoreCase("allocateRecordId").or(namedIgnoreCase("existRecord")).or(namedIgnoreCase("queryCount")).or(namedIgnoreCase("queryList")).or(namedIgnoreCase("queryObject")).or(namedIgnoreCase("queryObjectId")).or(namedIgnoreCase("queryObjectIds")).or(namedIgnoreCase("querySingleColInOneRecord").and(takesGenericArgument(1,
+                                                                                                                                                                                                                                                                                                                                                                                          TypeDescription.Generic.Builder.parameterizedType(List.class,
+                                                                                                                                                                                                                                                                                                                                                                                                                                            Object.class).build()))).or(namedIgnoreCase("updateRecords").and(takesGenericArgument(1,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  TypeDescription.Generic.Builder.parameterizedType(List.class,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Object.class).build())));
+
         new AgentBuilder.Default().type(namedIgnoreCase("com.netease.framework.dbsupport.impl.SqlManagerImpl")).transform((builder,
                                                                                                                            typeDescription,
                                                                                                                            classloader,
-                                                                                                                           javaModule) -> builder.method(namedIgnoreCase("allocateRecordId").or(namedIgnoreCase("existRecord")).or(namedIgnoreCase("queryCount")).or(namedIgnoreCase("queryList")).or(namedIgnoreCase("queryObject")).or(namedIgnoreCase("queryObjectId")).or(namedIgnoreCase("queryObjectIds")).or(namedIgnoreCase("updateRecords").and(takesGenericArgument(1,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                              TypeDescription.Generic.Builder.parameterizedType(List.class,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                Object.class).build())))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                                           javaModule) -> builder.method(methodSignatureMatcher.and(isDeclaredBy(typeDescription))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
     }
 
