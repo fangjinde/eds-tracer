@@ -1,4 +1,4 @@
-package com.netease.edu.eds.trace.constants;
+package com.netease.edu.eds.trace.agent.constants;
 
 /**
  * @author hzfjd
