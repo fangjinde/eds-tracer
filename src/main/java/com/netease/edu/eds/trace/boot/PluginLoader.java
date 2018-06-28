@@ -37,29 +37,29 @@ public class PluginLoader {
         if (TraceInstrumentationHolder.getProps() == null || TraceInstrumentationHolder.getInstumentation() == null) {
             return;
         }
-        TraceInstrumentationHolder.getLog().info("begin premain with agentArgs:"
+        TraceInstrumentationHolder.getLog().info(" premain [[ begin all ]] with agentArgs:"
                                                  + TraceInstrumentationHolder.getProps().get("agentArgs"));
         ServiceLoader<TraceAgentInstrumetation> serviceLoader = ServiceLoader.load(TraceAgentInstrumetation.class);
 
         Iterator<TraceAgentInstrumetation> iterator = serviceLoader.iterator();
         while (iterator.hasNext()) {
             TraceAgentInstrumetation traceAgentInstrumetation = iterator.next();
-            TraceInstrumentationHolder.getLog().info("current instrumentation is :"
-                                                     + traceAgentInstrumetation.getClass().getName());
             try {
-                TraceInstrumentationHolder.getLog().info(traceAgentInstrumetation.getClass().getName()
-                                                         + " beginning to instrumentation...");
+                TraceInstrumentationHolder.getLog().info(" [[ beginning ]] to instrument: [[ "
+                                                         + traceAgentInstrumetation.getClass().getName() + " ]].");
                 traceAgentInstrumetation.premain(TraceInstrumentationHolder.getProps(),
                                                  TraceInstrumentationHolder.getInstumentation());
-                TraceInstrumentationHolder.getLog().info(traceAgentInstrumetation.getClass().getName()
-                                                         + " 's instrumentation finished.");
+                TraceInstrumentationHolder.getLog().info(" [[ finished ]] to instrument [[ "
+                                                         + traceAgentInstrumetation.getClass().getName() + " ]]. ");
             } catch (Exception e) {
-                TraceInstrumentationHolder.getLog().log(Level.SEVERE, traceAgentInstrumetation.getClass().getName()
-                                                                      + " 's instrumetation error:",
+                TraceInstrumentationHolder.getLog().log(Level.SEVERE,
+                                                        " [[ fail ]] to instrument [[ "
+                                                                      + traceAgentInstrumetation.getClass().getName()
+                                                                      + " ]]. ",
                                                         e);
             }
         }
-        TraceInstrumentationHolder.getLog().info("end of premain with agentArgs:"
+        TraceInstrumentationHolder.getLog().info(" premain [[ end all ]] with agentArgs:"
                                                  + TraceInstrumentationHolder.getProps().get("agentArgs"));
     }
 
