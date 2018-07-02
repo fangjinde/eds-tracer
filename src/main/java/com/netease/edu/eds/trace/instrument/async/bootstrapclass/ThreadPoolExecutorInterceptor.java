@@ -1,4 +1,4 @@
-package com.netease.edu.eds.trace.instrument.async;
+package com.netease.edu.eds.trace.instrument.async.bootstrapclass;
 
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
