@@ -68,6 +68,7 @@ public class BootstrapDelegateListener extends AgentBuilder.Listener.Adapter {
 
     private void injectClassToBootstrap(Class injectingClazz) {
         String injectingClassName = injectingClazz.getName();
+        TraceInstrumentationHolder.getLog().info(String.format("injecting class: %s ...", injectingClassName));
         Boolean classInjected = classInjectedMap.get(injectingClassName);
         if (classInjected != null && classInjected.booleanValue()) {
             return;
@@ -81,6 +82,7 @@ public class BootstrapDelegateListener extends AgentBuilder.Listener.Adapter {
             if (jarFile != null) {
                 TraceInstrumentationHolder.getInstumentation().appendToBootstrapClassLoaderSearch(jarFile);
                 classInjectedMap.putIfAbsent(injectingClassName, Boolean.TRUE);
+                TraceInstrumentationHolder.getLog().info(String.format("injected class: %s .", injectingClassName));
             }
         }
     }
@@ -98,6 +100,9 @@ public class BootstrapDelegateListener extends AgentBuilder.Listener.Adapter {
             inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
             File file = new File(folder + File.separator + "trace-bootstrap-" + clazz.getSimpleName() + "-"
                                  + randomString + ".jar");
+            TraceInstrumentationHolder.getLog().info(String.format("injecting jar path will be: %s .",
+                                                                   file.getAbsolutePath()));
+
             if (!file.createNewFile()) {
                 throw new IllegalStateException("Cannot create file " + file);
             }
@@ -108,6 +113,8 @@ public class BootstrapDelegateListener extends AgentBuilder.Listener.Adapter {
             // write to jar
             jarOutputStream.putNextEntry(new JarEntry(path));
             jarOutputStream.write(outputStream.toByteArray());
+            // must close before generate jar file.
+            jarOutputStream.close();
             return new JarFile(file);
 
         } catch (Exception exception) {
