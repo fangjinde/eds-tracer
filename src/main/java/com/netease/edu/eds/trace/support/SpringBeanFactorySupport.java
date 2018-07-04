@@ -40,7 +40,7 @@ public class SpringBeanFactorySupport implements BeanFactoryAware {
         try {
             return s_beanFactory.getBean(requiredType);
         } catch (Exception e) {
-            logger.warn("getBean error:", e);
+            logger.error("getBean error:", e);
             return null;
         }
     }
