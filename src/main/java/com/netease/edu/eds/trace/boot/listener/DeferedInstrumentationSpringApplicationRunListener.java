@@ -9,9 +9,11 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import com.netease.edu.eds.trace.boot.PluginLoader;
 
 /**
+ * SpringApplicationRunListener spring boot 1和2版本不兼容，弃用。
  * @author hzfjd
  * @create 18/5/22
  **/
+@Deprecated
 public class DeferedInstrumentationSpringApplicationRunListener implements SpringApplicationRunListener, PriorityOrdered {
 
     private final SpringApplication application;
