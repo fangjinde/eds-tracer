@@ -1,16 +1,17 @@
 package com.netease.edu.eds.trace.configuration;/**
- * Created by hzfjd on 18/4/13.
- */
+                                                 * Created by hzfjd on 18/4/13.
+                                                 */
 
-import brave.Tracing;
-import com.netease.edu.eds.trace.instrument.rabbit.RabbitTraceBeanFactoryPostProcessor;
-import com.netease.edu.eds.trace.instrument.rabbit.RabbitTracing;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.sleuth.autoconfig.TraceAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.netease.edu.eds.trace.instrument.rabbit.RabbitTracing;
+
+import brave.Tracing;
 
 /**
  * @author hzfjd
@@ -27,9 +28,4 @@ public class EduTraceRabbitAutoconfiguration {
         return RabbitTracing.newBuilder().tracing(tracing).build();
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    public static RabbitTraceBeanFactoryPostProcessor rabbitTraceBeanFactoryPostProcessor() {
-        return new RabbitTraceBeanFactoryPostProcessor();
-    }
 }

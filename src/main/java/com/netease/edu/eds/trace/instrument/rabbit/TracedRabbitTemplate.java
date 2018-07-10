@@ -19,9 +19,11 @@ import brave.propagation.TraceContext;
 import zipkin2.Endpoint;
 
 /**
+ * @See RabbitTemplateInstrumentation
  * @author hzfjd
  * @create 18/4/12
  */
+@Deprecated
 public class TracedRabbitTemplate extends RabbitTemplate {
 
     public TracedRabbitTemplate() {

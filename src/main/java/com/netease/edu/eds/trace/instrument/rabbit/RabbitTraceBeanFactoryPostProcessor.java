@@ -10,9 +10,11 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 
 /**
+ * @See RabbitTemplateInstrumentation
  * @author hzfjd
  * @create 18/4/13
  */
+@Deprecated
 public class RabbitTraceBeanFactoryPostProcessor implements BeanDefinitionRegistryPostProcessor {
 
     private static final String RABBIT_TEMPLATE_CLASS_NAME                   = "org.springframework.amqp.rabbit.core.RabbitTemplate";
