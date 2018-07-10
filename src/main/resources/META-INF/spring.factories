@@ -10,6 +10,7 @@ com.netease.edu.eds.trace.configuration.TraceRedisAutoConfiguration,\
 com.netease.edu.eds.trace.configuration.TraceMemcacheAutoConfiguration,\
 com.netease.edu.eds.trace.configuration.EduTraceRabbitAutoconfiguration,\
 com.netease.edu.eds.trace.configuration.TraceAsyncAutoConfiguration,\
+com.netease.edu.eds.trace.instrument.async.EduAsyncDefaultAutoConfiguration,\
 com.netease.edu.eds.trace.configuration.TraceDdbAutoConfiguration
 
 # SpringApplicationRunListener
