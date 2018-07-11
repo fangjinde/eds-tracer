@@ -7,26 +7,23 @@ import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
+import com.netease.edu.eds.trace.support.AgentSupport;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.rabbitmq.client.Channel;
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
-import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.Morph;
-import net.bytebuddy.implementation.bind.annotation.SuperCall;
+import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import zipkin2.Endpoint;
 
 import java.lang.instrument.Instrumentation;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import static brave.Span.Kind.CONSUMER;
-import static net.bytebuddy.matcher.ElementMatchers.isOverriddenFrom;
-import static net.bytebuddy.matcher.ElementMatchers.namedIgnoreCase;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * @author hzfjd
@@ -39,30 +36,29 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
         new AgentBuilder.Default().type(namedIgnoreCase("org.springframework.amqp.rabbit.listener.AbstractMessageListenerContainer")).transform((builder,
                                                                                                                                                  typeDescription,
                                                                                                                                                  classloader,
-                                                                                                                                                 javaModule) -> builder.method(isOverriddenFrom(typeDescription).and(namedIgnoreCase("invokeListener"))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                                                                 javaModule) -> builder.method(isOverriddenFrom(typeDescription).and(namedIgnoreCase("invokeListener")).and(takesArguments(2))).intercept(AgentSupport.getInvokerMethodDelegationCustomer().to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
     }
 
     public static class TraceInterceptor {
 
-        public static void invokeListener(@Argument(0) Channel channel, @Argument(1) Message message,
-                                          @SuperCall Callable<Void> originalCall, @AllArguments Object[] args,
-                                          @Morph Invoker invoker) throws Exception {
+        @RuntimeType
+        public static Object invokeListener(@AllArguments Object[] args, @Morph Invoker invoker) throws Exception {
 
             RabbitTracing rabbitTracing = SpringBeanFactorySupport.getBean(RabbitTracing.class);
             if (rabbitTracing == null) {
-                originalCall.call();
-                return;
+                return invoker.invoke(args);
             }
+
+            Channel channel = (Channel) args[0];
+            Message message = (Message) args[1];
 
             TraceContext.Extractor<MessageProperties> extractor = rabbitTracing.tracing().propagation().extractor(GETTER);
             TraceContextOrSamplingFlags extracted = extractTraceContextAndRemoveHeaders(message, rabbitTracing,
                                                                                         extractor);
 
             Tracer tracer = rabbitTracing.tracing().tracer();
-            // named for BlockingQueueConsumer.nextMessage, which we can't currently see
             Span consumerSpan = tracer.nextSpan(extracted).kind(CONSUMER).name("on-message");
-            // Span listenerSpan = tracer.newChild(consumerSpan.context()).name("on-message");
 
             if (!consumerSpan.isNoop()) {
                 consumerSpan.start();
@@ -83,7 +79,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
             }
 
             try (Tracer.SpanInScope ws = tracer.withSpanInScope(consumerSpan)) {
-                invoker.invoke(args);
+                return invoker.invoke(args);
             } catch (Throwable t) {
                 RabbitTracing.tagErrorSpan(consumerSpan, t);
                 throw t;
