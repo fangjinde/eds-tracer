@@ -19,9 +19,11 @@ import java.util.Map;
 import static brave.Span.Kind.CONSUMER;
 
 /**
+ * @See AbstractMessageListenerContainerInstrumentation
  * @author hzfjd
  * @create 18/4/12
  */
+@Deprecated
 public class SimpleTracedMessageListenerContainer extends SimpleMessageListenerContainer {
 
     public SimpleTracedMessageListenerContainer() {

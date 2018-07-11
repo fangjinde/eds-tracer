@@ -83,6 +83,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
             }
 
             try (Tracer.SpanInScope ws = tracer.withSpanInScope(consumerSpan)) {
+                originMethod.setAccessible(true);
                 originMethod.invoke(proxy, channel, message);
             } catch (Throwable t) {
                 RabbitTracing.tagErrorSpan(consumerSpan, t);
