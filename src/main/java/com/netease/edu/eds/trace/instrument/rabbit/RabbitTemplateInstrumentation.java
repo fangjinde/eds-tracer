@@ -80,6 +80,7 @@ public class RabbitTemplateInstrumentation implements TraceAgentInstrumetation {
 
             try (Tracer.SpanInScope spanInScope = tracer.withSpanInScope(span)) {
                 injector.inject(span.context(), message.getMessageProperties());
+                originMethod.setAccessible(true);
                 originMethod.invoke(proxy, channel, exchange, routingKey, message, mandatory, correlationData);
             } catch (Exception e) {
                 RabbitTracing.tagErrorSpan(span, e);
