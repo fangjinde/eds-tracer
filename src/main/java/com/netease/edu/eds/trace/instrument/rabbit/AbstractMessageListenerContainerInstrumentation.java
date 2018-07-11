@@ -5,22 +5,22 @@ import brave.Tracer;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
+import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.rabbitmq.client.Channel;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
+import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Argument;
-import net.bytebuddy.implementation.bind.annotation.Origin;
+import net.bytebuddy.implementation.bind.annotation.Morph;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
-import net.bytebuddy.implementation.bind.annotation.This;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import zipkin2.Endpoint;
 
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -46,8 +46,8 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
     public static class TraceInterceptor {
 
         public static void invokeListener(@Argument(0) Channel channel, @Argument(1) Message message,
-                                          @SuperCall Callable<Void> originalCall, @Origin Method originMethod,
-                                          @This Object proxy) throws Exception {
+                                          @SuperCall Callable<Void> originalCall, @AllArguments Object[] args,
+                                          @Morph Invoker invoker) throws Exception {
 
             RabbitTracing rabbitTracing = SpringBeanFactorySupport.getBean(RabbitTracing.class);
             if (rabbitTracing == null) {
@@ -83,8 +83,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
             }
 
             try (Tracer.SpanInScope ws = tracer.withSpanInScope(consumerSpan)) {
-                originMethod.setAccessible(true);
-                originMethod.invoke(proxy, channel, message);
+                invoker.invoke(args);
             } catch (Throwable t) {
                 RabbitTracing.tagErrorSpan(consumerSpan, t);
                 throw t;
