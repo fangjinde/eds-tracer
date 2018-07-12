@@ -9,9 +9,11 @@ import com.netease.dbsupport.transaction.IDBTransactionManager;
 import java.sql.Connection;
 
 /**
+ * @See  SqlManagerInstrumentation
  * @author hzfjd
  * @create 18/3/27
  */
+@Deprecated
 public class IDBTransactionManagerTraceWrapper implements IDBTransactionManager {
 
     private IDBTransactionManager target;

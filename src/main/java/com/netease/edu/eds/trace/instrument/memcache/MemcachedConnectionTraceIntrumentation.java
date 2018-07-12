@@ -3,7 +3,7 @@ package com.netease.edu.eds.trace.instrument.memcache;
 import brave.Span;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
-import com.netease.edu.eds.trace.utils.JsonUtils;
+import com.netease.edu.eds.trace.utils.TraceJsonUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
@@ -85,7 +85,7 @@ public class MemcachedConnectionTraceIntrumentation implements TraceAgentInstrum
                     }
 
                     if (index > 0) {
-                        span.tag("AllNodes", JsonUtils.toJson(hostLists));
+                        span.tag("AllNodes", TraceJsonUtils.toJson(hostLists));
                     }
 
                 }

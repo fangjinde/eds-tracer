@@ -13,8 +13,10 @@ import com.alibaba.dubbo.remoting.exchange.ResponseCallback;
 import com.alibaba.dubbo.rpc.*;
 import com.alibaba.dubbo.rpc.protocol.dubbo.FutureAdapter;
 import com.alibaba.dubbo.rpc.support.RpcUtils;
+import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
-import com.netease.edu.eds.trace.utils.JsonUtils;
+import com.netease.edu.eds.trace.utils.SpanUtils;
+import com.netease.edu.eds.trace.utils.TraceJsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -74,6 +76,8 @@ public final class DubboTraceFilter implements Filter {
             TraceContextOrSamplingFlags extracted = extractor.extract(invocation.getAttachments());
             span = extracted.context() != null ? tracer.joinSpan(extracted.context()) : tracer.nextSpan(extracted);
         }
+
+        SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.DUBBO);
 
         if (!span.isNoop()) {
 
@@ -140,7 +144,7 @@ public final class DubboTraceFilter implements Filter {
         if (consumerSide) {
             try {
 
-                span.tag(adviceName, JsonUtils.toJson(value));
+                span.tag(adviceName, TraceJsonUtils.toJson(value));
             } catch (Exception e) {
                 logger.error("writeValueAsString error:", e);
                 span.tag(adviceName, adviceName + " value json serializing error. ");

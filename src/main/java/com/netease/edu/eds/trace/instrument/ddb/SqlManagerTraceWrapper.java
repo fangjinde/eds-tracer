@@ -5,7 +5,7 @@ package com.netease.edu.eds.trace.instrument.ddb;/**
 import brave.Span;
 import brave.Tracer;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
-import com.netease.edu.eds.trace.utils.SpanStringUtils;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.framework.dbsupport.SqlManager;
 import com.netease.framework.dbsupport.callback.DBListHandler;
 import com.netease.framework.dbsupport.callback.DBObjectHandler;
@@ -46,7 +46,7 @@ public class SqlManagerTraceWrapper implements SqlManager {
     }
 
     private String getSpanName(String sql) {
-        return SpanStringUtils.filterSpanName(sql);
+        return SpanUtils.filterSpanName(sql);
     }
 
     private StringBuilder getSqlDetail(String sql, List<Object> params) {

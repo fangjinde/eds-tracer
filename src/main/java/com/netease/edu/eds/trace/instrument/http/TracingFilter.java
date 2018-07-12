@@ -8,6 +8,8 @@ import brave.http.HttpTracing;
 import brave.propagation.Propagation.Getter;
 import brave.propagation.TraceContext;
 import brave.servlet.HttpServletAdapter;
+import com.netease.edu.eds.trace.constants.SpanType;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.web.util.UrlPathHelper;
 
@@ -81,6 +83,8 @@ public final class TracingFilter implements Filter {
         request.setAttribute("TracingFilter", "true");
 
         Span span = handler.handleReceive(extractor, httpRequest);
+
+        SpanUtils.safeTag(span, SpanType.TAG_KEY,SpanType.HTTP);
 
         if (span != null && !span.isNoop() && environment != null) {
             span.tag("env", environment.getProperty("spring.profiles.active"));

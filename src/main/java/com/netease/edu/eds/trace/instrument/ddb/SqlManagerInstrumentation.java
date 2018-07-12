@@ -5,13 +5,14 @@ import brave.Tracer;
 import com.netease.backend.db.DBResultSet;
 import com.netease.backend.db.common.utils.OneBasedArray;
 import com.netease.backend.db.result.Record;
+import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionHandler;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
-import com.netease.edu.eds.trace.utils.JsonUtils;
-import com.netease.edu.eds.trace.utils.SpanStringUtils;
+import com.netease.edu.eds.trace.utils.SpanUtils;
+import com.netease.edu.eds.trace.utils.TraceJsonUtils;
 import com.netease.framework.dbsupport.callback.DBListHandler;
 import com.netease.framework.dbsupport.callback.DBObjectHandler;
 import com.netease.framework.dbsupport.impl.DBResource;
@@ -87,7 +88,7 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
                     }
 
                 }
-                return JsonUtils.toJson(rowsList);
+                return TraceJsonUtils.toJson(rowsList);
 
             }
         } catch (Exception e) {
@@ -115,6 +116,7 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
             }
 
             Span ddbSpan = ddbTracing.tracing().tracer().nextSpan();
+            SpanUtils.safeTag(ddbSpan, SpanType.TAG_KEY, SpanType.DDB);
 
             try (Tracer.SpanInScope spanInScope = ddbTracing.tracing().tracer().withSpanInScope(ddbSpan)) {
                 ddbSpan.kind(Span.Kind.CLIENT).name(getSpanName(sql)).tag("sql_detail",
@@ -127,7 +129,7 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
                     DBResource dBResource = (DBResource) result;
                     ddbSpan.tag("return", getResultStringFromDBResource(dBResource));
                 } else {
-                    ddbSpan.tag("return", JsonUtils.toJson(result));
+                    ddbSpan.tag("return", TraceJsonUtils.toJson(result));
                 }
 
                 return result;
@@ -142,7 +144,7 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
         }
 
         private static String getSpanName(String sql) {
-            return SpanStringUtils.filterSpanName(sql);
+            return SpanUtils.filterSpanName(sql);
         }
 
         private static StringBuilder getSqlDetail(String sql, List<Object> params, Span span) {
@@ -238,7 +240,7 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
             try {
                 DdbTraceContext.setSpan(ddbSpan);
                 Long result = callable.call();
-                String retJson = JsonUtils.toJson(result);
+                String retJson = TraceJsonUtils.toJson(result);
                 ddbSpan.tag("return", retJson);
                 return result;
             } catch (Exception e) {

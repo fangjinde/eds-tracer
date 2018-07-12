@@ -10,10 +10,12 @@ import com.alibaba.dubbo.rpc.*;
 import java.util.Map;
 
 /**
+ * @see DubboTraceFilter
  * Tracing filter for dubbo consumer,returns cs and cr.
  *
  * @author Will Tong
  */
+@Deprecated
 @Activate(group = Constants.CONSUMER, order = -8990)
 public class DubboConsumerTraceFilter implements Filter {
   private Tracer tracer;

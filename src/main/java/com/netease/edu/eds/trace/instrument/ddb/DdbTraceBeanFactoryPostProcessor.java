@@ -9,9 +9,11 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 
 /**
+ * @See SqlManagerInstrumentation
  * @author hzfjd
  * @create 18/3/29
  */
+@Deprecated
 public class DdbTraceBeanFactoryPostProcessor implements BeanDefinitionRegistryPostProcessor {
 
     private static final String DDB_SQL_MANAGER_CLASS_NAME             = "com.netease.edu.persist.dao.sql.SqlManagerEduProxy";

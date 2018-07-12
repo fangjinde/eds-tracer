@@ -9,9 +9,11 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 
 /**
+ * @see SqlManagerInstrumentation
  * @author hzfjd
  * @create 18/3/22
  */
+@Deprecated
 public class ConnectionTraceWrapper implements Connection {
 
     private String ddbUrl;

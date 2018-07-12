@@ -11,9 +11,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
+ * @see TracingFilter
  * @author hzfjd
  * @create 18/4/2
  */
+@Deprecated
 public class WebDebugSupportTraceFilter implements Filter {
 
     private WebDebugMatcher webDebugMatcher;

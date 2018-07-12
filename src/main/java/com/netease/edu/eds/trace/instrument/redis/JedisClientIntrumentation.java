@@ -4,11 +4,13 @@ import brave.Span;
 import brave.Tracer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
-import com.netease.edu.eds.trace.utils.JsonUtils;
+import com.netease.edu.eds.trace.utils.SpanUtils;
+import com.netease.edu.eds.trace.utils.TraceJsonUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
@@ -62,10 +64,13 @@ public class JedisClientIntrumentation implements TraceAgentInstrumetation {
 
             }
             Span span = redisTracing.tracing().tracer().nextSpan();
+
+            SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.REDIS);
+
             if (!span.isNoop()) {
                 span.kind(Span.Kind.CLIENT).name(method.getDeclaringClass().getSimpleName() + "." + method.getName());
 
-                String argsJson = JsonUtils.toJson(args);
+                String argsJson = TraceJsonUtils.toJson(args);
                 span.tag("args", argsJson);
                 span.start();
             }

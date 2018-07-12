@@ -2,11 +2,13 @@ package com.netease.edu.eds.trace.instrument.memcache;
 
 import brave.Span;
 import brave.Tracer;
+import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
-import com.netease.edu.eds.trace.utils.JsonUtils;
+import com.netease.edu.eds.trace.utils.SpanUtils;
+import com.netease.edu.eds.trace.utils.TraceJsonUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
@@ -76,10 +78,12 @@ public class MemcacheTraceIntrumentation implements TraceAgentInstrumetation {
             }
 
             span = memcacheTracing.tracing().tracer().nextSpan();
+            SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.MEMCACHE);
+
             if (!span.isNoop()) {
                 span.kind(Span.Kind.CLIENT).name(method.getDeclaringClass().getSimpleName() + "." + method.getName());
 
-                String argsJson = JsonUtils.toJson(args);
+                String argsJson = TraceJsonUtils.toJson(args);
                 span.tag("args", argsJson);
                 span.start();
             }
@@ -89,7 +93,7 @@ public class MemcacheTraceIntrumentation implements TraceAgentInstrumetation {
                 MemcacheTraceContext.setSpan(span);
 
                 Object ret = callable.call();
-                String retJson = JsonUtils.toJson(ret);
+                String retJson = TraceJsonUtils.toJson(ret);
                 span.tag("return", retJson);
                 return ret;
             } catch (Exception e) {

@@ -1,13 +1,15 @@
 package com.netease.edu.eds.trace.instrument.ndir;/**
- * Created by hzfjd on 18/4/25.
- */
+                                                   * Created by hzfjd on 18/4/25.
+                                                   */
 
 import brave.Span;
 import brave.Tracer;
+import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.ndir.client.base.NDirHttpClientBase;
 import com.netease.ndir.client.util.WrappedIndexRequest;
 import com.netease.ndir.common.ResponseCode;
@@ -30,22 +32,19 @@ import java.util.Map;
  */
 public class NdirIndexClientIntrumentation implements TraceAgentInstrumetation {
 
-    @Override public void premain(Map<String, String> props, Instrumentation inst) {
-        new AgentBuilder.Default().type(
-                ElementMatchers.namedIgnoreCase("com.netease.ndir.client.NDirIndexClient")).transform(
-                (builder, typeDescription, classloader, javaModule) ->
-                        builder.method(ElementMatchers.namedIgnoreCase("postwrappedIndexRequest").and(
-                                ElementMatchers.isDeclaredBy(typeDescription))).intercept(
-                                MethodDelegation.to(TraceInterceptor.class))).with(
-                DefaultAgentBuilderListener.getInstance()).installOn(
-                inst);
+    @Override
+    public void premain(Map<String, String> props, Instrumentation inst) {
+        new AgentBuilder.Default().type(ElementMatchers.namedIgnoreCase("com.netease.ndir.client.NDirIndexClient")).transform((builder,
+                                                                                                                               typeDescription,
+                                                                                                                               classloader,
+                                                                                                                               javaModule) -> builder.method(ElementMatchers.namedIgnoreCase("postwrappedIndexRequest").and(ElementMatchers.isDeclaredBy(typeDescription))).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
     }
 
     public static class TraceInterceptor {
 
         public static void postwrappedIndexRequest(@Argument(0) WrappedIndexRequest wrappedIndexRequest,
-                                                   @Argument(1) String url, @SuperCall Runnable runnable)
-                throws NDirException {
+                                                   @Argument(1) String url,
+                                                   @SuperCall Runnable runnable) throws NDirException {
 
             NdirTracing ndirTracing = SpringBeanFactorySupport.getBean(NdirTracing.class);
 
@@ -70,6 +69,8 @@ public class NdirIndexClientIntrumentation implements TraceAgentInstrumetation {
             }
 
             Span span = ndirTracing.tracing().tracer().nextSpan();
+            SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.NDIR);
+
             if (!span.isNoop()) {
                 String spanName = uri.getPath() + uri.getQuery();
                 if (spanName.length() > 50) {

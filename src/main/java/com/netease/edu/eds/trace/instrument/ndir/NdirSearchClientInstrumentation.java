@@ -4,10 +4,12 @@ package com.netease.edu.eds.trace.instrument.ndir;/**
 
 import brave.Span;
 import brave.Tracer;
+import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.ndir.common.ResponseCode;
 import com.netease.ndir.common.exception.NDirException;
 import com.netease.ndir.common.search.SearchResultView;
@@ -73,6 +75,7 @@ public class NdirSearchClientInstrumentation implements TraceAgentInstrumetation
             }
 
             Span span = ndirTracing.tracing().tracer().nextSpan();
+            SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.NDIR);
             if (!span.isNoop()) {
                 URI uri = request.getURI();
                 String spanName = uri.getPath() + uri.getQuery();

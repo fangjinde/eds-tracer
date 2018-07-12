@@ -1,11 +1,11 @@
 package com.netease.edu.eds.trace.instrument.ddb;/**
- * Created by hzfjd on 18/3/29.
- */
+                                                  * Created by hzfjd on 18/3/29.
+                                                  */
 
 import brave.Span;
 import brave.Tracer;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
-import com.netease.edu.eds.trace.utils.SpanStringUtils;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.framework.dbsupport.impl.DBResource;
 import com.netease.framework.dbsupport.impl.SqlManagerImpl;
 import org.apache.commons.lang.StringUtils;
@@ -18,18 +18,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 暂时使用子类进行拦截处理.会破坏原有SqlManagerImpl的子类的实现,如果有的话.
- * //TODO 后期改成字节码修改方案,直接修改SqlManagerImpl类本身的实现.
+ * @See SqlManagerInstrumentation
  *
+ * 暂时使用子类进行拦截处理.会破坏原有SqlManagerImpl的子类的实现,如果有的话. //TODO
+ * 后期改成字节码修改方案,直接修改SqlManagerImpl类本身的实现.
  * @author hzfjd
  * @create 18/3/29
  */
+@Deprecated
 public class SqlManagerTracedImpl extends SqlManagerImpl {
 
     private static final String  SQL_IN_PATTERN = "in[\\s]+\\(((?!select|SELECT)[^\\)])+\\)";
     private static final Pattern pattern        = Pattern.compile(SQL_IN_PATTERN);
 
-    private DdbTracing ddbTracing;
+    private DdbTracing           ddbTracing;
 
     @Autowired
     public void setDdbTracing(DdbTracing ddbTracing) {
@@ -43,8 +45,7 @@ public class SqlManagerTracedImpl extends SqlManagerImpl {
             ConnectionTraceWrapper connectionTraceWrapper = (ConnectionTraceWrapper) connection;
             Span ddbSpan = ddbTracing.tracing().tracer().currentSpan();
             if (ddbSpan != null && !ddbSpan.isNoop()) {
-                Endpoint.Builder endpointBuilder = Endpoint.newBuilder().serviceName("ddb").port(
-                        connectionTraceWrapper.getPort());
+                Endpoint.Builder endpointBuilder = Endpoint.newBuilder().serviceName("ddb").port(connectionTraceWrapper.getPort());
                 if (endpointBuilder.parseIp(connectionTraceWrapper.getHost())) {
                     ddbSpan.remoteEndpoint(endpointBuilder.build());
                 }
@@ -71,7 +72,7 @@ public class SqlManagerTracedImpl extends SqlManagerImpl {
     }
 
     private String getSpanName(String sql) {
-        return SpanStringUtils.filterSpanName(sql);
+        return SpanUtils.filterSpanName(sql);
     }
 
     private StringBuilder getSqlDetail(String sql, List<Object> params) {

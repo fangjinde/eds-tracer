@@ -15,9 +15,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * @See SqlManagerInstrumentation
  * @author hzfjd
  * @create 18/3/23
  */
+@Deprecated
 public class DdbTraceBeanPostProcessor extends InstantiationAwareBeanPostProcessorAdapter {
 
     private final Set<Object> earlyProxyReferences =

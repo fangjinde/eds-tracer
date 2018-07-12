@@ -2,9 +2,11 @@ package com.netease.edu.eds.trace.instrument.ddb;
 
 import brave.Span;
 import brave.Tracer;
+import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
@@ -82,6 +84,7 @@ public class DBTransactionManagerInstrumentation implements TraceAgentInstrumeta
             // add trace
             if (!b) {
                 Span ddbTransactionSpan = ddbTracing.tracing().tracer().nextSpan();
+                SpanUtils.safeTag(ddbTransactionSpan, SpanType.TAG_KEY, SpanType.TRANSACTION);
                 Tracer.SpanInScope spanInScope = ddbTracing.tracing().tracer().withSpanInScope(ddbTransactionSpan);
                 transactionSpanContext.set(spanInScope);
                 ddbTransactionSpan.kind(Span.Kind.CLIENT).name("ddb_transaction").start();

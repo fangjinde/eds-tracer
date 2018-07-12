@@ -5,11 +5,13 @@ import brave.Tracer;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
+import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.AgentSupport;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.rabbitmq.client.Channel;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
@@ -59,6 +61,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
             Tracer tracer = rabbitTracing.tracing().tracer();
             Span consumerSpan = tracer.nextSpan(extracted).kind(CONSUMER).name("on-message");
+            SpanUtils.safeTag(consumerSpan, SpanType.TAG_KEY, SpanType.RABBIT);
 
             if (!consumerSpan.isNoop()) {
                 consumerSpan.start();

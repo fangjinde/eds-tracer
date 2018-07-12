@@ -8,8 +8,8 @@ import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionHandler;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
-import com.netease.edu.eds.trace.utils.JsonUtils;
-import com.netease.edu.eds.trace.utils.SpanStringUtils;
+import com.netease.edu.eds.trace.utils.TraceJsonUtils;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
@@ -73,7 +73,7 @@ public class ControllerTraceInstrumentation implements TraceAgentInstrumetation 
         while (paraNames.hasMoreElements()) {
             String paramName = paraNames.nextElement();
             String paramValue = request.getParameter(paramName);
-            SpanStringUtils.safeTag(span, "p_" + paramName, paramValue);
+            SpanUtils.safeTag(span, "p_" + paramName, paramValue);
 
         }
     }
@@ -86,7 +86,7 @@ public class ControllerTraceInstrumentation implements TraceAgentInstrumetation 
         while (paraNames.hasMoreElements()) {
             String paramName = paraNames.nextElement();
             String paramValue = request.getHeader(paramName);
-            SpanStringUtils.safeTag(span, "h_" + paramName, paramValue);
+            SpanUtils.safeTag(span, "h_" + paramName, paramValue);
 
         }
     }
@@ -122,16 +122,16 @@ public class ControllerTraceInstrumentation implements TraceAgentInstrumetation 
             if (span != null && !span.isNoop()) {
                 int requestBodyParamIndex = detectRequestBodyParamIndex(method);
                 if (requestBodyParamIndex >= 0 && requestBodyParamIndex < args.length) {
-                    span.tag("requestBody", JsonUtils.toJson(args[requestBodyParamIndex]));
+                    span.tag("requestBody", TraceJsonUtils.toJson(args[requestBodyParamIndex]));
                 }
             }
 
             try {
                 Object ret = callable.call();
-                SpanStringUtils.safeTag(span, "return", JsonUtils.toJson(ret));
+                SpanUtils.safeTag(span, "return", TraceJsonUtils.toJson(ret));
                 return ret;
             } catch (Exception e) {
-                SpanStringUtils.safeTag(span, "controller invoke error. ", ExceptionStringUtils.getStackTraceString(e));
+                SpanUtils.safeTag(span, "controller invoke error. ", ExceptionStringUtils.getStackTraceString(e));
                 throw ExceptionHandler.wrapToRuntimeException(e);
             }
 
