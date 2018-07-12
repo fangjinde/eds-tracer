@@ -78,6 +78,8 @@ public final class DubboTraceFilter implements Filter {
         }
 
         SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.DUBBO);
+        SpanUtils.safeTag(span, "service", service);
+        SpanUtils.safeTag(span, "method", method);
 
         if (!span.isNoop()) {
 
