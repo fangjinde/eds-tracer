@@ -11,6 +11,8 @@ package com.netease.edu.eds.trace.instrument.async;
 
 import brave.Span;
 import brave.Tracer;
+import com.netease.edu.eds.trace.constants.SpanType;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import org.springframework.cloud.sleuth.ErrorParser;
 import org.springframework.cloud.sleuth.SpanNamer;
 
@@ -35,6 +37,7 @@ public class EduTraceCallable<V> implements Callable<V> {
     private final Callable<V>   delegate;
     private final Span          span;
     private final ErrorParser   errorParser;
+    private String              asyncType;
 
     public EduTraceCallable(Tracer tracer, SpanNamer spanNamer, ErrorParser errorParser, Callable<V> delegate) {
         this(tracer, spanNamer, errorParser, delegate, null);
@@ -44,6 +47,7 @@ public class EduTraceCallable<V> implements Callable<V> {
                             String name) {
         this.tracer = tracer;
         this.delegate = delegate;
+        this.asyncType = name;
         String spanName = name != null ? name : spanNamer.name(delegate, DEFAULT_SPAN_NAME);
         this.span = this.tracer.nextSpan().name(spanName);
         this.errorParser = errorParser;
@@ -53,6 +57,7 @@ public class EduTraceCallable<V> implements Callable<V> {
     public V call() throws Exception {
         Throwable error = null;
         try (Tracer.SpanInScope ws = this.tracer.withSpanInScope(this.span.start())) {
+            SpanUtils.safeTag(span, SpanType.AsyncSubType.TAG_KEY, asyncType);
             return this.delegate.call();
         } catch (Exception | Error e) {
             error = e;

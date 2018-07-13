@@ -10,6 +10,7 @@
 package com.netease.edu.eds.trace.instrument.async;
 
 import brave.Tracer;
+import com.netease.edu.eds.trace.constants.SpanType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.BeanFactory;
@@ -55,7 +56,7 @@ public class EduLazyTraceThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
 
             try {
                 AsyncTracedMarkContext.markTraced();
-                this.delegate.execute(new EduTraceRunnable(tracer(), spanNamer(), errorParser(), task));
+                this.delegate.execute(new EduTraceRunnable(tracer(), spanNamer(), errorParser(), task, SpanType.AsyncSubType.SPRING_ASYNC));
             } finally {
                 AsyncTracedMarkContext.reset();
             }
@@ -73,7 +74,7 @@ public class EduLazyTraceThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
 
             try {
                 AsyncTracedMarkContext.markTraced();
-                this.delegate.execute(new EduTraceRunnable(tracer(), spanNamer(), errorParser(), task), startTimeout);
+                this.delegate.execute(new EduTraceRunnable(tracer(), spanNamer(), errorParser(), task,SpanType.AsyncSubType.SPRING_ASYNC), startTimeout);
             } finally {
                 AsyncTracedMarkContext.reset();
             }
@@ -89,7 +90,7 @@ public class EduLazyTraceThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
 
             try {
                 AsyncTracedMarkContext.markTraced();
-                return this.delegate.submit(new EduTraceRunnable(tracer(), spanNamer(), errorParser(), task));
+                return this.delegate.submit(new EduTraceRunnable(tracer(), spanNamer(), errorParser(), task,SpanType.AsyncSubType.SPRING_ASYNC));
             } finally {
                 AsyncTracedMarkContext.reset();
             }
@@ -105,7 +106,7 @@ public class EduLazyTraceThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
 
             try {
                 AsyncTracedMarkContext.markTraced();
-                return this.delegate.submit(new EduTraceCallable<>(tracer(), spanNamer(), errorParser(), task));
+                return this.delegate.submit(new EduTraceCallable<>(tracer(), spanNamer(), errorParser(), task,SpanType.AsyncSubType.SPRING_ASYNC));
             } finally {
                 AsyncTracedMarkContext.reset();
             }
@@ -125,7 +126,7 @@ public class EduLazyTraceThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
 
             try {
                 AsyncTracedMarkContext.markTraced();
-                return this.delegate.submitListenable(new EduTraceRunnable(tracer(), spanNamer(), errorParser(), task));
+                return this.delegate.submitListenable(new EduTraceRunnable(tracer(), spanNamer(), errorParser(), task,SpanType.AsyncSubType.SPRING_ASYNC));
             } finally {
                 AsyncTracedMarkContext.reset();
             }
@@ -143,7 +144,7 @@ public class EduLazyTraceThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
 
             try {
                 AsyncTracedMarkContext.markTraced();
-                return this.delegate.submitListenable(new EduTraceCallable<>(tracer(), spanNamer(), errorParser(), task));
+                return this.delegate.submitListenable(new EduTraceCallable<>(tracer(), spanNamer(), errorParser(), task,SpanType.AsyncSubType.SPRING_ASYNC));
             } finally {
                 AsyncTracedMarkContext.reset();
             }

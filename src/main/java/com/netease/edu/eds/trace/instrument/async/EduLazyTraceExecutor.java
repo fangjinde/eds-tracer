@@ -10,6 +10,7 @@
 package com.netease.edu.eds.trace.instrument.async;
 
 import brave.Tracer;
+import com.netease.edu.eds.trace.constants.SpanType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.BeanFactory;
@@ -18,7 +19,6 @@ import org.springframework.cloud.sleuth.DefaultSpanNamer;
 import org.springframework.cloud.sleuth.ErrorParser;
 import org.springframework.cloud.sleuth.ExceptionMessageErrorParser;
 import org.springframework.cloud.sleuth.SpanNamer;
-import org.springframework.cloud.sleuth.instrument.async.TraceRunnable;
 
 import java.util.concurrent.Executor;
 
@@ -60,7 +60,8 @@ public class EduLazyTraceExecutor implements Executor {
         } else {
             try {
                 AsyncTracedMarkContext.markTraced();
-                this.delegate.execute(new TraceRunnable(this.tracer, spanNamer(), errorParser(), command));
+                this.delegate.execute(new EduTraceRunnable(this.tracer, spanNamer(), errorParser(), command,
+                                                           SpanType.AsyncSubType.SPRING_ASYNC));
             } finally {
                 AsyncTracedMarkContext.reset();
             }

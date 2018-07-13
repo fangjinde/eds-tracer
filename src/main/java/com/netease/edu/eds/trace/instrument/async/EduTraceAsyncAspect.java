@@ -11,6 +11,7 @@ package com.netease.edu.eds.trace.instrument.async;
 
 import brave.Span;
 import brave.Tracer;
+import com.netease.edu.eds.trace.constants.SpanType;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -46,7 +47,8 @@ public class EduTraceAsyncAspect {
     @Around("execution (@org.springframework.scheduling.annotation.Async  * *.*(..))")
     public Object traceBackgroundThread(final ProceedingJoinPoint pjp) throws Throwable {
         String spanName = this.spanNamer.name(getMethod(pjp, pjp.getTarget()),
-                                              SpanNameUtil.toLowerHyphen(pjp.getTarget().getClass().getSimpleName()
+                                              SpanNameUtil.toLowerHyphen(SpanType.AsyncSubType.SPRING_ASYNC + ":"
+                                                                         + pjp.getTarget().getClass().getSimpleName()
                                                                          + "." + pjp.getSignature().getName()));
         Span span = this.tracer.currentSpan().name(spanName);
         try (Tracer.SpanInScope ws = this.tracer.withSpanInScope(span)) {

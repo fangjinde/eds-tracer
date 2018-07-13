@@ -3,6 +3,7 @@ package com.netease.edu.eds.trace.utils;/**
                                          */
 
 import brave.Span;
+import brave.SpanCustomizer;
 
 /**
  * @author hzfjd
@@ -42,6 +43,10 @@ public class SpanUtils {
         }
     }
 
-
+    public static void safeTag(SpanCustomizer span, String name, String value) {
+        if (span != null && name != null && name.length() > 0 && value != null) {
+            span.tag(name, value);
+        }
+    }
 
 }

@@ -7,14 +7,22 @@ public interface SpanType {
 
     String TAG_KEY     = "SpanType";
 
-    String DDB         = "ddb";
-    String NDIR        = "ndir";
-    String MEMCACHE    = "memcache";
-    String ASYNC       = "async";
-    String TRANSACTION = "transaction";
-    String DUBBO       = "dubbo";
-    String RABBIT      = "rabbit";
-    String REDIS       = "redis";
-    String HTTP        = "http";
+    String DDB         = "Ddb";
+    String NDIR        = "Ndir";
+    String MEMCACHE    = "Memcache";
+    String ASYNC       = "Async";
+    String TRANSACTION = "Transaction";
+    String DUBBO       = "Dubbo";
+    String RABBIT      = "Rabbit";
+    String REDIS       = "Redis";
+    String HTTP        = "Http";
+
+    interface AsyncSubType {
+
+        String TAG_KEY            = "AsyncType";
+        String SPRING_ASYNC       = "SpringAsync";
+        String NATIVE_THREAD_POOL = "NativeThreadPool";
+        String NATIVE_THREAD      = "NativeThread";
+    }
 
 }
