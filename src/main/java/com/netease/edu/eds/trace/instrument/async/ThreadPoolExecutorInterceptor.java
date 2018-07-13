@@ -1,10 +1,15 @@
 package com.netease.edu.eds.trace.instrument.async;
 
+import java.util.concurrent.Callable;
+
+import org.springframework.cloud.sleuth.DefaultSpanNamer;
+import org.springframework.cloud.sleuth.ErrorParser;
+import org.springframework.cloud.sleuth.SpanNamer;
+
+import com.netease.edu.eds.trace.constants.SpanType;
+import com.netease.edu.eds.trace.support.EduExceptionMessageErrorParser;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionHandler;
-
-import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
 
 /**
  * @author hzfjd
@@ -12,7 +17,10 @@ import java.util.concurrent.Callable;
  **/
 public class ThreadPoolExecutorInterceptor {
 
-    public static void execute(Runnable command, Callable<Void> originalCall, Method originMethod, Object proxy) {
+    private static final SpanNamer   DefaultSpanNamer   = new DefaultSpanNamer();
+    private static final ErrorParser DefaultErrorParser = new EduExceptionMessageErrorParser();
+
+    public static void intercept(Object[] args, Callable<Void> originalCall, Object proxy) {
 
         AsyncTracing asyncTracing = SpringBeanFactorySupport.getBean(AsyncTracing.class);
         if (asyncTracing == null) {
@@ -24,29 +32,39 @@ public class ThreadPoolExecutorInterceptor {
             }
         }
 
+        if (AsyncTracedMarkContext.isTraced()) {
+            try {
+                originalCall.call();
+                return;
+            } catch (Exception e) {
+                throw ExceptionHandler.wrapToRuntimeException(e);
+            }
+        } else {
+            try {
+                AsyncTracedMarkContext.markTraced();
+                SpanNamer spanNamer = SpringBeanFactorySupport.getBean(SpanNamer.class);
+                if (spanNamer == null) {
+                    spanNamer = DefaultSpanNamer;
+                }
+                ErrorParser errorParser = SpringBeanFactorySupport.getBean(ErrorParser.class);
+                if (errorParser == null) {
+                    errorParser = DefaultErrorParser;
+                }
 
-        try {
-            originalCall.call();
-            return;
-        } catch (Exception e) {
-            throw ExceptionHandler.wrapToRuntimeException(e);
+                // magic here. just wrapper the args will work!
+                args[0] = new EduTraceRunnable(asyncTracing.tracing().tracer(), spanNamer, errorParser,
+                                               (Runnable) args[0], SpanType.AsyncSubType.NATIVE_THREAD_POOL);
+                try {
+                    originalCall.call();
+                    return;
+                } catch (Exception e) {
+                    throw ExceptionHandler.wrapToRuntimeException(e);
+                }
+
+            } finally {
+                AsyncTracedMarkContext.reset();
+            }
         }
-
-        // Span asyncSpan = asyncTracing.tracing().tracer().nextSpan();
-        //
-        // try (Tracer.SpanInScope spanInScope = asyncTracing.tracing().tracer().withSpanInScope(asyncSpan)) {
-        // asyncSpan.kind(Span.Kind.CLIENT).name("async").start();
-        //
-        // originMethod.invoke(proxy, asyncTracing.tracing().currentTraceContext().wrap(command));
-        //
-        // return;
-        //
-        // } catch (Exception e) {
-        // throw ExceptionHandler.wrapToRuntimeException(e);
-        // } finally {
-        // DdbTraceContext.setSpan(null);
-        // asyncSpan.finish();
-        // }
 
     }
 }

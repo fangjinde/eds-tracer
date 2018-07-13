@@ -18,12 +18,22 @@ import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
  **/
 public class AgentSupport {
 
+    /**
+     * 支持bootstrap增强
+     * 
+     * @param inst
+     * @return
+     */
     public static AgentBuilder getBootstrapAgentBuilder(Instrumentation inst) {
         return new AgentBuilder.Default().enableBootstrapInjection(inst,
                                                                    new File(TraceInstrumentationHolder.getBootstrapLibPath())).ignore(new AgentBuilder.RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").or(nameStartsWith("sun.reflect.")).<TypeDescription> or(isSynthetic())));
     }
 
-
+    /**
+     * 支持带参数的Invoker模式调用
+     * 
+     * @return
+     */
     public static MethodDelegation.WithCustomProperties getInvokerMethodDelegationCustomer() {
         return MethodDelegation.withDefaultConfiguration().withBinders(Morph.Binder.install(Invoker.class));
     }

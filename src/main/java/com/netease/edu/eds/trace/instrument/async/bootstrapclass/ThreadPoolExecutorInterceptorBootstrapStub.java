@@ -1,8 +1,9 @@
 package com.netease.edu.eds.trace.instrument.async.bootstrapclass;
 
-import net.bytebuddy.implementation.bind.annotation.Argument;
-import net.bytebuddy.implementation.bind.annotation.Origin;
-import net.bytebuddy.implementation.bind.annotation.SuperCall;
+import com.netease.edu.eds.trace.core.Invoker;
+import net.bytebuddy.implementation.bind.annotation.AllArguments;
+import net.bytebuddy.implementation.bind.annotation.Morph;
+import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.This;
 
 import java.lang.reflect.InvocationTargetException;
@@ -17,15 +18,26 @@ import java.util.concurrent.Callable;
  **/
 public class ThreadPoolExecutorInterceptorBootstrapStub {
 
-    public static void execute(@Argument(0) Runnable command, @SuperCall Callable<Void> originalCall,
-                               @Origin Method originMethod, @This Object proxy) {
-
+    @RuntimeType
+    public static Object intercept(@AllArguments
+    final Object[] args, @Morph
+    final Invoker invoker, @This Object proxy) {
         try {
+            // 通过反射解决类命名空间隔离的问题
             Class revertClass = Class.forName("com.netease.edu.eds.trace.instrument.async.ThreadPoolExecutorInterceptor",
                                               true, getClassLoader());
-            Method revertMethod = revertClass.getMethod("execute", Runnable.class, Callable.class, Method.class,
-                                                        Object.class);
-            revertMethod.invoke(null, command, originalCall, originMethod, proxy);
+            Method revertMethod = revertClass.getMethod("intercept", Object[].class, Callable.class, Object.class);
+            // 通过Callable适配，解决Invoker类命名空间隔离的问题
+            Callable<Void> originalCall = new Callable<Void>() {
+
+                @Override
+                public Void call() throws Exception {
+                    invoker.invoke(args);
+                    return null;
+                }
+            };
+            revertMethod.invoke(null, args, originalCall, proxy);
+            return null;
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException
                 | InvocationTargetException e) {
             throw new RuntimeException("ThreadPoolExecutorInterceptorBootstrapStub execute error.", e);
