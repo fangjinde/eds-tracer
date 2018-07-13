@@ -10,8 +10,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.cloud.sleuth.instrument.async.LazyTraceExecutor;
-import org.springframework.cloud.sleuth.instrument.async.LazyTraceThreadPoolTaskExecutor;
 import org.springframework.core.PriorityOrdered;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.ReflectionUtils;
@@ -35,7 +33,7 @@ public class EduExecutorBeanPostProcessor implements BeanPostProcessor, Priority
         this.beanFactory = beanFactory;
     }
 
-    public EduExecutorBeanPostProcessor(){
+    public EduExecutorBeanPostProcessor() {
 
     }
 
@@ -79,7 +77,7 @@ public class EduExecutorBeanPostProcessor implements BeanPostProcessor, Priority
 
             @Override
             Executor executor(BeanFactory beanFactory, ThreadPoolTaskExecutor executor) {
-                return new LazyTraceThreadPoolTaskExecutor(beanFactory, executor);
+                return new EduLazyTraceThreadPoolTaskExecutor(beanFactory, executor);
             }
         });
         factory.setTarget(bean);
@@ -102,7 +100,7 @@ public class EduExecutorBeanPostProcessor implements BeanPostProcessor, Priority
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        this.beanFactory=beanFactory;
+        this.beanFactory = beanFactory;
     }
 
     public static class ExecutorMethodInterceptor<T extends Executor> implements MethodInterceptor {
@@ -131,7 +129,7 @@ public class EduExecutorBeanPostProcessor implements BeanPostProcessor, Priority
         }
 
         Executor executor(BeanFactory beanFactory, T executor) {
-            return new LazyTraceExecutor(beanFactory, executor);
+            return new EduLazyTraceExecutor(beanFactory, executor);
         }
     }
 }

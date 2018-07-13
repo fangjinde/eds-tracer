@@ -8,8 +8,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.sleuth.SpanNamer;
 import org.springframework.cloud.sleuth.TraceKeys;
-import org.springframework.cloud.sleuth.instrument.async.LazyTraceExecutor;
-import org.springframework.cloud.sleuth.instrument.async.TraceAsyncAspect;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
@@ -25,35 +23,32 @@ import java.util.concurrent.Executor;
 @Configuration
 @ConditionalOnProperty(value = "spring.sleuth.async.enabled", matchIfMissing = true)
 @ConditionalOnBean(Tracing.class)
-// @AutoConfigureAfter(AsyncCustomAutoConfiguration.class)
 public class EduAsyncDefaultAutoConfiguration {
-
 
     @Bean
     @ConditionalOnMissingBean(AsyncConfigurer.class)
     @ConditionalOnProperty(value = "spring.sleuth.async.configurer.enabled", matchIfMissing = true)
-    public AsyncConfigurer defaultTracedAsyncConfigurer(BeanFactory beanFactory){
+    public AsyncConfigurer defaultTracedAsyncConfigurer(BeanFactory beanFactory) {
         return new DefaultAsyncConfigurerSupport(beanFactory);
     }
 
-
     static class DefaultAsyncConfigurerSupport extends AsyncConfigurerSupport {
 
-        DefaultAsyncConfigurerSupport(BeanFactory beanFactory){
-            this.beanFactory=beanFactory;
+        DefaultAsyncConfigurerSupport(BeanFactory beanFactory) {
+            this.beanFactory = beanFactory;
         }
 
         private BeanFactory beanFactory;
 
         @Override
         public Executor getAsyncExecutor() {
-            return new LazyTraceExecutor(this.beanFactory, new SimpleAsyncTaskExecutor());
+            return new EduLazyTraceExecutor(this.beanFactory, new SimpleAsyncTaskExecutor());
         }
     }
 
     @Bean
-    public TraceAsyncAspect traceAsyncAspect(Tracer tracer, SpanNamer spanNamer, TraceKeys traceKeys) {
-        return new TraceAsyncAspect(tracer, spanNamer, traceKeys);
+    public EduTraceAsyncAspect eduTraceAsyncAspect(Tracer tracer, SpanNamer spanNamer, TraceKeys traceKeys) {
+        return new EduTraceAsyncAspect(tracer, spanNamer, traceKeys);
     }
 
     @Bean
