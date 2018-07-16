@@ -1,5 +1,7 @@
 package com.netease.edu.eds.trace.support;
 
+import com.netease.edu.eds.trace.core.Invoker;
+import com.netease.edu.eds.trace.instrument.async.bootstrapclass.BootstrapInterceptorSupport;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -39,8 +41,18 @@ public class BootstrapDelegateListener extends AgentBuilder.Listener.Adapter {
         return classesToBeLoadedByBootstrap;
     }
 
+    private static Class[] basicBootstrapIntrumentSupportClass = { BootstrapInterceptorSupport.class,
+                                                                   BootstrapInterceptorSupport.OriginCall.class,
+                                                                   Invoker.class };
+
     public static AgentBuilder.Listener newBootstrapAgentBuildLister(Class... classes) {
         BootstrapDelegateListener listener = new BootstrapDelegateListener();
+
+        for (Class clazz : basicBootstrapIntrumentSupportClass) {
+            listener.getClassesToBeLoadedByBootstrap().add(clazz);
+            listener.getClassNamesToBeLoadedByBootstrap().add(clazz.getName());
+        }
+
         for (Class clazz : classes) {
             listener.getClassesToBeLoadedByBootstrap().add(clazz);
             listener.getClassNamesToBeLoadedByBootstrap().add(clazz.getName());
