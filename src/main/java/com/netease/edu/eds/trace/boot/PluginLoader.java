@@ -5,7 +5,6 @@ import com.netease.edu.eds.trace.support.TraceInstrumentationHolder;
 
 import java.util.Iterator;
 import java.util.ServiceLoader;
-import java.util.logging.Level;
 
 /**
  * @author hzfjd
@@ -37,7 +36,7 @@ public class PluginLoader {
         if (TraceInstrumentationHolder.getProps() == null || TraceInstrumentationHolder.getInstumentation() == null) {
             return;
         }
-        TraceInstrumentationHolder.getLog().info(" premain [[ begin all ]] with agentArgs:"
+        TraceInstrumentationHolder.getLog().info(" PluginLoader.innerAddTraceInstrumentations [[ begin all ]] with agentArgs:"
                                                  + TraceInstrumentationHolder.getProps().get("agentArgs"));
         ServiceLoader<TraceAgentInstrumetation> serviceLoader = ServiceLoader.load(TraceAgentInstrumetation.class);
 
@@ -45,21 +44,18 @@ public class PluginLoader {
         while (iterator.hasNext()) {
             TraceAgentInstrumetation traceAgentInstrumetation = iterator.next();
             try {
-                TraceInstrumentationHolder.getLog().info(" [[ beginning ]] to instrument: [[ "
+                TraceInstrumentationHolder.getLog().info(" PluginLoader.innerAddTraceInstrumentations [[ beginning ]] to instrument: [[ "
                                                          + traceAgentInstrumetation.getClass().getName() + " ]].");
                 traceAgentInstrumetation.premain(TraceInstrumentationHolder.getProps(),
                                                  TraceInstrumentationHolder.getInstumentation());
-                TraceInstrumentationHolder.getLog().info(" [[ finished ]] to instrument [[ "
+                TraceInstrumentationHolder.getLog().info(" PluginLoader.innerAddTraceInstrumentations [[ finished ]] to instrument [[ "
                                                          + traceAgentInstrumetation.getClass().getName() + " ]]. ");
             } catch (Exception e) {
-                TraceInstrumentationHolder.getLog().log(Level.SEVERE,
-                                                        " [[ fail ]] to instrument [[ "
-                                                                      + traceAgentInstrumetation.getClass().getName()
-                                                                      + " ]]. ",
-                                                        e);
+                TraceInstrumentationHolder.getLog().error(" PluginLoader.innerAddTraceInstrumentations [[ fail ]] to instrument [[ "
+                                                          + traceAgentInstrumetation.getClass().getName() + " ]]. ", e);
             }
         }
-        TraceInstrumentationHolder.getLog().info(" premain [[ end all ]] with agentArgs:"
+        TraceInstrumentationHolder.getLog().info(" PluginLoader.innerAddTraceInstrumentations [[ end all ]] with agentArgs:"
                                                  + TraceInstrumentationHolder.getProps().get("agentArgs"));
     }
 

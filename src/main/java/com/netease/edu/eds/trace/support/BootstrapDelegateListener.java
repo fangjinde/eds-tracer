@@ -19,7 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
-import java.util.logging.Level;
 
 /**
  * @author hzfjd
@@ -130,9 +129,9 @@ public class BootstrapDelegateListener extends AgentBuilder.Listener.Adapter {
             return new JarFile(file);
 
         } catch (Exception exception) {
-            TraceInstrumentationHolder.getLog().log(Level.SEVERE,
-                                                    String.format("class: %s cant inject to jar:", clazz.getName()),
-                                                    exception);
+            TraceInstrumentationHolder.getLog().error(String.format("BootstrapDelegateListener.inject error: class: %s cant inject to jar:",
+                                                                    clazz.getName()),
+                                                      exception);
             return null;
         } finally {
             IOUtils.closeQuietly(inputStream);
@@ -147,10 +146,9 @@ public class BootstrapDelegateListener extends AgentBuilder.Listener.Adapter {
     public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded,
                         Throwable throwable) {
 
-        TraceInstrumentationHolder.getLog().log(Level.SEVERE,
-                                                String.format("type: %s loaded by %s can't be transformed cause by error:",
-                                                              typeName, classLoader),
-                                                throwable);
+        TraceInstrumentationHolder.getLog().error(String.format(" BootstrapDelegateListener.onError type: %s loaded by %s can't be transformed cause by error:",
+                                                                typeName, classLoader),
+                                                  throwable);
 
     }
 

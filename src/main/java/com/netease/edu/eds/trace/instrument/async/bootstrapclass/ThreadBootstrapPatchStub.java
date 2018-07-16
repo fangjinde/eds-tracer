@@ -6,7 +6,6 @@ import net.bytebuddy.implementation.bind.annotation.Morph;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.This;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
@@ -16,51 +15,45 @@ import java.util.concurrent.Callable;
  **/
 public class ThreadBootstrapPatchStub {
 
+    /**
+     * 统一的拦截代码
+     *
+     * @param args
+     * @param invoker
+     * @param proxy
+     * @return
+     */
     @RuntimeType
     public static Object intercept(@AllArguments Object[] args, @Morph Invoker invoker, @This Object proxy) {
         try {
             // 通过反射解决类命名空间隔离的问题
-            Class revertClass = Class.forName("com.netease.edu.eds.trace.instrument.async.ThreadPoolExecutorInterceptor",
-                                              true, getClassLoader());
-            Method revertMethod = revertClass.getMethod("intercept", Object[].class, Callable.class, Object.class);
-            // 通过Callable适配，解决Invoker类命名空间隔离的问题
-            revertMethod.invoke(null, args, new OriginCall(args, invoker), proxy);
-            return null;
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException
-                | InvocationTargetException e) {
-            throw new RuntimeException("ThreadPoolExecutorInterceptorBootstrapStub execute error.", e);
+            return reflectionCall(args, new BootstrapInterceptorSupport.OriginCall(args, invoker), proxy,
+                                  BootstrapInterceptorSupport.getClassLoader());
+        } catch (Exception e) {
+            throw new RuntimeException("BootstrapInterceptorStub.reflectionCall error.", e);
         }
 
-    }
-
-    public static class OriginCall implements Callable<Void> {
-
-        Object[] args;
-        Invoker  invoker;
-
-        public OriginCall(Object[] args, Invoker invoker) {
-            this.args = args;
-            this.invoker = invoker;
-        }
-
-        @Override
-        public Void call() throws Exception {
-            invoker.invoke(args);
-            return null;
-        }
     }
 
     /**
-     * 内部实现，不要依赖非bootstrap类
+     * 定制的反射调用部分
      *
+     * @param args
+     * @param callable
+     * @param proxy
+     * @param classLoader
      * @return
+     * @throws Exception
      */
-    private static ClassLoader getClassLoader() {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        if (classLoader != null) {
-            return classLoader;
-        }
-        return ClassLoader.getSystemClassLoader();
 
+    private static Object reflectionCall(Object[] args, Callable callable, Object proxy,
+                                         ClassLoader classLoader) throws Exception {
+
+        // 通过反射解决类命名空间隔离的问题
+        Class revertClass = Class.forName("com.netease.edu.eds.trace.instrument.async.ThreadInterceptor",
+                                          true, classLoader);
+        Method revertMethod = revertClass.getMethod("intercept", Object[].class, Callable.class, Object.class);
+        // 通过Callable适配，解决Invoker类命名空间隔离的问题
+        return revertMethod.invoke(null, args, callable, proxy);
     }
 }
