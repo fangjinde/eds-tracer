@@ -9,6 +9,7 @@ import com.netease.edu.eds.trace.support.BootstrapDelegateListener;
 import java.lang.instrument.Instrumentation;
 import java.util.Map;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.namedIgnoreCase;
 
 /**
@@ -22,7 +23,7 @@ public class ThreadPoolExecutorInstrumentation implements TraceAgentInstrumetati
         AgentSupport.getBootstrapAgentBuilder(inst).type(namedIgnoreCase("java.util.concurrent.ThreadPoolExecutor")).transform((builder,
                                                                                                                                 typeDescription,
                                                                                                                                 classLoader,
-                                                                                                                                module) -> builder.method(namedIgnoreCase("execute")).intercept(AgentSupport.getInvokerMethodDelegationCustomer().to(ThreadPoolExecutorInterceptorBootstrapStub.class))).with(BootstrapDelegateListener.newBootstrapAgentBuildLister(ThreadPoolExecutorInterceptorBootstrapStub.class,
+                                                                                                                                module) -> builder.method(namedIgnoreCase("execute").and(isDeclaredBy(typeDescription))).intercept(AgentSupport.getInvokerMethodDelegationCustomer().to(ThreadPoolExecutorInterceptorBootstrapStub.class))).with(BootstrapDelegateListener.newBootstrapAgentBuildLister(ThreadPoolExecutorInterceptorBootstrapStub.class,
                                                                                                                                                                                                                                                                                                                                                                      ThreadPoolExecutorInterceptorBootstrapStub.OriginCall.class,
                                                                                                                                                                                                                                                                                                                                                                      Invoker.class)).installOn(inst);
 
