@@ -1,6 +1,7 @@
 package com.netease.edu.eds.trace.instrument.async;
 
 import com.netease.edu.eds.trace.core.Invoker;
+import com.netease.edu.eds.trace.instrument.async.bootstrapclass.BootstrapInterceptorSupport;
 import com.netease.edu.eds.trace.instrument.async.bootstrapclass.ThreadPoolExecutorInterceptorBootstrapStub;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.AgentSupport;
@@ -24,8 +25,9 @@ public class ThreadPoolExecutorInstrumentation implements TraceAgentInstrumetati
                                                                                                                                 typeDescription,
                                                                                                                                 classLoader,
                                                                                                                                 module) -> builder.method(namedIgnoreCase("execute").and(isDeclaredBy(typeDescription))).intercept(AgentSupport.getInvokerMethodDelegationCustomer().to(ThreadPoolExecutorInterceptorBootstrapStub.class))).with(BootstrapDelegateListener.newBootstrapAgentBuildLister(ThreadPoolExecutorInterceptorBootstrapStub.class,
-                                                                                                                                                                                                                                                                                                                                                                     ThreadPoolExecutorInterceptorBootstrapStub.OriginCall.class,
-                                                                                                                                                                                                                                                                                                                                                                     Invoker.class)).installOn(inst);
+                                                                                                                                                                                                                                                                                                                                                                                                        BootstrapInterceptorSupport.class,
+                                                                                                                                                                                                                                                                                                                                                                                                        BootstrapInterceptorSupport.OriginCall.class,
+                                                                                                                                                                                                                                                                                                                                                                                                        Invoker.class)).installOn(inst);
 
     }
 
