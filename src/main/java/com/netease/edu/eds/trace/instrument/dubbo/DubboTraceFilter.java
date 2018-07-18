@@ -15,6 +15,7 @@ import com.alibaba.dubbo.rpc.protocol.dubbo.FutureAdapter;
 import com.alibaba.dubbo.rpc.support.RpcUtils;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
+import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.edu.eds.trace.utils.TraceJsonUtils;
 import org.slf4j.Logger;
@@ -75,6 +76,7 @@ public final class DubboTraceFilter implements Filter {
         } else {
             TraceContextOrSamplingFlags extracted = extractor.extract(invocation.getAttachments());
             span = extracted.context() != null ? tracer.joinSpan(extracted.context()) : tracer.nextSpan(extracted);
+            PropagationUtils.setOriginEnvIfNotExists(span.context(), environment.getProperty("spring.profiles.active"));
         }
 
         SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.DUBBO);
