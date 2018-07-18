@@ -10,9 +10,12 @@ import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
 /**
+ * //太早加载的bootstrap类，premain开始前便已经加载。只能通过retransform进行增强，后期需要换成其他字节码增强工具。
+ * 
  * @author hzfjd
  * @create 18/7/16
  **/
+@Deprecated
 public class ThreadBootstrapPatchStub {
 
     /**
@@ -50,8 +53,8 @@ public class ThreadBootstrapPatchStub {
                                          ClassLoader classLoader) throws Exception {
 
         // 通过反射解决类命名空间隔离的问题
-        Class revertClass = Class.forName("com.netease.edu.eds.trace.instrument.async.ThreadInterceptor",
-                                          true, classLoader);
+        Class revertClass = Class.forName("com.netease.edu.eds.trace.instrument.async.ThreadInterceptor", true,
+                                          classLoader);
         Method revertMethod = revertClass.getMethod("intercept", Object[].class, Callable.class, Object.class);
         // 通过Callable适配，解决Invoker类命名空间隔离的问题
         return revertMethod.invoke(null, args, callable, proxy);

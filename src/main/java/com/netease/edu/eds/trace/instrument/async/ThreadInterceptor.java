@@ -12,9 +12,12 @@ import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
 
 /**
+ * //太早加载的bootstrap类，premain开始前便已经加载。只能通过retransform进行增强，后期需要换成其他字节码增强工具。
+ * 
  * @author hzfjd
  * @create 18/7/16
  **/
+@Deprecated
 public class ThreadInterceptor {
 
     private static Logger logger = LoggerFactory.getLogger(ThreadInterceptor.class);
