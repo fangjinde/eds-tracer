@@ -61,27 +61,28 @@ public class RabbitTemplateInstrumentation implements TraceAgentInstrumetation {
             Tracer tracer = rabbitTracing.tracing().tracer();
             Span span = tracer.nextSpan().kind(Span.Kind.PRODUCER).name("publish");
 
-            SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.RABBIT);
-
-            if (!span.isNoop()) {
-
-                RabbitTracing.tagSendMessageInfo(span, exchange, routingKey);
-                RabbitTracing.tagMessagePayload(span, message.toString());
-                Endpoint.Builder builder = Endpoint.newBuilder();
-                if (rabbitTracing.remoteServiceName() != null) {
-                    builder.serviceName(rabbitTracing.remoteServiceName());
-
-                }
-                if (channel.getConnection().getAddress() != null) {
-                    builder.parseIp(channel.getConnection().getAddress());
-                }
-                span.remoteEndpoint(builder.build());
-                span.start();
-
-            }
 
             try (Tracer.SpanInScope spanInScope = tracer.withSpanInScope(span)) {
-                injector.inject(span.context(), message.getMessageProperties());
+
+                if (!span.isNoop()) {
+
+                    SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.RABBIT);
+                    injector.inject(span.context(), message.getMessageProperties());
+
+                    RabbitTracing.tagSendMessageInfo(span, exchange, routingKey);
+                    RabbitTracing.tagMessagePayload(span, message.toString());
+                    Endpoint.Builder builder = Endpoint.newBuilder();
+                    if (rabbitTracing.remoteServiceName() != null) {
+                        builder.serviceName(rabbitTracing.remoteServiceName());
+
+                    }
+                    if (channel.getConnection().getAddress() != null) {
+                        builder.parseIp(channel.getConnection().getAddress());
+                    }
+                    span.remoteEndpoint(builder.build());
+                    span.start();
+
+                }
                 return invoker.invoke(args);
             } catch (Exception e) {
                 RabbitTracing.tagErrorSpan(span, e);
