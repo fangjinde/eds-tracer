@@ -7,15 +7,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.core.Ordered;
+import org.springframework.core.PriorityOrdered;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 实现BeanDefinitionRegistryPostProcessor和PriorityOrdered仅仅为了确保在普通单例实现前初始化。
+ * 
  * @author hzfjd
  * @create 18/4/19
  */
-public class SpringBeanFactorySupport implements BeanFactoryAware {
+public class SpringBeanFactorySupport implements BeanFactoryAware, BeanDefinitionRegistryPostProcessor, PriorityOrdered {
 
     private volatile static BeanFactory                   s_beanFactory = null;
 
@@ -77,5 +84,18 @@ public class SpringBeanFactorySupport implements BeanFactoryAware {
 
     }
 
+    @Override
+    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
 
+    }
+
+    @Override
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+
+    }
+
+    @Override
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE + 2;
+    }
 }

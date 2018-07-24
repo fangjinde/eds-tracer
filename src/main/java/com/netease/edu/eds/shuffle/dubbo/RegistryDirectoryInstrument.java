@@ -41,7 +41,7 @@ public class RegistryDirectoryInstrument implements TraceAgentInstrumetation {
         new AgentBuilder.Default().type(namedIgnoreCase("com.alibaba.dubbo.registry.integration.RegistryDirectory")).transform((builder,
                                                                                                                                 typeDescription,
                                                                                                                                 classloader,
-                                                                                                                                javaModule) -> builder.method(isOverriddenFrom(typeDescription).and(namedIgnoreCase("doList")).and(takesArguments(1))).intercept(AgentSupport.getInvokerMethodDelegationCustomer().to(Interceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                                                javaModule) -> builder.method(isDeclaredBy(typeDescription).and(namedIgnoreCase("doList")).and(takesArguments(1))).intercept(AgentSupport.getInvokerMethodDelegationCustomer().to(Interceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
     }
 
@@ -71,14 +71,14 @@ public class RegistryDirectoryInstrument implements TraceAgentInstrumetation {
                 dubboInvokerList.add(dubboInvoker);
             }
             if (CollectionUtils.isEmpty(dubboInvokerList)) {
-                return result;
+                return dubboInvokerList;
             }
 
             List<String> environmentsForPropagationSelection = EnvironmentShuffleUtils.getEnvironmentsForPropagationSelection();
             // 可供选择的环境不存在？
             if (CollectionUtils.isEmpty(environmentsForPropagationSelection)) {
                 dubboInvokerList.clear();
-                return result;
+                return dubboInvokerList;
             }
 
             Map<String, List<InvokerWrapper>> envInvokersSelectorMap = getEnvInvokersSelectorMap(environmentsForPropagationSelection,
@@ -86,7 +86,7 @@ public class RegistryDirectoryInstrument implements TraceAgentInstrumetation {
             // 所有环境都没有符合条件的invokers，则清空
             if (MapUtils.isEmpty(envInvokersSelectorMap)) {
                 dubboInvokerList.clear();
-                return result;
+                return dubboInvokerList;
             }
 
             // 取存在invoker并且优先级最高的环境所对应那一组Invokers
@@ -101,7 +101,7 @@ public class RegistryDirectoryInstrument implements TraceAgentInstrumetation {
             // 安全防御。内部实现上，此时不应该再为空
             if (CollectionUtils.isEmpty(selectedInvokerWrapperList)) {
                 dubboInvokerList.clear();
-                return result;
+                return dubboInvokerList;
             }
 
             // 删除非选中的其他所有invoker
@@ -112,7 +112,7 @@ public class RegistryDirectoryInstrument implements TraceAgentInstrumetation {
                     dubboInvokerList.remove(curDubboInvoker);
                 }
             }
-            return result;
+            return dubboInvokerList;
 
         }
 

@@ -32,7 +32,7 @@ public class TraceBaseAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SpringBeanFactorySupport springBeanFactorySupport() {
+    public static SpringBeanFactorySupport springBeanFactorySupport() {
         return new SpringBeanFactorySupport();
     }
 }

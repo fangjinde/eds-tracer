@@ -13,8 +13,9 @@ import com.netease.edu.eds.shuffle.core.ShuffleProperties;
 public class ShuffleConfiguration {
 
     @Bean
-    // @ConditionalOnProperty(value = "edu.service.shuffle.turnOn", havingValue = "true", matchIfMissing = false)
     public ShuffleProperties shuffleProperties() {
         return new ShuffleProperties();
     }
+
+    // @ConditionalOnProperty(value = "edu.service.shuffle.turnOn", havingValue = "true", matchIfMissing = false)
 }

@@ -3,6 +3,7 @@ package com.netease.edu.eds.shuffle.dubbo;
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.URL;
 import com.alibaba.dubbo.common.utils.StringUtils;
+import com.alibaba.dubbo.common.utils.UrlUtils;
 import com.netease.edu.eds.shuffle.core.ShuffleSwitch;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
@@ -29,7 +30,7 @@ public class DubboUrlUtilsInstrument implements TraceAgentInstrumetation {
         new AgentBuilder.Default().type(namedIgnoreCase("com.alibaba.dubbo.common.utils.UrlUtils")).transform((builder,
                                                                                                                typeDescription,
                                                                                                                classloader,
-                                                                                                               javaModule) -> builder.method(isOverriddenFrom(typeDescription).and(namedIgnoreCase("isMatch")).and(takesArguments(2))).intercept(AgentSupport.getInvokerMethodDelegationCustomer().to(Interceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                               javaModule) -> builder.method(isDeclaredBy(typeDescription).and(namedIgnoreCase("isMatch")).and(takesArguments(2))).intercept(AgentSupport.getInvokerMethodDelegationCustomer().to(Interceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
     }
 
     public static class Interceptor {
@@ -57,8 +58,10 @@ public class DubboUrlUtilsInstrument implements TraceAgentInstrumetation {
                   || StringUtils.isEquals(consumerInterface, providerInterface)))
                 return false;
 
-            if (!isMatchCategory(providerUrl.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY),
-                                 consumerUrl.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY))) {
+            // 注意，在方法体内部的类方法调用，不会触发类的预加载。因此此处调用是安全的。
+            if (!UrlUtils.isMatchCategory(providerUrl.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY),
+                                          consumerUrl.getParameter(Constants.CATEGORY_KEY,
+                                                                   Constants.DEFAULT_CATEGORY))) {
                 return false;
             }
             if (!providerUrl.getParameter(Constants.ENABLED_KEY, true)
@@ -78,23 +81,5 @@ public class DubboUrlUtilsInstrument implements TraceAgentInstrumetation {
                        || StringUtils.isEquals(consumerClassifier, providerClassifier));
         }
 
-        /**
-         * copy from com.alibaba.dubbo.common.utils.UrlUtils的同名方法，防止类被过早加载。如果不考虑性能，也可以通过反射调用。
-         * 
-         * @param category
-         * @param categories
-         * @return
-         */
-        private static boolean isMatchCategory(String category, String categories) {
-            if (categories == null || categories.length() == 0) {
-                return Constants.DEFAULT_CATEGORY.equals(category);
-            } else if (categories.contains(Constants.ANY_VALUE)) {
-                return true;
-            } else if (categories.contains(Constants.REMOVE_VALUE_PREFIX)) {
-                return !categories.contains(Constants.REMOVE_VALUE_PREFIX + category);
-            } else {
-                return categories.contains(category);
-            }
-        }
     }
 }
