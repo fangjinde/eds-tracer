@@ -64,8 +64,12 @@ public class RegistryDirectoryInstrument implements TraceAgentInstrumetation {
                 return result;
             }
 
-            // dubbo和trace的Invoker别混了
-            List<Object> dubboInvokerList = (List<Object>) result;
+            // dubbo和trace的Invoker别混了。
+            // 原目录接口返回的List是Unmodifiable的，重新生成一个可修改的List
+            List<Object> dubboInvokerList =new ArrayList<>();
+            for ( Object dubboInvoker:(List<Object>) result){
+                dubboInvokerList.add(dubboInvoker);
+            }
             if (CollectionUtils.isEmpty(dubboInvokerList)) {
                 return result;
             }
@@ -139,6 +143,7 @@ public class RegistryDirectoryInstrument implements TraceAgentInstrumetation {
                         List<InvokerWrapper> invokerWrapperList = envInvokersSelectorMap.get(envSelected);
                         if (invokerWrapperList == null) {
                             invokerWrapperList = new ArrayList<>();
+                            envInvokersSelectorMap.put(envSelected,invokerWrapperList);
                         }
                         invokerWrapperList.add(dubboInvokerWrapper);
                         // 不可能也不允许同时被多个环境选中。因此命中后，跳过后续环境检查。

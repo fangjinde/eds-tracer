@@ -3,7 +3,6 @@ package com.netease.edu.eds.shuffle.dubbo;
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.URL;
 import com.alibaba.dubbo.common.utils.StringUtils;
-import com.alibaba.dubbo.common.utils.UrlUtils;
 import com.netease.edu.eds.shuffle.core.ShuffleSwitch;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
@@ -58,9 +57,8 @@ public class DubboUrlUtilsInstrument implements TraceAgentInstrumetation {
                   || StringUtils.isEquals(consumerInterface, providerInterface)))
                 return false;
 
-            if (!UrlUtils.isMatchCategory(providerUrl.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY),
-                                          consumerUrl.getParameter(Constants.CATEGORY_KEY,
-                                                                   Constants.DEFAULT_CATEGORY))) {
+            if (!isMatchCategory(providerUrl.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY),
+                                 consumerUrl.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY))) {
                 return false;
             }
             if (!providerUrl.getParameter(Constants.ENABLED_KEY, true)
@@ -78,6 +76,25 @@ public class DubboUrlUtilsInstrument implements TraceAgentInstrumetation {
 
                    && (consumerClassifier == null || Constants.ANY_VALUE.equals(consumerClassifier)
                        || StringUtils.isEquals(consumerClassifier, providerClassifier));
+        }
+
+        /**
+         * copy from com.alibaba.dubbo.common.utils.UrlUtils的同名方法，防止类被过早加载。如果不考虑性能，也可以通过反射调用。
+         * 
+         * @param category
+         * @param categories
+         * @return
+         */
+        private static boolean isMatchCategory(String category, String categories) {
+            if (categories == null || categories.length() == 0) {
+                return Constants.DEFAULT_CATEGORY.equals(category);
+            } else if (categories.contains(Constants.ANY_VALUE)) {
+                return true;
+            } else if (categories.contains(Constants.REMOVE_VALUE_PREFIX)) {
+                return !categories.contains(Constants.REMOVE_VALUE_PREFIX + category);
+            } else {
+                return categories.contains(category);
+            }
         }
     }
 }
