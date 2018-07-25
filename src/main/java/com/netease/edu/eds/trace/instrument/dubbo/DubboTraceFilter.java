@@ -56,7 +56,7 @@ public final class DubboTraceFilter implements Filter {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        if (tracer == null) {
+        if (tracer == null || environment == null) {
             return invoker.invoke(invocation);
         }
 
@@ -76,7 +76,7 @@ public final class DubboTraceFilter implements Filter {
         } else {
             TraceContextOrSamplingFlags extracted = extractor.extract(invocation.getAttachments());
             span = extracted.context() != null ? tracer.joinSpan(extracted.context()) : tracer.nextSpan(extracted);
-            PropagationUtils.setOriginEnvIfNotExists(span.context(), environment.getProperty("spring.profiles.active"));
+
         }
 
         SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.DUBBO);
@@ -96,13 +96,10 @@ public final class DubboTraceFilter implements Filter {
                 remoteEndpoint.parseIp(remoteAddress.getHostName());
             }
 
-            if (environment != null) {
-                if (kind.equals(Kind.CLIENT)) {
-                    SpanUtils.safeTag(span, "clientEnv", environment.getProperty("spring.profiles.active"));
-                } else {
-                    SpanUtils.safeTag(span, "serverEnv", environment.getProperty("spring.profiles.active"));
-                }
-
+            if (kind.equals(Kind.CLIENT)) {
+                SpanUtils.safeTag(span, "clientEnv", environment.getProperty("spring.profiles.active"));
+            } else {
+                SpanUtils.safeTag(span, "serverEnv", environment.getProperty("spring.profiles.active"));
             }
 
             Endpoint ep = remoteEndpoint.build();
@@ -111,6 +108,18 @@ public final class DubboTraceFilter implements Filter {
 
         boolean isOneway = false, deferFinish = false;
         try (Tracer.SpanInScope scope = tracer.withSpanInScope(span)) {
+
+            // 一定要放在SpanInScope中，否则CurrentContext不正确。
+            if (rpcContext.isProviderSide()) {
+                PropagationUtils.setOriginEnvIfNotExists(span.context(),
+                                                         environment.getProperty("spring.profiles.active"));
+            }
+
+            if (rpcContext.isConsumerSide()) {
+                SpanUtils.safeTag(span, "clientOriginEnv", PropagationUtils.getOriginEnv());
+            } else {
+                SpanUtils.safeTag(span, "serverOriginEnv", PropagationUtils.getOriginEnv());
+            }
 
             if (rpcContext.isConsumerSide()) {
                 onValue("args", invocation.getArguments(), span, rpcContext.isConsumerSide());

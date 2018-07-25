@@ -36,13 +36,14 @@ public final class TracingFilter implements Filter {
                                                             };
     static final HttpServletAdapter                 ADAPTER = new HttpServletAdapter();
 
-    public static Filter create(Tracing tracing, SkipUriMatcher skipUriMatcher, WebDebugMatcher webDebugMatcher, Environment environment) {
-        return new TracingFilter(HttpTracing.create(tracing), skipUriMatcher, webDebugMatcher,environment);
+    public static Filter create(Tracing tracing, SkipUriMatcher skipUriMatcher, WebDebugMatcher webDebugMatcher,
+                                Environment environment) {
+        return new TracingFilter(HttpTracing.create(tracing), skipUriMatcher, webDebugMatcher, environment);
     }
 
-    public static Filter create(HttpTracing httpTracing, SkipUriMatcher skipUriMatcher,
-                                WebDebugMatcher webDebugMatcher, Environment environment) {
-        return new TracingFilter(httpTracing, skipUriMatcher, webDebugMatcher,environment);
+    public static Filter create(HttpTracing httpTracing, SkipUriMatcher skipUriMatcher, WebDebugMatcher webDebugMatcher,
+                                Environment environment) {
+        return new TracingFilter(httpTracing, skipUriMatcher, webDebugMatcher, environment);
     }
 
     private SkipUriMatcher                                           skipUriMatcher;
@@ -85,12 +86,10 @@ public final class TracingFilter implements Filter {
 
         Span span = handler.handleReceive(extractor, httpRequest);
 
-        PropagationUtils.setOriginEnvIfNotExists(span.context(), environment.getProperty("spring.profiles.active"));
-
-        SpanUtils.safeTag(span, SpanType.TAG_KEY,SpanType.HTTP);
+        SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.HTTP);
 
         if (span != null && !span.isNoop() && environment != null) {
-            span.tag("env", environment.getProperty("spring.profiles.active"));
+            SpanUtils.safeTag(span, "env", environment.getProperty("spring.profiles.active"));
         }
 
         // Add attributes for explicit access to customization or span context
@@ -99,6 +98,10 @@ public final class TracingFilter implements Filter {
 
         Throwable error = null;
         try (Tracer.SpanInScope ws = tracer.withSpanInScope(span)) {
+
+            // 一定要放在SpanInScope中，否则CurrentContext不正确。
+            PropagationUtils.setOriginEnvIfNotExists(span.context(), environment.getProperty("spring.profiles.active"));
+            SpanUtils.safeTag(span, "originEnv", PropagationUtils.getOriginEnv());
             // any downstream code can see Tracer.currentSpan() or use Tracer.currentSpanCustomizer()
             chain.doFilter(httpRequest, httpResponse);
         } catch (IOException | ServletException | RuntimeException | Error e) {
