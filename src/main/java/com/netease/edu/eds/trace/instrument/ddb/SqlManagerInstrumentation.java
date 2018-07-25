@@ -134,8 +134,8 @@ public class SqlManagerInstrumentation implements TraceAgentInstrumetation {
 
                 return result;
             } catch (Exception e) {
-                ddbSpan.tag("has_error", String.valueOf(true));
-                ddbSpan.tag("ddb_error", ExceptionStringUtils.getStackTraceString(e));
+                SpanUtils.tagErrorMark(ddbSpan);
+                SpanUtils.tagError(ddbSpan, e);
                 throw ExceptionHandler.wrapToRuntimeException(e);
             } finally {
                 DdbTraceContext.setSpan(null);
