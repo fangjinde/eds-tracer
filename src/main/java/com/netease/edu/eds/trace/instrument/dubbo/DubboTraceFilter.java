@@ -97,7 +97,12 @@ public final class DubboTraceFilter implements Filter {
             }
 
             if (environment != null) {
-                span.tag("env", environment.getProperty("spring.profiles.active"));
+                if (kind.equals(Kind.CLIENT)) {
+                    SpanUtils.safeTag(span, "clientEnv", environment.getProperty("spring.profiles.active"));
+                } else {
+                    SpanUtils.safeTag(span, "serverEnv", environment.getProperty("spring.profiles.active"));
+                }
+
             }
 
             Endpoint ep = remoteEndpoint.build();

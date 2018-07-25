@@ -109,7 +109,7 @@ public class RegistryDirectoryInstrument implements TraceAgentInstrumetation {
             while (dubboInvokerIterator.hasNext()) {
                 Object curDubboInvoker = dubboInvokerIterator.next();
                 if (!selectedInvokerWrapperList.contains(curDubboInvoker)) {
-                    dubboInvokerList.remove(curDubboInvoker);
+                    dubboInvokerIterator.remove();
                 }
             }
             return dubboInvokerList;
