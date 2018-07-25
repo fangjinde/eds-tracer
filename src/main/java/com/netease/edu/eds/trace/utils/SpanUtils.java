@@ -49,4 +49,13 @@ public class SpanUtils {
         }
     }
 
+    public static void tagErrorMark(SpanCustomizer span) {
+        SpanUtils.safeTag(span, "has_error", String.valueOf(true));
+
+    }
+
+    public static void tagError(SpanCustomizer span, Throwable e) {
+        SpanUtils.safeTag(span, "error", ExceptionStringUtils.getStackTraceString(e));
+    }
+
 }

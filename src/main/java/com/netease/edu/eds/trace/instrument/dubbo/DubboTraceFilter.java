@@ -14,7 +14,6 @@ import com.alibaba.dubbo.rpc.*;
 import com.alibaba.dubbo.rpc.protocol.dubbo.FutureAdapter;
 import com.alibaba.dubbo.rpc.support.RpcUtils;
 import com.netease.edu.eds.trace.constants.SpanType;
-import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.edu.eds.trace.utils.TraceJsonUtils;
@@ -160,23 +159,16 @@ public final class DubboTraceFilter implements Filter {
 
     public void onValue(String adviceName, Object value, Span span, boolean consumerSide) {
         if (consumerSide) {
-            try {
-
-                span.tag(adviceName, TraceJsonUtils.toJson(value));
-            } catch (Exception e) {
-                logger.error("writeValueAsString error:", e);
-                span.tag(adviceName, adviceName + " value json serializing error. ");
-            }
+            SpanUtils.safeTag(span, adviceName, TraceJsonUtils.toJson(value));
         }
 
     }
 
     static void onError(Throwable error, SpanCustomizer span, boolean consumerSide) {
         if (consumerSide) {
-            span.tag("has_error", String.valueOf(true));
-            span.tag("dubbo_error", ExceptionStringUtils.getStackTraceString(error));
+            SpanUtils.tagErrorMark(span);
+            SpanUtils.tagError(span, error);
         }
-
     }
 
     static final Propagation.Getter<Map<String, String>, String> GETTER = new Propagation.Getter<Map<String, String>, String>() {
