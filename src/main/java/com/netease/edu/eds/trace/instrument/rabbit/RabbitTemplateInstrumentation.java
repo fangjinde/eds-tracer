@@ -4,6 +4,8 @@ import brave.Span;
 import brave.Tracer;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
+import com.netease.edu.eds.shuffle.core.EnvironmentShuffleUtils;
+import com.netease.edu.eds.shuffle.core.ShuffleSwitch;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
@@ -16,11 +18,16 @@ import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Morph;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import zipkin2.Endpoint;
 
 import java.lang.instrument.Instrumentation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -46,6 +53,98 @@ public class RabbitTemplateInstrumentation implements TraceAgentInstrumetation {
         @RuntimeType
         public static Object doSend(@AllArguments Object[] args, @Morph Invoker invoker) throws Exception {
 
+            if (!ShuffleSwitch.isTurnOn()) {
+                return traceDoSend(args, invoker);
+
+            }
+
+            String exchange = (String) args[1];
+            List<String> envsForSelection = EnvironmentShuffleUtils.getEnvironmentsForPropagationSelection();
+            List<String> allShuffleExchanges = getAllShuffleExchangeToSend(envsForSelection, exchange);
+            if (CollectionUtils.isEmpty(allShuffleExchanges)) {
+                return traceDoSend(args, invoker);
+            }
+
+            Object originResult = null;
+            for (String shuffleExchange : allShuffleExchanges) {
+                args[1] = shuffleExchange;
+                Object result = traceDoSend(args, invoker);
+                if (exchange.equals(shuffleExchange)) {
+                    originResult = result;
+                }
+            }
+
+            return originResult;
+
+        }
+
+        private static List<String> getAllShuffleExchangeToSend(List<String> envsForSelection, String exchange) {
+
+            if (CollectionUtils.isEmpty(envsForSelection)) {
+                return null;
+            }
+
+            String originExchangeEnv = null;
+            for (String env : envsForSelection) {
+                if (exchange.startsWith(env) || exchange.endsWith(env)) {
+                    originExchangeEnv = env;
+                    break;
+                }
+            }
+            // 为规避cloud bus等统一环境exchange的情况，原exchange若无环境属性，则不做shuffle处理
+            if (originExchangeEnv == null) {
+                return null;
+            }
+
+            List<String> allShuffleExchanges = new ArrayList<>();
+            allShuffleExchanges.add(exchange);
+            // 增加其他环境的exchange，修改对应的环境属性
+            for (String newEnv : envsForSelection) {
+
+                if (!originExchangeEnv.equals(newEnv)) {
+                    String newShuffleExchange = getNewExchangeWithNewEnv(exchange, originExchangeEnv, newEnv);
+                    if (StringUtils.isNotBlank(newShuffleExchange)) {
+                        allShuffleExchanges.add(newShuffleExchange);
+                    }
+                }
+            }
+
+            return allShuffleExchanges;
+
+        }
+
+        public static void main(String[] args) {
+
+            String exchange1 = "memberRegisterExchange-p1";
+            String exchange2 = "std-memberRegisterExchange";
+            String exchange3 = "memberRegisterExchange";
+
+            System.out.println(getNewExchangeWithNewEnv(exchange1, "p1", "std"));
+            System.out.println(getNewExchangeWithNewEnv(exchange2, "std", "p1"));
+            System.out.println(getNewExchangeWithNewEnv(exchange3, "p1", "std"));
+
+            System.out.println(getAllShuffleExchangeToSend(Arrays.asList("p1", "std"), exchange1));
+            System.out.println(getAllShuffleExchangeToSend(Arrays.asList("p1", "std"), exchange2));
+            System.out.println(getAllShuffleExchangeToSend(Arrays.asList("p1", "std"), exchange3));
+
+            System.out.println(getAllShuffleExchangeToSend(Arrays.asList("std"), exchange1));
+            System.out.println(getAllShuffleExchangeToSend(Arrays.asList("std"), exchange2));
+            System.out.println(getAllShuffleExchangeToSend(Arrays.asList("std"), exchange3));
+
+        }
+
+        private static String getNewExchangeWithNewEnv(String exchange, String originEnv, String newEnv) {
+            StringBuilder newExchangeSb = new StringBuilder();
+            if (exchange.startsWith(originEnv)) {
+                newExchangeSb.append(newEnv).append(exchange.substring(originEnv.length()));
+            } else if (exchange.endsWith(originEnv)) {
+                newExchangeSb.append(exchange.substring(0, exchange.length() - originEnv.length())).append(newEnv);
+            }
+            return newExchangeSb.toString();
+        }
+
+        private static Object traceDoSend(Object[] args, Invoker invoker) throws Exception {
+
             RabbitTracing rabbitTracing = SpringBeanFactorySupport.getBean(RabbitTracing.class);
             if (rabbitTracing == null) {
                 return invoker.invoke(args);
@@ -60,7 +159,6 @@ public class RabbitTemplateInstrumentation implements TraceAgentInstrumetation {
 
             Tracer tracer = rabbitTracing.tracing().tracer();
             Span span = tracer.nextSpan().kind(Span.Kind.PRODUCER).name("publish");
-
 
             try (Tracer.SpanInScope spanInScope = tracer.withSpanInScope(span)) {
 
