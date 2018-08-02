@@ -29,6 +29,7 @@ import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import zipkin2.Endpoint;
@@ -59,6 +60,10 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
     public static class TraceInterceptor {
 
+        static int PROCESS = 1;
+        static int DELAY   = 2;
+        static int IGNORE  = 3;
+
         /**
          * case1 当前环境接收处理; case2 当前环境delay处理; case3 当前环境丢弃处理;
          * 
@@ -68,19 +73,23 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
          * @return
          */
         private static int getCaseForStdConsumer(String stdEnv, List<String> originAndStdEnvs,
-                                                 String currentApplicationName) {
+                                                 String currentApplicationName, KeyValueManager keyValueManager,
+                                                 String messageOwnerEnvKey,
+                                                 String messageDelayAndRouteBackStdQueueCountKey,
+                                                 EnvironmentDetector environmentDetector) {
+
             // 请求来源是std
             String originEnv = PropagationUtils.getOriginEnv();
             if (StringUtils.isBlank(originEnv) || stdEnv.equals(originEnv)) {
-                return 1;
+                return PROCESS;
             }
 
             if (CollectionUtils.isEmpty(originAndStdEnvs) || originAndStdEnvs.size() != 2
                 || !originAndStdEnvs.contains(stdEnv)) {
-                return 1;
+                return PROCESS;
             }
 
-            // 请求来源为测试环境
+            // 以下仅需处理请求来源为测试环境的情况
             String testEnv = null;
             Iterator<String> envIterator = originAndStdEnvs.iterator();
             while (envIterator.hasNext()) {
@@ -90,10 +99,45 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                 }
             }
 
-            // case2 当前环境delay处理
+            // 检查现有环境占用情况
+            String ownerEnv = keyValueManager.getValue(messageOwnerEnvKey);
+            if (stdEnv.equals(ownerEnv)) {
+                return PROCESS;
+            }
 
-            // case3 当前环境丢弃处理
-            return 3;
+            if (StringUtils.isNotBlank(ownerEnv) && !testEnv.equals(ownerEnv)) {
+                // 别的乱七八糟的环境，则交由std兼容处理。
+                return PROCESS;
+            }
+
+            int STD_IN_QUEUE_COUNT_THRESHOLD = 3;
+            boolean testEnvExisted = environmentDetector.exist(testEnv, currentApplicationName);
+            // 测试环境占用标记存在
+            if (testEnv.equals(ownerEnv)) {
+
+                if (testEnvExisted) {
+                    // 如果测试环境存在，并且有消费过的标记。则std当前消息可以丢弃。如果后续测试环境重试产生消息，但环境被后续销毁，消息也会通过死信队列重新转移到std队列。因此当前消息是可以丢弃的。
+                    return IGNORE;
+                }
+                Long messageStdInQueueCount = keyValueManager.increment(messageDelayAndRouteBackStdQueueCountKey, 0L);
+                // 测试环境不存活。需要区分测试环境是暂时下线，还是销毁。通过重入队列次数，亦即MESSAGE TTL周期数。
+                if (messageStdInQueueCount > STD_IN_QUEUE_COUNT_THRESHOLD) {
+                    // 销毁
+                    return PROCESS;
+                } else {
+                    // 暂时下线,delay处理。
+                    return DELAY;
+                }
+
+            }
+
+            // 以下仅需处理来源为测试环境，且未有环境占用标记的情况。
+            if (testEnvExisted) {
+
+                return DELAY;
+            }
+
+            return PROCESS;
         }
 
         public static Object shuffleInvokeListener(Object[] args, Invoker invoker) throws Exception {
@@ -117,20 +161,69 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
             String messageKey = getMessageIdKey(message);
             String messageOwnerEnvKey = messageKey + "-OwnerEnv";
-            String messageStdInQueueCountKey = messageKey + "-" + stdEnv + "-InQueueCount";
+            String messageDelayAndRouteBackStdQueueCountKey = messageKey + "-" + stdEnv + "-RouteBackCount";
 
             if (stdEnv.equals(curEnv)) {
                 // 当前为基准环境
-                // 检查现有环境占用情况
-                String ownerEnv = keyValueManager.getValue(messageOwnerEnvKey);
+                int caseToProcess = getCaseForStdConsumer(stdEnv, originAndStdEnvs, currentApplicationName,
+                                                          keyValueManager, messageOwnerEnvKey,
+                                                          messageDelayAndRouteBackStdQueueCountKey,
+                                                          environmentDetector);
+                if (DELAY == caseToProcess) {
 
-                // 其他环境已经消费
-                if (StringUtils.isNotBlank(ownerEnv) && !ownerEnv.equals(curEnv)) {
-                    // 过滤该消息。如果发现对于rabbit事务消息的场景有影响的话，再做进一步的细化处理。例如及时提交事务，关闭channel等。
+                    keyValueManager.increment(messageDelayAndRouteBackStdQueueCountKey, 1);
+
+                    throw new AmqpRejectAndDontRequeueException("make message reject and not requeue for further dead letter process, with messageKey="
+                                                                + messageKey);
+                    // nack, not requeue, make it dead letter
+                    // channel.basicNack(message.getMessageProperties().getDeliveryTag(), true, false);
+                    // return null;
+
+                } else if (PROCESS == caseToProcess) {
+
+                    InterProcessMutex lock = queueConsumerMutexContext.getLock(messageOwnerEnvKey);
+                    boolean acquired = lock.acquire(3600, TimeUnit.SECONDS);
+                    // 长时间仍锁定超时，丢弃该消息。即由能获取锁定的消费者处理(基准环境）
+                    if (!acquired) {
+                        return null;
+                    }
+                    // 获取锁后
+                    try {
+                        // 二次检查
+                        int caseToProcessSecondTimeCheck = getCaseForStdConsumer(stdEnv, originAndStdEnvs,
+                                                                                 currentApplicationName,
+                                                                                 keyValueManager, messageOwnerEnvKey,
+                                                                                 messageDelayAndRouteBackStdQueueCountKey,
+                                                                                 environmentDetector);
+                        if (PROCESS == caseToProcessSecondTimeCheck) {
+                            // 执行消息消费
+                            try {
+                                return invoker.invoke(args);
+                            } finally {
+                                // 不管消费过程有没有异常，都需要更新环境占用标记
+                                String ownerEnv = keyValueManager.getValue(messageOwnerEnvKey);
+                                if (!curEnv.equals(ownerEnv)) {
+                                    keyValueManager.setValue(messageOwnerEnvKey, curEnv);
+                                }
+                            }
+                        } else if (DELAY == caseToProcessSecondTimeCheck) {
+                            keyValueManager.increment(messageDelayAndRouteBackStdQueueCountKey, 1);
+
+                            throw new AmqpRejectAndDontRequeueException("make message reject and not requeue for further dead letter process, with messageKey="
+                                                                        + messageKey);
+                        } else {
+                            return null;
+                        }
+
+                    } finally {
+                        // 释放锁
+                        lock.release();
+
+                    }
+                } else {
                     return null;
                 }
 
-                return invoker.invoke(args);
             } else {
                 // 当前为测试环境
 
@@ -160,7 +253,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                     }
                     // 执行消息消费
                     try {
-                        Object result = invoker.invoke(args);
+                        return invoker.invoke(args);
                     } finally {
                         // 不管消费过程有没有异常，都需要更新环境占用标记
                         if (!curEnv.equals(ownerEnv)) {
@@ -176,7 +269,6 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
             }
 
-            return invoker.invoke(args);
         }
 
         private static String getMessageIdKey(Message message) {
