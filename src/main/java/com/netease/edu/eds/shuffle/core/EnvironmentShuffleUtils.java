@@ -14,6 +14,11 @@ import java.util.List;
  **/
 public class EnvironmentShuffleUtils {
 
+    /**
+     * 获取当前环境
+     * 
+     * @return
+     */
     public static String getCurrentEnv() {
         Environment environment = SpringBeanFactorySupport.getBean(Environment.class);
         if (environment == null) {
@@ -23,12 +28,30 @@ public class EnvironmentShuffleUtils {
     }
 
     /**
+     * 获取当前应用名字
+     * 
+     * @return
+     */
+    public static String getCurrentApplicationName() {
+        Environment environment = SpringBeanFactorySupport.getBean(Environment.class);
+        if (environment == null) {
+            return null;
+        }
+        return environment.getProperty("spring.application.name");
+    }
+
+    /**
      * 获取用于传播的环境名称,按照优先序返回列表。传播过来的环境 > 当前环境 > 基准环境
      * 
      * @return
      */
     public static List<String> getEnvironmentsForPropagationSelection() {
 
+        return getAllEnvironmentsForPropagationSelection(true);
+
+    }
+
+    private static List<String> getAllEnvironmentsForPropagationSelection(boolean includeCurrentEnv) {
         List<String> environmentsForPropagationSelection = new ArrayList<>(3);
         String lastEnv = null;
 
@@ -38,10 +61,12 @@ public class EnvironmentShuffleUtils {
             lastEnv = originEnv;
         }
 
-        String currentEnv = getCurrentEnv();
-        if (StringUtils.isNotBlank(currentEnv) && !currentEnv.equals(lastEnv)) {
-            environmentsForPropagationSelection.add(currentEnv);
-            lastEnv = currentEnv;
+        if (includeCurrentEnv) {
+            String currentEnv = getCurrentEnv();
+            if (StringUtils.isNotBlank(currentEnv) && !currentEnv.equals(lastEnv)) {
+                environmentsForPropagationSelection.add(currentEnv);
+                lastEnv = currentEnv;
+            }
         }
 
         String stdEnv = ShufflePropertiesSupport.getStandardEnvName();
@@ -49,7 +74,15 @@ public class EnvironmentShuffleUtils {
             environmentsForPropagationSelection.add(stdEnv);
         }
         return environmentsForPropagationSelection;
+    }
 
+    /**
+     * 获取用于传播的环境名称,按照优先序返回列表。传播过来的环境 > 基准环境
+     * 
+     * @return
+     */
+    public static List<String> getOriginAndStdEnvironments() {
+        return getAllEnvironmentsForPropagationSelection(false);
     }
 
 }
