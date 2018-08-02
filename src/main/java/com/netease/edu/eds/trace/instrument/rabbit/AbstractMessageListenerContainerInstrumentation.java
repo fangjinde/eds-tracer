@@ -259,48 +259,46 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                                      messageOwnerEnvKey, messageDelayAndRouteBackStdQueueCountKey, environmentDetector,
                                      queueConsumerMutexContext, curEnv, messageKey, args, invoker);
 
-            } else {
-                // 当前为测试环境
+            }
+            // 当前为测试环境
 
-                // 检查现有环境占用情况
-                String ownerEnv = keyValueManager.getValue(messageOwnerEnvKey);
+            // 检查现有环境占用情况
+            String ownerEnv = keyValueManager.getValue(messageOwnerEnvKey);
 
+            // 其他环境已经消费
+            if (StringUtils.isNotBlank(ownerEnv) && !ownerEnv.equals(curEnv)) {
+                // 过滤该消息。如果发现对于rabbit事务消息的场景有影响的话，再做进一步的细化处理。例如及时提交事务，关闭channel等。
+                return null;
+            }
+
+            InterProcessMutex lock = queueConsumerMutexContext.getLock(messageOwnerEnvKey);
+            boolean acquired = lock.acquire(3600, TimeUnit.SECONDS);
+            // 长时间仍锁定超时，丢弃该消息。即由能获取锁定的消费者处理(基准环境）
+            if (!acquired) {
+                return null;
+            }
+            // 获取锁后
+            try {
+                // 二次检查环境是否占有
+                ownerEnv = keyValueManager.getValue(messageOwnerEnvKey);
                 // 其他环境已经消费
                 if (StringUtils.isNotBlank(ownerEnv) && !ownerEnv.equals(curEnv)) {
                     // 过滤该消息。如果发现对于rabbit事务消息的场景有影响的话，再做进一步的细化处理。例如及时提交事务，关闭channel等。
                     return null;
                 }
-
-                InterProcessMutex lock = queueConsumerMutexContext.getLock(messageOwnerEnvKey);
-                boolean acquired = lock.acquire(3600, TimeUnit.SECONDS);
-                // 长时间仍锁定超时，丢弃该消息。即由能获取锁定的消费者处理(基准环境）
-                if (!acquired) {
-                    return null;
-                }
-                // 获取锁后
+                // 执行消息消费
                 try {
-                    // 二次检查环境是否占有
-                    ownerEnv = keyValueManager.getValue(messageOwnerEnvKey);
-                    // 其他环境已经消费
-                    if (StringUtils.isNotBlank(ownerEnv) && !ownerEnv.equals(curEnv)) {
-                        // 过滤该消息。如果发现对于rabbit事务消息的场景有影响的话，再做进一步的细化处理。例如及时提交事务，关闭channel等。
-                        return null;
-                    }
-                    // 执行消息消费
-                    try {
-                        return invoker.invoke(args);
-                    } finally {
-                        // 不管消费过程有没有异常，都需要更新环境占用标记
-                        if (!curEnv.equals(ownerEnv)) {
-                            keyValueManager.setValue(messageOwnerEnvKey, curEnv);
-                        }
-                    }
-
+                    return invoker.invoke(args);
                 } finally {
-                    // 释放锁
-                    lock.release();
-
+                    // 不管消费过程有没有异常，都需要更新环境占用标记
+                    if (!curEnv.equals(ownerEnv)) {
+                        keyValueManager.setValue(messageOwnerEnvKey, curEnv);
+                    }
                 }
+
+            } finally {
+                // 释放锁
+                lock.release();
 
             }
 
