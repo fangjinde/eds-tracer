@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author hzfjd
  * @create 18/7/20
  **/
-@ConfigurationProperties(prefix = "edu.service.shuffle")
+@ConfigurationProperties(prefix = "shuffle")
 public class ShuffleProperties {
 
     private boolean            turnOn;

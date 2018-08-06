@@ -5,10 +5,7 @@ import brave.Tracer;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
-import com.netease.edu.eds.shuffle.core.BeanNameConstants;
-import com.netease.edu.eds.shuffle.core.EnvironmentShuffleUtils;
-import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
-import com.netease.edu.eds.shuffle.core.ShuffleSwitch;
+import com.netease.edu.eds.shuffle.core.*;
 import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
 import com.netease.edu.eds.shuffle.spi.KeyValueManager;
 import com.netease.edu.eds.shuffle.support.InterProcessMutexContext;
@@ -119,7 +116,8 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                     // 如果测试环境存在，并且有消费过的标记。则std当前消息可以丢弃。如果后续测试环境重试产生消息，但环境被后续销毁，消息也会通过死信队列重新转移到std队列。因此当前消息是可以丢弃的。
                     return IGNORE;
                 }
-                Long messageStdInQueueCount = keyValueManager.increment(messageDelayAndRouteBackStdQueueCountKey, 0L);
+                Long messageStdInQueueCount = keyValueManager.increment(messageDelayAndRouteBackStdQueueCountKey, 0L,
+                                                                        ShuffleConstants.DUPLICATE_CHECK_VALID_PERIOD);
                 // 测试环境不存活。需要区分测试环境是暂时下线，还是销毁。通过重入队列次数，亦即MESSAGE TTL周期数。
                 if (messageStdInQueueCount > STD_IN_QUEUE_COUNT_THRESHOLD) {
                     // 销毁
@@ -146,7 +144,8 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
         private static Object doDelay(KeyValueManager keyValueManager, String messageDelayAndRouteBackStdQueueCountKey,
                                       String messageKey) {
-            keyValueManager.increment(messageDelayAndRouteBackStdQueueCountKey, 1);
+            keyValueManager.increment(messageDelayAndRouteBackStdQueueCountKey, 1,
+                                      ShuffleConstants.DUPLICATE_CHECK_VALID_PERIOD);
             throw new AmqpRejectAndDontRequeueException("make message reject and not requeue for further dead letter process, with messageKey="
                                                         + messageKey);
             // nack, not requeue, make it dead letter
@@ -164,7 +163,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                 // 不管消费过程有没有异常，都需要更新环境占用标记
                 String ownerEnv = keyValueManager.getValue(messageOwnerEnvKey);
                 if (!curEnv.equals(ownerEnv)) {
-                    keyValueManager.setValue(messageOwnerEnvKey, curEnv);
+                    keyValueManager.setValue(messageOwnerEnvKey, curEnv, ShuffleConstants.DUPLICATE_CHECK_VALID_PERIOD);
                 }
             }
         }
@@ -292,7 +291,8 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                 } finally {
                     // 不管消费过程有没有异常，都需要更新环境占用标记
                     if (!curEnv.equals(ownerEnv)) {
-                        keyValueManager.setValue(messageOwnerEnvKey, curEnv);
+                        keyValueManager.setValue(messageOwnerEnvKey, curEnv,
+                                                 ShuffleConstants.DUPLICATE_CHECK_VALID_PERIOD);
                     }
                 }
 

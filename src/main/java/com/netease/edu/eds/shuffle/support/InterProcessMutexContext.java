@@ -8,6 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
+ * 不依赖base-framework。单独实现。
+ * 
  * @author hzfjd
  * @create 18/8/2
  **/
@@ -109,9 +111,6 @@ public class InterProcessMutexContext {
             return hash >>> this.segmentShift & this.segmentMask;
         }
 
-        public int getIndexMask() {
-            return this.segmentMask;
-        }
     }
 
 }

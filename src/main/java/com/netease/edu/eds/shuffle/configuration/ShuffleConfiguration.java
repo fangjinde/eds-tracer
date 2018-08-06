@@ -5,15 +5,20 @@ import org.apache.curator.x.discovery.*;
 import org.apache.curator.x.discovery.details.InstanceSerializer;
 import org.apache.curator.x.discovery.details.JsonInstanceSerializer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
 
 import com.netease.edu.eds.shuffle.core.BeanNameConstants;
 import com.netease.edu.eds.shuffle.core.ServiceDirectory;
 import com.netease.edu.eds.shuffle.core.ShuffleProperties;
 import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
+import com.netease.edu.eds.shuffle.spi.KeyValueManager;
 import com.netease.edu.eds.shuffle.support.*;
 
 /**
@@ -94,6 +99,38 @@ public class ShuffleConfiguration {
     @ConditionalOnMissingBean
     public ServiceDirectory cachedZookeeperServiceDirectory() {
         return new CachedZookeeperServiceDirectory();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_REDIS_CONNECTION_FACTORY)
+    public JedisConnectionFactory shuffleRedisConnectionFactory() {
+        JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();
+        RedisProperties redisProperties = shuffleRedisProperties();
+        jedisConnectionFactory.setHostName(redisProperties.getHost());
+        jedisConnectionFactory.setPassword(redisProperties.getPassword());
+        jedisConnectionFactory.setPort(redisProperties.getPort());
+        jedisConnectionFactory.setTimeout(redisProperties.getTimeout());
+        return jedisConnectionFactory;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_REDIS_TEMPLATE)
+    public RedisOperations shuffleRedisTemplate() {
+        RedisTemplate redisTemplate = new RedisTemplate();
+        redisTemplate.setConnectionFactory(shuffleRedisConnectionFactory());
+        return redisTemplate;
+    }
+
+    @Bean
+    @ConfigurationProperties(prefix = "shuffle.redis")
+    public RedisProperties shuffleRedisProperties() {
+        return new RedisProperties();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_REDIS_KEY_VALUE_MANAGER)
+    public KeyValueManager shuffleRedisKeyValueManager() {
+        return new RedisKeyValueManager();
     }
 
     // @ConditionalOnProperty(value = "edu.service.shuffle.turnOn", havingValue = "true", matchIfMissing = false)
