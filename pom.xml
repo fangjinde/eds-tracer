@@ -153,9 +153,9 @@
     <dependencies>
 
         <!--<dependency>-->
-            <!--<groupId>io.github.hengyunabc</groupId>-->
-            <!--<artifactId>dumpclass</artifactId>-->
-            <!--<version>0.0.2</version>-->
+        <!--<groupId>io.github.hengyunabc</groupId>-->
+        <!--<artifactId>dumpclass</artifactId>-->
+        <!--<version>0.0.2</version>-->
         <!--</dependency>-->
 
 
@@ -334,15 +334,15 @@
     <repositories>
 
         <!--<repository>-->
-            <!--<id>spring-snapshots2</id>-->
-            <!--<url>https://repo.spring.io/snapshot</url>-->
-            <!--<snapshots>-->
-                <!--<enabled>true</enabled>-->
-            <!--</snapshots>-->
+        <!--<id>spring-snapshots2</id>-->
+        <!--<url>https://repo.spring.io/snapshot</url>-->
+        <!--<snapshots>-->
+        <!--<enabled>true</enabled>-->
+        <!--</snapshots>-->
         <!--</repository>-->
         <!--<repository>-->
-            <!--<id>spring-milestones2</id>-->
-            <!--<url>https://repo.spring.io/milestone</url>-->
+        <!--<id>spring-milestones2</id>-->
+        <!--<url>https://repo.spring.io/milestone</url>-->
         <!--</repository>-->
 
         <repository>
@@ -354,15 +354,15 @@
             </snapshots>
         </repository>
         <!--<repository>-->
-            <!--<id>spring-snapshots</id>-->
-            <!--<name>Spring Snapshots</name>-->
-            <!--<url>https://repo.spring.io/libs-snapshot-local</url>-->
-            <!--<snapshots>-->
-                <!--<enabled>true</enabled>-->
-            <!--</snapshots>-->
-            <!--<releases>-->
-                <!--<enabled>false</enabled>-->
-            <!--</releases>-->
+        <!--<id>spring-snapshots</id>-->
+        <!--<name>Spring Snapshots</name>-->
+        <!--<url>https://repo.spring.io/libs-snapshot-local</url>-->
+        <!--<snapshots>-->
+        <!--<enabled>true</enabled>-->
+        <!--</snapshots>-->
+        <!--<releases>-->
+        <!--<enabled>false</enabled>-->
+        <!--</releases>-->
         <!--</repository>-->
         <!--<repository>-->
         <!--<id>spring-milestones</id>-->
