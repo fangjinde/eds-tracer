@@ -5,7 +5,6 @@ import org.apache.curator.x.discovery.*;
 import org.apache.curator.x.discovery.details.InstanceSerializer;
 import org.apache.curator.x.discovery.details.JsonInstanceSerializer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.cloud.zookeeper.discovery.ZookeeperInstance;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,8 +29,8 @@ public class ShuffleConfiguration {
     }
 
     @Bean(name = BeanNameConstants.QUEUE_CONSUMER_MUTEX_CONTEXT)
-    public InterProcessMutexContext queueConsumerMutextContext() {
-        return new InterProcessMutexContext();
+    public InterProcessMutexContext queueConsumerMutextContext(CuratorFramework client) {
+        return new InterProcessMutexContext(client, "RabbitConsumerShuffle");
     }
 
     @Bean(name = BeanNameConstants.ENVIRONMENT_DETECTOR)
@@ -41,8 +40,8 @@ public class ShuffleConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public InstanceSerializer<ZookeeperInstance> deprecatedInstanceSerializer() {
-        return new JsonInstanceSerializer<>(ZookeeperInstance.class);
+    public InstanceSerializer<ServiceInstance> deprecatedInstanceSerializer() {
+        return new JsonInstanceSerializer<>(ServiceInstance.class);
     }
 
     @Bean
