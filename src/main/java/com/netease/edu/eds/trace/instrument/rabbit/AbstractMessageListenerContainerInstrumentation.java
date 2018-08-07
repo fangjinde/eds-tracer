@@ -2,6 +2,7 @@ package com.netease.edu.eds.trace.instrument.rabbit;
 
 import brave.Span;
 import brave.Tracer;
+import brave.Tracing;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
@@ -305,7 +306,12 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
         }
 
         private static String getMessageIdKey(Message message) {
-            return MD5Utils.digest(message.getBody());
+            try {
+                return Tracing.currentTracer().currentSpan().context().traceIdString();
+            } catch (Exception e) {
+                return MD5Utils.digest(message.getBody());
+            }
+
         }
 
         @RuntimeType

@@ -46,8 +46,8 @@ public class ShuffleConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public InstanceSerializer<ServiceInstance> deprecatedInstanceSerializer() {
-        return new JsonInstanceSerializer<>(ServiceInstance.class);
+    public InstanceSerializer<java.util.HashMap> deprecatedInstanceSerializer() {
+        return new JsonInstanceSerializer(java.util.HashMap.class);
     }
 
     @Bean
