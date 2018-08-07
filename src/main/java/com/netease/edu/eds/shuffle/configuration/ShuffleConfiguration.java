@@ -6,6 +6,7 @@ import org.apache.curator.x.discovery.details.InstanceSerializer;
 import org.apache.curator.x.discovery.details.JsonInstanceSerializer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.commons.util.InetUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,6 +48,12 @@ public class ShuffleConfiguration {
     @ConditionalOnMissingBean
     public InstanceSerializer<ServiceInstance> deprecatedInstanceSerializer() {
         return new JsonInstanceSerializer<>(ServiceInstance.class);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public ZookeeperDiscoveryProperties zookeeperDiscoveryProperties(InetUtils inetUtils) {
+        return new ZookeeperDiscoveryProperties(inetUtils);
     }
 
     @Bean

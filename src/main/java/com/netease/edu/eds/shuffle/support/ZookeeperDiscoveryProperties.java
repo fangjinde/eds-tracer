@@ -23,7 +23,7 @@ import java.util.Map;
  * @author Spencer Gibb
  * @since 1.0.0
  */
-@ConfigurationProperties("spring.shuffle.zookeeper.discovery")
+@ConfigurationProperties("shuffle.zookeeper.discovery")
 public class ZookeeperDiscoveryProperties {
 
     public static final String  DEFAULT_URI_SPEC = "{scheme}://{address}:{port}";
