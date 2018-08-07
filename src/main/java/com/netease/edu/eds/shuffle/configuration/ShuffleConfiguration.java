@@ -74,7 +74,7 @@ public class ShuffleConfiguration {
             throw new RuntimeException("create ServiceInstance.builder() failed. ", e);
         }
 
-        serviceInstanceBuilder.id(context.getId()).name(appNameForServiceDiscovery).address(host).payload(properties.getMetadata()).uriSpec(new UriSpec(properties.getUriSpec()));
+        serviceInstanceBuilder.name(appNameForServiceDiscovery).address(host).payload(properties.getMetadata()).uriSpec(new UriSpec(properties.getUriSpec()));
 
         if (properties.getInstanceSslPort() != null) {
             serviceInstanceBuilder.sslPort(properties.getInstanceSslPort());
