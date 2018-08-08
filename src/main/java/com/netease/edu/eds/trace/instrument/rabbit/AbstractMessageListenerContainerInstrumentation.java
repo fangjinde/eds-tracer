@@ -21,22 +21,31 @@ import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.rabbitmq.client.Channel;
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.implementation.bind.annotation.AllArguments;
-import net.bytebuddy.implementation.bind.annotation.Morph;
-import net.bytebuddy.implementation.bind.annotation.RuntimeType;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.bind.annotation.*;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.rabbit.core.ChannelAwareMessageListener;
+import org.springframework.amqp.rabbit.listener.AbstractMessageListenerContainer;
+import org.springframework.util.ReflectionUtils;
 import zipkin2.Endpoint;
 
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static brave.Span.Kind.CONSUMER;
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -47,20 +56,33 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  **/
 public class AbstractMessageListenerContainerInstrumentation implements TraceAgentInstrumetation {
 
+    private ElementMatcher.Junction getMatcher(TypeDescription typeDescription) {
+        ElementMatcher.Junction matcher1 = isDeclaredBy(typeDescription).and(namedIgnoreCase("invokeListener")).and(takesArguments(2));
+        ElementMatcher.Junction matcher2 = isDeclaredBy(typeDescription).and(namedIgnoreCase("getMessageListener")).and(takesArguments(0));
+        return matcher1.or(matcher2);
+    }
+
     @Override
     public void premain(Map<String, String> props, Instrumentation inst) {
+
         new AgentBuilder.Default().type(namedIgnoreCase("org.springframework.amqp.rabbit.listener.AbstractMessageListenerContainer")).transform((builder,
                                                                                                                                                  typeDescription,
                                                                                                                                                  classloader,
-                                                                                                                                                 javaModule) -> builder.method(isOverriddenFrom(typeDescription).and(namedIgnoreCase("invokeListener")).and(takesArguments(2))).intercept(AgentSupport.getInvokerMethodDelegationCustomer().to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+                                                                                                                                                 javaModule) -> builder.method(getMatcher(typeDescription)).intercept(AgentSupport.getInvokerMethodDelegationCustomer().to(Interceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
     }
 
-    public static class TraceInterceptor {
+    public static class Interceptor {
 
-        static int PROCESS = 1;
-        static int DELAY   = 2;
-        static int IGNORE  = 3;
+        private static AtomicReference<Method> actualInvokeListenerMethod = new AtomicReference<>();
+
+        private static Logger                  logger                     = LoggerFactory.getLogger(Interceptor.class);
+
+        private static ThreadLocal<Integer>    processModeThreadLocal     = new ThreadLocal<>();
+
+        static int                             PROCESS                    = 1;
+        static int                             DELAY                      = 2;
+        static int                             IGNORE                     = 3;
 
         /**
          * case1 当前环境接收处理; case2 当前环境delay处理; case3 当前环境丢弃处理;
@@ -139,19 +161,55 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
             return PROCESS;
         }
 
-        private static Object doIgnore() {
-            return null;
+        private static Object byPassProxyIfPossible(Object[] args, Invoker invoker, Object proxy) {
+            // protected void actualInvokeListener(Channel channel, Message message) throws Exception
+            Method method = actualInvokeListenerMethod.get();
+            if (method == null) {
+                method = ReflectionUtils.findMethod(AbstractMessageListenerContainer.class, "actualInvokeListener",
+                                                    Channel.class, Message.class);
+                actualInvokeListenerMethod.set(method);
+            }
+
+            if (method == null) {
+                logger.error("miss AbstractMessageListenerContainer:actualInvokeListener method, using origin method. which might cause unknown errors.");
+                return invoker.invoke(args);
+            }
+
+            try {
+                return method.invoke(proxy, args);
+            } catch (IllegalAccessException e) {
+                logger.error("IllegalAccessException while calling AbstractMessageListenerContainer:actualInvokeListener method, using origin method. which might cause unknown errors.");
+                return invoker.invoke(args);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException("InvocationTargetException while  calling to AbstractMessageListenerContainer:actualInvokeListener error. ",
+                                           e.getTargetException());
+            }
         }
 
-        private static Object doDelay(KeyValueManager keyValueManager, String messageDelayAndRouteBackStdQueueCountKey,
-                                      String messageKey) {
-            keyValueManager.increment(messageDelayAndRouteBackStdQueueCountKey, 1,
-                                      ShuffleConstants.DUPLICATE_CHECK_VALID_PERIOD);
-            throw new AmqpRejectAndDontRequeueException("make message reject and not requeue for further dead letter process, with messageKey="
-                                                        + messageKey);
-            // nack, not requeue, make it dead letter
-            // channel.basicNack(message.getMessageProperties().getDeliveryTag(), true, false);
-            // return null;
+        private static Object doIgnore(Object[] args, Invoker invoker, Object proxy) {
+            // 标记IGNORE，后续messageListen会被替换为IGNORE实现。
+            processModeThreadLocal.set(IGNORE);
+            try {
+                return byPassProxyIfPossible(args, invoker, proxy);
+
+            } finally {
+                processModeThreadLocal.remove();
+            }
+        }
+
+        private static Object doDelay(Object[] args, Invoker invoker, KeyValueManager keyValueManager,
+                                      String messageDelayAndRouteBackStdQueueCountKey, Object proxy) {
+            // 标记delay，后续messageListen会被替换为delay实现。
+            processModeThreadLocal.set(DELAY);
+            try {
+                return byPassProxyIfPossible(args, invoker, proxy);
+            } finally {
+                processModeThreadLocal.remove();
+                // 累加delay次数
+                keyValueManager.increment(messageDelayAndRouteBackStdQueueCountKey, 1,
+                                          ShuffleConstants.DUPLICATE_CHECK_VALID_PERIOD);
+
+            }
 
         }
 
@@ -174,14 +232,14 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                                             String messageDelayAndRouteBackStdQueueCountKey,
                                             EnvironmentDetector environmentDetector,
                                             InterProcessMutexContext queueConsumerMutexContext, String curEnv,
-                                            String messageKey, Object[] args, Invoker invoker) {
+                                            String messageKey, Object[] args, Invoker invoker, Object proxy) {
             // 当前为基准环境
             int caseToProcess = getCaseForStdConsumer(stdEnv, originAndStdEnvs, currentApplicationName, keyValueManager,
                                                       messageOwnerEnvKey, messageDelayAndRouteBackStdQueueCountKey,
                                                       environmentDetector);
             if (DELAY == caseToProcess) {
 
-                return doDelay(keyValueManager, messageDelayAndRouteBackStdQueueCountKey, messageKey);
+                return doDelay(args, invoker, keyValueManager, messageDelayAndRouteBackStdQueueCountKey, proxy);
 
             } else if (PROCESS == caseToProcess) {
 
@@ -190,11 +248,11 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                 try {
                     acquired = lock.acquire(3600, TimeUnit.SECONDS);
                 } catch (Exception e) {
-                    return doDelay(keyValueManager, messageDelayAndRouteBackStdQueueCountKey, messageKey);
+                    return doDelay(args, invoker, keyValueManager, messageDelayAndRouteBackStdQueueCountKey, proxy);
                 }
                 // 长时间仍锁定超时，丢弃该消息。即由能获取锁定的消费者处理(基准环境）
                 if (!acquired) {
-                    return doIgnore();
+                    return doIgnore(args, invoker, proxy);
                 }
                 // 获取锁后
                 try {
@@ -209,9 +267,9 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                         // 执行消息消费
                         return doRealProcess(args, invoker, keyValueManager, messageOwnerEnvKey, curEnv);
                     } else if (DELAY == caseToProcessSecondTimeCheck) {
-                        return doDelay(keyValueManager, messageDelayAndRouteBackStdQueueCountKey, messageKey);
+                        return doDelay(args, invoker, keyValueManager, messageDelayAndRouteBackStdQueueCountKey, proxy);
                     } else {
-                        return doIgnore();
+                        return doIgnore(args, invoker, proxy);
                     }
 
                 } finally {
@@ -219,18 +277,17 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                     try {
                         lock.release();
                     } catch (Exception e) {
-                        e.printStackTrace();
-                        // 上面步骤已经完成对应执行执行
-                        return null;
+                        logger.error("release zookeeper lock error, ", e);
+                        // 上面步骤已经完成对应执行执行,此处不要调用 doIgnore()
                     }
 
                 }
             } else {
-                return doIgnore();
+                return doIgnore(args, invoker, proxy);
             }
         }
 
-        public static Object shuffleInvokeListener(Object[] args, Invoker invoker) throws Exception {
+        public static Object shuffleInvokeListener(Object[] args, Invoker invoker, Object proxy) throws Exception {
 
             if (!ShuffleSwitch.isTurnOn()) {
                 return invoker.invoke(args);
@@ -257,7 +314,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                 // 当前为基准环境
                 return processForStd(stdEnv, originAndStdEnvs, currentApplicationName, keyValueManager,
                                      messageOwnerEnvKey, messageDelayAndRouteBackStdQueueCountKey, environmentDetector,
-                                     queueConsumerMutexContext, curEnv, messageKey, args, invoker);
+                                     queueConsumerMutexContext, curEnv, messageKey, args, invoker, proxy);
 
             }
             // 当前为测试环境
@@ -268,14 +325,14 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
             // 其他环境已经消费
             if (StringUtils.isNotBlank(ownerEnv) && !ownerEnv.equals(curEnv)) {
                 // 过滤该消息。如果发现对于rabbit事务消息的场景有影响的话，再做进一步的细化处理。例如及时提交事务，关闭channel等。
-                return null;
+                return doIgnore(args, invoker, proxy);
             }
 
             InterProcessMutex lock = queueConsumerMutexContext.getLock(messageOwnerEnvKey);
             boolean acquired = lock.acquire(3600, TimeUnit.SECONDS);
             // 长时间仍锁定超时，丢弃该消息。即由能获取锁定的消费者处理(基准环境）
             if (!acquired) {
-                return null;
+                return doIgnore(args, invoker, proxy);
             }
             // 获取锁后
             try {
@@ -284,18 +341,10 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                 // 其他环境已经消费
                 if (StringUtils.isNotBlank(ownerEnv) && !ownerEnv.equals(curEnv)) {
                     // 过滤该消息。如果发现对于rabbit事务消息的场景有影响的话，再做进一步的细化处理。例如及时提交事务，关闭channel等。
-                    return null;
+                    return doIgnore(args, invoker, proxy);
                 }
                 // 执行消息消费
-                try {
-                    return invoker.invoke(args);
-                } finally {
-                    // 不管消费过程有没有异常，都需要更新环境占用标记
-                    if (!curEnv.equals(ownerEnv)) {
-                        keyValueManager.setValue(messageOwnerEnvKey, curEnv,
-                                                 ShuffleConstants.DUPLICATE_CHECK_VALID_PERIOD);
-                    }
-                }
+                return doRealProcess(args, invoker, keyValueManager, messageOwnerEnvKey, curEnv);
 
             } finally {
                 // 释放锁
@@ -314,12 +363,68 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
         }
 
-        @RuntimeType
-        public static Object invokeListener(@AllArguments Object[] args, @Morph Invoker invoker) throws Exception {
+        public static Object getMessageListener(Object[] args, Invoker invoker) throws Exception {
 
+            Integer processMode = processModeThreadLocal.get();
+
+            Object retObject = invoker.invoke(args);
+
+            if (new Integer(DELAY).equals(processMode)) {
+                String errorMessage = "reject caused by current shuffled consumer can't decide yet, wait next ttl comes to decide.";
+                if (retObject instanceof MessageListener) {
+                    return new MessageListener() {
+
+                        @Override
+                        public void onMessage(Message message) {
+                            throw new AmqpRejectAndDontRequeueException(errorMessage);
+                        }
+                    };
+
+                } else if (retObject instanceof ChannelAwareMessageListener) {
+                    return new ChannelAwareMessageListener() {
+
+                        @Override
+                        public void onMessage(Message message, Channel channel) throws Exception {
+                            throw new AmqpRejectAndDontRequeueException(errorMessage);
+                        }
+                    };
+                }
+
+            } else if (new Integer(IGNORE).equals(processMode)) {
+                if (retObject instanceof MessageListener) {
+                    return new MessageListener() {
+
+                        @Override
+                        public void onMessage(Message message) {
+                        }
+                    };
+
+                } else if (retObject instanceof ChannelAwareMessageListener) {
+                    return new ChannelAwareMessageListener() {
+
+                        @Override
+                        public void onMessage(Message message, Channel channel) throws Exception {
+                        }
+                    };
+                }
+            }
+            return retObject;
+
+        }
+
+        @RuntimeType
+        public static Object intercept(@AllArguments Object[] args, @Morph Invoker invoker, @Origin Method method,
+                                       @This Object proxy) throws Exception {
+
+            // do for "getMessageListener" method
+            if (method.getName().equals("getMessageListener")) {
+                return getMessageListener(args, invoker);
+            }
+
+            // do for "invokeListener" method
             RabbitTracing rabbitTracing = SpringBeanFactorySupport.getBean(RabbitTracing.class);
             if (rabbitTracing == null) {
-                return shuffleInvokeListener(args, invoker);
+                return invoker.invoke(args);
             }
 
             Channel channel = (Channel) args[0];
@@ -352,7 +457,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
             }
 
             try (Tracer.SpanInScope ws = tracer.withSpanInScope(consumerSpan)) {
-                return shuffleInvokeListener(args, invoker);
+                return shuffleInvokeListener(args, invoker, proxy);
             } catch (Throwable t) {
                 RabbitTracing.tagErrorSpan(consumerSpan, t);
                 throw t;
