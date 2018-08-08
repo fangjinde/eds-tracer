@@ -41,7 +41,8 @@ public class ShuffleConfiguration {
 
     @Bean(name = BeanNameConstants.ENVIRONMENT_DETECTOR)
     public EnvironmentDetector environmentDetector() {
-        return new EnvironmentDetectorServiceDiscoveryImpl();
+        //return new EnvironmentDetectorServiceDiscoveryImpl();
+        return new EnvironmentDetectorDiscoveryClientImpl();
     }
 
     @Bean
