@@ -20,6 +20,7 @@ import com.netease.edu.eds.trace.utils.MD5Utils;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.annotation.*;
@@ -29,6 +30,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageListener;
@@ -41,6 +43,7 @@ import zipkin2.Endpoint;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -167,6 +170,9 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
             if (method == null) {
                 method = ReflectionUtils.findMethod(AbstractMessageListenerContainer.class, "actualInvokeListener",
                                                     Channel.class, Message.class);
+                if (method != null) {
+                    ReflectionUtils.makeAccessible(method);
+                }
                 actualInvokeListenerMethod.set(method);
             }
 
@@ -181,8 +187,13 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                 logger.error("IllegalAccessException while calling AbstractMessageListenerContainer:actualInvokeListener method, using origin method. which might cause unknown errors.");
                 return invoker.invoke(args);
             } catch (InvocationTargetException e) {
-                throw new RuntimeException("InvocationTargetException while  calling to AbstractMessageListenerContainer:actualInvokeListener error. ",
-                                           e.getTargetException());
+                if (e.getCause() instanceof AmqpException) {
+                    throw (AmqpException) e.getCause();
+                } else {
+                    throw new AmqpException("InvocationTargetException while  calling to AbstractMessageListenerContainer:actualInvokeListener error.",
+                                            e);
+                }
+
             }
         }
 
@@ -448,8 +459,16 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
                 }
 
-                if (channel.getConnection().getAddress() != null) {
-                    builder.parseIp(channel.getConnection().getAddress());
+                try {
+                    Connection connection = channel.getConnection();
+                    if (connection != null) {
+                        InetAddress inetAddress = connection.getAddress();
+                        if (inetAddress != null) {
+                            builder.parseIp(connection.getAddress());
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("parse Address from rabbit channel failed.", e);
                 }
 
                 consumerSpan.remoteEndpoint(builder.build());
