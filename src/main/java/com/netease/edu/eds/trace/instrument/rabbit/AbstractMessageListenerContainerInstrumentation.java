@@ -1,11 +1,32 @@
 package com.netease.edu.eds.trace.instrument.rabbit;
 
-import brave.Span;
-import brave.Tracer;
-import brave.Tracing;
-import brave.propagation.Propagation;
-import brave.propagation.TraceContext;
-import brave.propagation.TraceContextOrSamplingFlags;
+import static brave.Span.Kind.CONSUMER;
+import static net.bytebuddy.matcher.ElementMatchers.*;
+
+import java.lang.instrument.Instrumentation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageListener;
+import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.rabbit.core.ChannelAwareMessageListener;
+import org.springframework.amqp.rabbit.listener.AbstractMessageListenerContainer;
+import org.springframework.util.ReflectionUtils;
+
 import com.netease.edu.eds.shuffle.core.*;
 import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
 import com.netease.edu.eds.shuffle.spi.KeyValueManager;
@@ -21,37 +42,18 @@ import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
+
+import brave.Span;
+import brave.Tracer;
+import brave.Tracing;
+import brave.propagation.Propagation;
+import brave.propagation.TraceContext;
+import brave.propagation.TraceContextOrSamplingFlags;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.annotation.*;
 import net.bytebuddy.matcher.ElementMatcher;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.curator.framework.recipes.locks.InterProcessMutex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.amqp.AmqpException;
-import org.springframework.amqp.AmqpRejectAndDontRequeueException;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageListener;
-import org.springframework.amqp.core.MessageProperties;
-import org.springframework.amqp.rabbit.core.ChannelAwareMessageListener;
-import org.springframework.amqp.rabbit.listener.AbstractMessageListenerContainer;
-import org.springframework.util.ReflectionUtils;
 import zipkin2.Endpoint;
-
-import java.lang.instrument.Instrumentation;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static brave.Span.Kind.CONSUMER;
-import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * @author hzfjd
@@ -187,6 +189,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                 logger.error("IllegalAccessException while calling AbstractMessageListenerContainer:actualInvokeListener method, using origin method. which might cause unknown errors.");
                 return invoker.invoke(args);
             } catch (InvocationTargetException e) {
+                // 需要确保抛出异常为spring rabbit设计范围内。否则可能会导致连接异常。后续可以深入研究下。
                 if (e.getCause() instanceof AmqpException) {
                     throw (AmqpException) e.getCause();
                 } else {
@@ -459,6 +462,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
                 }
 
+                // 需要增加try catch处理。否则可能会导致连接异常。后续可以深入研究下。
                 try {
                     Connection connection = channel.getConnection();
                     if (connection != null) {
