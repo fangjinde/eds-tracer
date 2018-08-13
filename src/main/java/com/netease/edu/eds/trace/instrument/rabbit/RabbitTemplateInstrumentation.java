@@ -5,6 +5,7 @@ import brave.Tracer;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
 import com.netease.edu.eds.shuffle.core.EnvironmentShuffleUtils;
+import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
 import com.netease.edu.eds.shuffle.core.ShuffleSwitch;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.core.Invoker;
@@ -20,6 +21,8 @@ import net.bytebuddy.implementation.bind.annotation.Morph;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import zipkin2.Endpoint;
@@ -50,6 +53,8 @@ public class RabbitTemplateInstrumentation implements TraceAgentInstrumetation {
 
     public static class TraceInterceptor {
 
+        private static Logger logger = LoggerFactory.getLogger(TraceInterceptor.class);
+
         @RuntimeType
         public static Object doSend(@AllArguments Object[] args, @Morph Invoker invoker) throws Exception {
 
@@ -66,16 +71,40 @@ public class RabbitTemplateInstrumentation implements TraceAgentInstrumetation {
             }
 
             Object originResult = null;
+
+            int loopIndex = 0;
             for (String shuffleExchange : allShuffleExchanges) {
                 args[1] = shuffleExchange;
+                if (loopIndex >= 1) {
+                    doDelayForNextSend();
+                }
                 Object result = traceDoSend(args, invoker);
                 if (exchange.equals(shuffleExchange)) {
                     originResult = result;
                 }
+                loopIndex++;
             }
 
             return originResult;
 
+        }
+
+        /**
+         * wait 150ms to send message to latter environment to reduce cross environment consumer compete as less as
+         * possible.
+         * 
+         * @throws InterruptedException
+         */
+        private static void doDelayForNextSend() throws InterruptedException {
+            int delayMs = ShufflePropertiesSupport.getDelayMSToSendLatter();
+            if (delayMs > 0) {
+                try {
+                    Thread.sleep(delayMs);
+                } catch (InterruptedException e) {
+                    logger.error("doDelayForNextSend try to sleep, but got interrupted.", e);
+                    throw e;
+                }
+            }
         }
 
         private static List<String> getAllShuffleExchangeToSend(List<String> envsForSelection, String exchange) {

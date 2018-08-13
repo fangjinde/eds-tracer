@@ -227,16 +227,17 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
         private static Object doRealProcess(Object[] args, Invoker invoker, KeyValueManager keyValueManager,
                                             String messageOwnerEnvKey, String curEnv) {
-            // 执行消息消费
+
+            // 真正消费前，声明环境占用。避免不必要的跨环境竞争,避免业务执行时间较长导致std环境做delay处理。
             try {
-                return invoker.invoke(args);
-            } finally {
-                // 不管消费过程有没有异常，都需要更新环境占用标记
                 String ownerEnv = keyValueManager.getValue(messageOwnerEnvKey);
                 if (!curEnv.equals(ownerEnv)) {
                     keyValueManager.setValue(messageOwnerEnvKey, curEnv, ShuffleConstants.DUPLICATE_CHECK_VALID_PERIOD);
                 }
+            } finally {
+                return invoker.invoke(args);
             }
+
         }
 
         private static Object processForStd(String stdEnv, List<String> originAndStdEnvs, String currentApplicationName,

@@ -15,4 +15,12 @@ public class ShufflePropertiesSupport {
         }
         return shuffleProperties.getStandardEnvName();
     }
+
+    public static int getDelayMSToSendLatter() {
+        ShuffleProperties shuffleProperties = SpringBeanFactorySupport.getBean(ShuffleProperties.class);
+        if (shuffleProperties == null) {
+            return ShuffleProperties.DELAY_MS_TO_SEND_LATTER;
+        }
+        return shuffleProperties.getDelayMSToSendLatter();
+    }
 }
