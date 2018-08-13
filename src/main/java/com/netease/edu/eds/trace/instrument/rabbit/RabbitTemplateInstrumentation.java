@@ -183,7 +183,8 @@ public class RabbitTemplateInstrumentation implements TraceAgentInstrumetation {
                 }
                 return invoker.invoke(args);
             } catch (Exception e) {
-                RabbitTracing.tagErrorSpan(span, e);
+                SpanUtils.tagErrorMark(span);
+                SpanUtils.tagError(span, e);
                 throw e;
             } finally {
                 span.finish();

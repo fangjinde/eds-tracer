@@ -7,6 +7,7 @@ import brave.Tracer;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
@@ -93,7 +94,8 @@ public class SimpleTracedMessageListenerContainer extends SimpleMessageListenerC
         try (Tracer.SpanInScope ws = tracer.withSpanInScope(consumerSpan)) {
             super.invokeListener(channel, message);
         } catch (Throwable t) {
-            RabbitTracing.tagErrorSpan(consumerSpan, t);
+            SpanUtils.tagErrorMark(consumerSpan);
+            SpanUtils.tagError(consumerSpan, t);
             throw t;
         } finally {
             consumerSpan.finish();

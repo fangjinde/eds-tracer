@@ -36,13 +36,18 @@ public class ShuffleConfiguration {
 
     @Bean(name = BeanNameConstants.QUEUE_CONSUMER_MUTEX_CONTEXT)
     public InterProcessMutexContext queueConsumerMutextContext(CuratorFramework client) {
-        return new InterProcessMutexContext(client, "RabbitConsumerShuffle");
+        return new InterProcessMutexContext(client, BeanNameConstants.QUEUE_CONSUMER_MUTEX_CONTEXT);
+    }
+
+    @Bean(name = BeanNameConstants.QUEUE_REDECLARE_MUTEX_CONTEXT)
+    public InterProcessMutexContext queueRedeclareMutexContext(CuratorFramework client) {
+        return new InterProcessMutexContext(client, BeanNameConstants.QUEUE_REDECLARE_MUTEX_CONTEXT);
     }
 
     @Bean(name = BeanNameConstants.ENVIRONMENT_DETECTOR)
     public EnvironmentDetector environmentDetector() {
-        return new EnvironmentDetectorServiceDiscoveryImpl();
-        // return new EnvironmentDetectorDiscoveryClientImpl();
+        // return new EnvironmentDetectorServiceDiscoveryImpl();
+        return new EnvironmentDetectorDiscoveryClientImpl();
     }
 
     @Bean

@@ -68,10 +68,4 @@ public abstract class RabbitTracing {
         }
     }
 
-    public static void tagErrorSpan(Span span, Throwable t) {
-        String errorMessage = t.getMessage();
-        if (errorMessage == null) errorMessage = t.getClass().getSimpleName();
-        span.tag("error", errorMessage);
-    }
-
 }

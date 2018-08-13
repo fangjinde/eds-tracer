@@ -10,6 +10,7 @@ import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.rabbitmq.client.Channel;
 
 import brave.Span;
@@ -87,7 +88,8 @@ public class TracedRabbitTemplate extends RabbitTemplate {
             injector.inject(span.context(), message.getMessageProperties());
             super.doSend(channel, exchange, routingKey, message, mandatory, correlationData);
         } catch (Exception e) {
-            RabbitTracing.tagErrorSpan(span, e);
+            SpanUtils.tagErrorMark(span);
+            SpanUtils.tagError(span, e);
             throw e;
         } finally {
 

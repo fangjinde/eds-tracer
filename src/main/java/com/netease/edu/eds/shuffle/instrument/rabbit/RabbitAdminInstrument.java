@@ -1,9 +1,12 @@
 package com.netease.edu.eds.shuffle.instrument.rabbit;
 
+import com.netease.edu.eds.shuffle.core.BeanNameConstants;
+import com.netease.edu.eds.shuffle.support.InterProcessMutexContext;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.AgentSupport;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
+import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ShutdownSignalException;
@@ -11,6 +14,7 @@ import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.annotation.*;
 import net.bytebuddy.matcher.ElementMatcher;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Declarable;
@@ -26,6 +30,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -80,11 +85,37 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
             do {
 
                 try {
+
+                    InterProcessMutexContext queueRedeclareMutexContext = SpringBeanFactorySupport.getBean(BeanNameConstants.QUEUE_REDECLARE_MUTEX_CONTEXT);
+                    InterProcessMutex lock = queueRedeclareMutexContext.getLock(queue.getName());
                     // 第二次开始进行删除
-                    if (triedTimes >= 2) {
-                        channel.queueDelete(queue.getName());
+                    boolean acquired = false;
+                    try {
+                        acquired = lock.acquire(600, TimeUnit.SECONDS);
+                        if (!acquired) {
+                            logger.error("try lock failed. just do the job what so ever.");
+                        }
+                    } catch (Exception e) {
+                        logger.error("try lock failed. just do the job what so ever.");
                     }
-                    innerDeclareQueue(channel, queue, declareOks);
+                    //锁定成功或锁定超时，都进行操作
+                    try {
+                        if (triedTimes >= 2) {
+                            channel.queueDelete(queue.getName());
+                        }
+                        innerDeclareQueue(channel, queue, declareOks);
+                        // 没有异常则创建成功，跳出循环
+                        return;
+                    } finally {
+                        try {
+                            if (acquired = true) {
+                                lock.release();
+                            }
+                        } catch (Exception e) {
+                            logger.error("release lock failed. nothing left to do.");
+                        }
+                    }
+
                 } catch (IOException e) {
                     lastException = e;
                     if (isContainInequivalentArgExceptionCause(e)) {
@@ -137,10 +168,7 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
 
             Channel channel = (Channel) args[0];
 
-            Queue[] queues = new Queue[args.length - 1];
-            for (int i = 1; i < args.length; i++) {
-                queues[i] = (Queue) args[i];
-            }
+            Queue[] queues = (Queue[]) args[1];
 
             List<AMQP.Queue.DeclareOk> declareOks = new ArrayList<AMQP.Queue.DeclareOk>(queues.length);
             for (int i = 0; i < queues.length; i++) {
