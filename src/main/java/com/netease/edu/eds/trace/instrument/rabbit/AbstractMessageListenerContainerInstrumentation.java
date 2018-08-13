@@ -95,7 +95,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
          * @param currentApplicationName
          * @return
          */
-        private static int getCaseForStdConsumer(String stdEnv, List<String> originAndStdEnvs,
+        private static int getCaseForStdConsumer(Message message, String stdEnv, List<String> originAndStdEnvs,
                                                  String currentApplicationName, KeyValueManager keyValueManager,
                                                  String messageOwnerEnvKey,
                                                  String messageDelayAndRouteBackStdQueueCountKey,
@@ -138,30 +138,40 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
             // 测试环境占用标记存在
             if (testEnv.equals(ownerEnv)) {
 
-                if (testEnvExisted) {
-                    // 如果测试环境存在，并且有消费过的标记。则std当前消息可以丢弃。如果后续测试环境重试产生消息，但环境被后续销毁，消息也会通过死信队列重新转移到std队列。因此当前消息是可以丢弃的。
-                    return IGNORE;
-                }
-                Long messageStdInQueueCount = keyValueManager.increment(messageDelayAndRouteBackStdQueueCountKey, 0L,
-                                                                        ShuffleConstants.DUPLICATE_CHECK_VALID_PERIOD);
-                // 测试环境不存活。需要区分测试环境是暂时下线，还是销毁。通过重入队列次数，亦即MESSAGE TTL周期数。
-                if (messageStdInQueueCount > STD_IN_QUEUE_COUNT_THRESHOLD) {
-                    // 销毁
+                // 测试环境标记过，目前当前消息为对应回游消息，则std消费之。
+                if (ShuffleConstants.SHUFFLE_ROUTE_BACK_EXCHANGE.equals(message.getMessageProperties().getReceivedExchange())) {
                     return PROCESS;
-                } else {
-                    // 暂时下线,delay处理。
-                    return DELAY;
                 }
+
+                // 即便此时测试环境不存在，也仍等待测试环境处理。直到消息过期，转回游消息。
+                // 测试环境标记过,当前消息为非回游消息，std忽略之。回游消息总会来的。
+                return IGNORE;
 
             }
 
             // 以下仅需处理来源为测试环境，且未有环境占用标记的情况。
-            if (testEnvExisted) {
-
-                return DELAY;
+            if (!testEnvExisted) {
+                // 如果环境未被测试环境声明，且测试环境不存活，则直接有std消费。
+                // 在发送端，对std的消息发送，会默认延迟100ms发送，以保证大多数情况下，std消息的声明是后于测试环境的。
+                // 受服务发现延迟的影响，这里的确会有一定的误判。但并不会导致声明严重的后果。因为事实上，测试环境真正不存在的情况也是允许的。
+                return PROCESS;
             }
 
-            return PROCESS;
+            // 测试环境未被暂用过，且当前测试环境存活着，主要如下几种可能：
+
+            // 1. 测试环境消息消费存在堆积，std等待N个重试周期。
+            // 2. 发送消息时，消费者的测试环境未创建，即其没有接受到该消息（这种情况比较极端的情况。因为队列是持久的。 但仍会重试多次后得到std处理。）
+            Long messageStdInQueueCount = keyValueManager.increment(messageDelayAndRouteBackStdQueueCountKey, 0L,
+                                                                    ShuffleConstants.DUPLICATE_CHECK_VALID_PERIOD);
+            // 测试环境不存活。需要区分测试环境是暂时下线，还是销毁。通过重入队列次数，亦即MESSAGE TTL周期数。
+            // 延迟3小时后再由原业务重试。正常情况下，走到延迟队列的都不需要及时处理。重试次数4*重试间隔3h=12小时后，测试环境暂用过，却又不存活的，则std接管处理。
+            if (messageStdInQueueCount > STD_IN_QUEUE_COUNT_THRESHOLD) {
+                // 销毁
+                return PROCESS;
+            }
+            // 暂时下线,delay处理。
+            return DELAY;
+
         }
 
         private static Object byPassProxyIfPossible(Object[] args, Invoker invoker, Object proxy) {
@@ -240,16 +250,16 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
         }
 
-        private static Object processForStd(String stdEnv, List<String> originAndStdEnvs, String currentApplicationName,
-                                            KeyValueManager keyValueManager, String messageOwnerEnvKey,
-                                            String messageDelayAndRouteBackStdQueueCountKey,
+        private static Object processForStd(Message message, String stdEnv, List<String> originAndStdEnvs,
+                                            String currentApplicationName, KeyValueManager keyValueManager,
+                                            String messageOwnerEnvKey, String messageDelayAndRouteBackStdQueueCountKey,
                                             EnvironmentDetector environmentDetector,
                                             InterProcessMutexContext queueConsumerMutexContext, String curEnv,
                                             String messageKey, Object[] args, Invoker invoker, Object proxy) {
             // 当前为基准环境
-            int caseToProcess = getCaseForStdConsumer(stdEnv, originAndStdEnvs, currentApplicationName, keyValueManager,
-                                                      messageOwnerEnvKey, messageDelayAndRouteBackStdQueueCountKey,
-                                                      environmentDetector);
+            int caseToProcess = getCaseForStdConsumer(message, stdEnv, originAndStdEnvs, currentApplicationName,
+                                                      keyValueManager, messageOwnerEnvKey,
+                                                      messageDelayAndRouteBackStdQueueCountKey, environmentDetector);
             if (DELAY == caseToProcess) {
 
                 return doDelay(args, invoker, keyValueManager, messageDelayAndRouteBackStdQueueCountKey, proxy);
@@ -271,7 +281,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                 try {
 
                     // 二次检查
-                    int caseToProcessSecondTimeCheck = getCaseForStdConsumer(stdEnv, originAndStdEnvs,
+                    int caseToProcessSecondTimeCheck = getCaseForStdConsumer(message, stdEnv, originAndStdEnvs,
                                                                              currentApplicationName, keyValueManager,
                                                                              messageOwnerEnvKey,
                                                                              messageDelayAndRouteBackStdQueueCountKey,
@@ -325,7 +335,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
             if (stdEnv.equals(curEnv)) {
                 // 当前为基准环境
-                return processForStd(stdEnv, originAndStdEnvs, currentApplicationName, keyValueManager,
+                return processForStd(message, stdEnv, originAndStdEnvs, currentApplicationName, keyValueManager,
                                      messageOwnerEnvKey, messageDelayAndRouteBackStdQueueCountKey, environmentDetector,
                                      queueConsumerMutexContext, curEnv, messageKey, args, invoker, proxy);
 

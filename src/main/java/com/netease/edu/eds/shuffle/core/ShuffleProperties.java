@@ -16,7 +16,7 @@ public class ShuffleProperties {
      * possible.
      */
     private int                delayMSToSendLatter     = DELAY_MS_TO_SEND_LATTER;
-    public static final int    DELAY_MS_TO_SEND_LATTER = 150;
+    public static final int    DELAY_MS_TO_SEND_LATTER = 100;
     public static final String STANDARD_ENV_NAME       = "std";
 
     public boolean isTurnOn() {
