@@ -60,7 +60,7 @@ public class TracedRabbitTemplate extends RabbitTemplate {
     }
 
     @Override
-    protected void doSend(Channel channel, String exchange, String routingKey, Message message, boolean mandatory,
+    public void doSend(Channel channel, String exchange, String routingKey, Message message, boolean mandatory,
                           CorrelationData correlationData) throws Exception {
 
         Tracer tracer = rabbitTracing.tracing().tracer();
