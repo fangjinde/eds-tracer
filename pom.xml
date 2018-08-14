@@ -12,10 +12,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <edu-second-party-base.version>1.0.40</edu-second-party-base.version>
+        <edu-second-party-base.version>1.0.361</edu-second-party-base.version>
         <edu-third-party-base.version>1.0.3</edu-third-party-base.version>
-        <!--<spring-cloud-netflix.version>1.2.7.RELEASE</spring-cloud-netflix.version>-->
-        <spring-cloud-sleuth.version>2.0.0.M7</spring-cloud-sleuth.version>
         <zipkin.version>2.7.1-fjd-incubating-SNAPSHOT</zipkin.version>
         <brave.version>4.18.3-fjd-incubating-SNAPSHOT</brave.version>
     </properties>
@@ -48,39 +46,39 @@
             </dependency>
 
             <dependency>
-                <groupId>io.zipkin.zipkin2</groupId>
-                <artifactId>zipkin</artifactId>
-                <version>${zipkin.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.zipkin.brave</groupId>
-                <artifactId>brave</artifactId>
-                <version>${brave.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.zipkin.brave</groupId>
-                <artifactId>brave-context-log4j2</artifactId>
-                <version>${brave.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.zipkin.brave</groupId>
-                <artifactId>brave-instrumentation-spring-web</artifactId>
-                <version>${brave.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.zipkin.brave</groupId>
-                <artifactId>brave-instrumentation-spring-webmvc</artifactId>
-                <version>${brave.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-sleuth-dependencies</artifactId>
-                <version>${spring-cloud-sleuth.version}</version>
+                <groupId>com.netease.edu</groupId>
+                <artifactId>edu-second-party-base</artifactId>
+                <version>${edu-second-party-base.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <!--<dependency>-->
+                <!--<groupId>io.zipkin.zipkin2</groupId>-->
+                <!--<artifactId>zipkin</artifactId>-->
+                <!--<version>${zipkin.version}</version>-->
+            <!--</dependency>-->
+
+            <!--<dependency>-->
+                <!--<groupId>io.zipkin.brave</groupId>-->
+                <!--<artifactId>brave</artifactId>-->
+                <!--<version>${brave.version}</version>-->
+            <!--</dependency>-->
+            <!--<dependency>-->
+                <!--<groupId>io.zipkin.brave</groupId>-->
+                <!--<artifactId>brave-context-log4j2</artifactId>-->
+                <!--<version>${brave.version}</version>-->
+            <!--</dependency>-->
+            <!--<dependency>-->
+                <!--<groupId>io.zipkin.brave</groupId>-->
+                <!--<artifactId>brave-instrumentation-spring-web</artifactId>-->
+                <!--<version>${brave.version}</version>-->
+            <!--</dependency>-->
+            <!--<dependency>-->
+                <!--<groupId>io.zipkin.brave</groupId>-->
+                <!--<artifactId>brave-instrumentation-spring-webmvc</artifactId>-->
+                <!--<version>${brave.version}</version>-->
+            <!--</dependency>-->
 
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
@@ -95,14 +93,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>1.5.10.RELEASE</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.netease.edu</groupId>
-                <artifactId>edu-second-party-base</artifactId>
-                <version>${edu-second-party-base.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -127,7 +117,6 @@
                 <version>1.2.7</version>
             </dependency>
 
-
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
@@ -138,12 +127,6 @@
                 <groupId>cglib</groupId>
                 <artifactId>cglib-nodep</artifactId>
                 <version>2.2.2</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.netease.sentry</groupId>
-                <artifactId>sentry-javaagent-collector</artifactId>
-                <version>1.2.7</version>
             </dependency>
 
             <dependency>
