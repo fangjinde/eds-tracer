@@ -8,8 +8,8 @@ import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionHandler;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
-import com.netease.edu.eds.trace.utils.TraceJsonUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
+import com.netease.edu.eds.trace.utils.TraceJsonUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
@@ -118,6 +118,8 @@ public class ControllerTraceInstrumentation implements TraceAgentInstrumetation 
                 }
 
             }
+
+
 
             if (span != null && !span.isNoop()) {
                 int requestBodyParamIndex = detectRequestBodyParamIndex(method);
