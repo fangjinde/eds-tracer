@@ -124,6 +124,8 @@ public final class DubboTraceFilter implements Filter {
                 onValue("args", invocation.getArguments(), span, rpcContext.isConsumerSide());
             }
 
+            SpanUtils.tagPropagationInfos(span);
+
             Result result = invoker.invoke(invocation);
             if (result.hasException()) {
                 onError(result.getException(), span, rpcContext.isConsumerSide());

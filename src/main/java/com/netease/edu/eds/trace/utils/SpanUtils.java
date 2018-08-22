@@ -4,6 +4,9 @@ package com.netease.edu.eds.trace.utils;/**
 
 import brave.Span;
 import brave.SpanCustomizer;
+import brave.propagation.ExtraFieldPropagation;
+
+import java.util.Map;
 
 /**
  * @author hzfjd
@@ -56,6 +59,17 @@ public class SpanUtils {
 
     public static void tagError(SpanCustomizer span, Throwable e) {
         SpanUtils.safeTag(span, "error", ExceptionStringUtils.getStackTraceString(e));
+    }
+
+    public static void tagPropagationInfos(SpanCustomizer span) {
+        Map<String, String> propagationExtraMap = ExtraFieldPropagation.getAll();
+        if (propagationExtraMap == null) {
+            return;
+        }
+
+        for (Map.Entry<String, String> entry : propagationExtraMap.entrySet()) {
+            SpanUtils.safeTag(span, entry.getKey(), entry.getValue());
+        }
     }
 
 }

@@ -489,6 +489,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
             }
 
             try (Tracer.SpanInScope ws = tracer.withSpanInScope(consumerSpan)) {
+                SpanUtils.tagPropagationInfos(consumerSpan);
                 return shuffleInvokeListener(args, invoker, proxy);
             } catch (Throwable t) {
                 SpanUtils.tagErrorMark(consumerSpan);

@@ -103,6 +103,7 @@ public final class TracingFilter implements Filter {
             PropagationUtils.setOriginEnvIfNotExists(span.context(), environment.getProperty("spring.profiles.active"));
             SpanUtils.safeTag(span, "originEnv", PropagationUtils.getOriginEnv());
             // any downstream code can see Tracer.currentSpan() or use Tracer.currentSpanCustomizer()
+            SpanUtils.tagPropagationInfos(span);
             chain.doFilter(httpRequest, httpResponse);
         } catch (IOException | ServletException | RuntimeException | Error e) {
             error = e;
