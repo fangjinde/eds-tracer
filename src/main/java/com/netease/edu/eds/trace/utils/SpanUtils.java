@@ -68,7 +68,7 @@ public class SpanUtils {
         }
 
         for (Map.Entry<String, String> entry : propagationExtraMap.entrySet()) {
-            SpanUtils.safeTag(span, entry.getKey(), entry.getValue());
+            SpanUtils.safeTag(span, "ppg_" + entry.getKey(), entry.getValue());
         }
     }
 

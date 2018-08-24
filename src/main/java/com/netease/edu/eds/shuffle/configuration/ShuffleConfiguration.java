@@ -5,6 +5,7 @@ import org.apache.curator.x.discovery.*;
 import org.apache.curator.x.discovery.details.InstanceSerializer;
 import org.apache.curator.x.discovery.details.JsonInstanceSerializer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.commons.util.InetUtils;
 import org.springframework.context.ApplicationContext;
@@ -18,6 +19,8 @@ import org.springframework.util.StringUtils;
 import com.netease.edu.eds.shuffle.core.BeanNameConstants;
 import com.netease.edu.eds.shuffle.core.ServiceDirectory;
 import com.netease.edu.eds.shuffle.core.ShuffleProperties;
+import com.netease.edu.eds.shuffle.instrument.rabbit.ShuffleDelayQueueBBP;
+import com.netease.edu.eds.shuffle.instrument.rabbit.SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor;
 import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
 import com.netease.edu.eds.shuffle.spi.KeyValueManager;
 import com.netease.edu.eds.shuffle.support.*;
@@ -32,6 +35,18 @@ public class ShuffleConfiguration {
     @Bean
     public ShuffleProperties shuffleProperties() {
         return new ShuffleProperties();
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "shuffle.turnOn", havingValue = "true", matchIfMissing = false)
+    public static SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor springRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor() {
+        return new SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor();
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "shuffle.turnOn", havingValue = "true", matchIfMissing = false)
+    public static ShuffleDelayQueueBBP shuffleDelayQueueBBP() {
+        return new ShuffleDelayQueueBBP();
     }
 
     @Bean(name = BeanNameConstants.QUEUE_CONSUMER_MUTEX_CONTEXT)

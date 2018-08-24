@@ -18,26 +18,28 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProce
 import org.springframework.core.Conventions;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
+ * 1.兼容历史上，通过xml创建的没有带环境前、后缀的队列或交换机名称。 注意：注解模式和Spring Cloud Stream Rabbit需要从编码层面加上环境后缀。主要是有些匿名队列、Declarable 的Bean
+ * Register 和RabbitAdmin的declare的先后顺序，触发时机都有差别，处理起来有很多细节。所以暂不做实现。事实上，后两种目前线上采用的还比较少，可以从编码规范上解决。
+ * 
  * @author hzfjd
  * @create 18/8/14
  **/
-@Deprecated
-public class SpringRabbitShuffleCustomBeanFactoryPostProcessor implements BeanDefinitionRegistryPostProcessor {
+public class SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor implements BeanDefinitionRegistryPostProcessor {
 
     private static final String       LISTENER_CONTAINER_FACTORY_BEAN_CLASS_NAME = "org.springframework.amqp.rabbit.config.ListenerContainerFactoryBean";
 
-    private static final String[]     rabbitEnvironmentKeyArray                  = { "${local_service_version_suffix}" };
+    private static final String[]     rabbitEnvironmentKeyArray                  = { "${local_service_version_suffix}",
+                                                                                     "${spring.profiles.active}" };
     private static final List<String> rabbitEnvironmentKeyList                   = Arrays.asList(rabbitEnvironmentKeyArray);
 
     private static final String       rabbitEnvironmentDefaultSuffix             = "${local_service_version_suffix}";
 
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+
         for (String beanName : registry.getBeanDefinitionNames()) {
             BeanDefinition beanDefinition = registry.getBeanDefinition(beanName);
             if (TopicExchange.class.getName().equals(beanDefinition.getBeanClassName())) {
@@ -125,53 +127,9 @@ public class SpringRabbitShuffleCustomBeanFactoryPostProcessor implements BeanDe
 
     private void processQueue(String beanName, BeanDefinition beanDefinition) {
         addEnvironmentKeyIfNotExisted(beanDefinition);
-        addQueueArgumentsForShuffleIfNotExistd(beanDefinition);
-
     }
 
-    /**
-     * 为队列增加增加ttl、dle、expire等设置，主要是测试环境销毁后的消息转移，消息队列过期删除，基准环境的消息延迟处理等。
-     * 已经有QueueArguments的需要排除。前者往往是业务中延迟队列，和shuffle机制正常情况下可以完美兼容。
-     *
-     * @param beanDefinition
-     */
-    private void addQueueArgumentsForShuffleIfNotExistd(BeanDefinition beanDefinition) {
 
-        ConstructorArgumentValues constructorArgumentValues = beanDefinition.getConstructorArgumentValues();
-        // 异常情况，不做额外处理
-        if (constructorArgumentValues == null || constructorArgumentValues.getArgumentCount() < 4) {
-            return;
-        }
-
-        // 含有QueueArguments的，为5参数构造函数
-        if (constructorArgumentValues.getArgumentCount() >= 5) {
-            return;
-        }
-
-        TypedStringValue queueNameTypeStringValue = (TypedStringValue) constructorArgumentValues.getIndexedArgumentValue(0,
-                                                                                                                         String.class).getValue();
-
-        // <rabbit:queue-arguments>
-
-        // <entry key="x-dead-letter-exchange" value="shuffle.delay.exchange"/>
-        // <!-- 只能路由回std环境的对应队列-->
-        // <entry key="x-dead-letter-routing-key" value="shuffle.dlq.routing.key.shuffleDemoQueueC1-std"/>
-        // <!-- 测试环境堆积一天以上的消息路由给std处理-->
-        // <entry key="x-message-ttl" value="1800000" value-type="java.lang.Long"/>
-        // <!-- 三天后销毁无用队列-->
-        // <entry key="x-expires" value="3600000" value-type="java.lang.Long"/>
-        //
-        // </rabbit:queue-arguments>
-
-        Map<TypedStringValue, TypedStringValue> arguments = new HashMap<>();
-        arguments.put(new TypedStringValue("x-dead-letter-exchange"), new TypedStringValue("shuffle.delay.exchange"));
-        arguments.put(new TypedStringValue("x-dead-letter-routing-key"),
-                      new TypedStringValue(getStdDeadLetterQueueRoutingKey(queueNameTypeStringValue)));
-        arguments.put(new TypedStringValue("x-message-ttl"), new TypedStringValue("1800000", Long.class));
-        arguments.put(new TypedStringValue("x-expires"), new TypedStringValue("3600000", Long.class));
-        constructorArgumentValues.addIndexedArgumentValue(5, arguments);
-
-    }
 
     private String getStdDeadLetterQueueRoutingKey(TypedStringValue queueNameTypeStringValue) {
         String queueNameWithoutEnvironmentInfo = getStringValueWithoutEnvironmentInfo(queueNameTypeStringValue);
