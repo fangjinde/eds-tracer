@@ -46,6 +46,7 @@ public class ShuffleRouteBackLifeCycle implements SmartLifecycle, ApplicationCon
 
             @Override
             public void doWith(Field field) throws IllegalArgumentException, IllegalAccessException {
+                ReflectionUtils.makeAccessible(field);
                 ConnectionFactory connectionFactory = (ConnectionFactory) field.get(rabbitAdmin);
                 if (connectionFactory != null) {
                     connectionFactoryKeyMap.put(CONNECTION_FACTORY_KEY,
