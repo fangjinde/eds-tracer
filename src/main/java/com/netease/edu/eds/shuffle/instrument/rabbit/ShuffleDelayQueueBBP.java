@@ -1,10 +1,7 @@
 package com.netease.edu.eds.shuffle.instrument.rabbit;
 
 import com.netease.edu.eds.shuffle.core.ShuffleRabbitConstants;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.Exchange;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.*;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -44,5 +41,9 @@ public class ShuffleDelayQueueBBP implements BeanFactoryPostProcessor {
 
         beanFactory.registerSingleton(ShuffleRabbitConstants.SHUFFLE_DELAY_EXCHANGE + ".bind."
                                       + ShuffleRabbitConstants.SHUFFLE_DELAY_QUEUE, actualBinding);
+
+        Exchange routeBackExchange = new DirectExchange(ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE, true,
+                                                        false);
+        beanFactory.registerSingleton(ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE, routeBackExchange);
     }
 }
