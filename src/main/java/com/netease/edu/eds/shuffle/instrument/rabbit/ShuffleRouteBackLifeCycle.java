@@ -14,8 +14,7 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.Lifecycle;
-import org.springframework.context.Phased;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
@@ -30,7 +29,7 @@ import java.util.Map;
  * @author hzfjd
  * @create 18/8/24
  **/
-public class ShuffleRouteBackLifeCycle implements Lifecycle, Phased, ApplicationContextAware, BeanFactoryAware {
+public class ShuffleRouteBackLifeCycle implements SmartLifecycle, ApplicationContextAware, BeanFactoryAware {
 
     private ApplicationContext applicationContext;
     private BeanFactory        beanFactory;
@@ -142,5 +141,15 @@ public class ShuffleRouteBackLifeCycle implements Lifecycle, Phased, Application
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
+    }
+
+    @Override
+    public boolean isAutoStartup() {
+        return true;
+    }
+
+    @Override
+    public void stop(Runnable callback) {
+
     }
 }
