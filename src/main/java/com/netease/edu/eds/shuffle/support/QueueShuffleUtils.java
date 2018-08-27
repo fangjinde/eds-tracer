@@ -26,9 +26,15 @@ public class QueueShuffleUtils {
     private static String       RABBIT_INNER_QUEUE_PREFIX = "amq.";
 
     public static boolean isShuffleInnerQueueOrExchange(String declarableName) {
+        if (isShuffleInnerExchange(declarableName) || isShuffleInnerQueue(declarableName)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isShuffleInnerExchange(String declarableName) {
         if (ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE.equals(declarableName)
-            || ShuffleRabbitConstants.SHUFFLE_DELAY_EXCHANGE.equals(declarableName)
-            || ShuffleRabbitConstants.SHUFFLE_DELAY_QUEUE.equals(declarableName)) {
+            || ShuffleRabbitConstants.SHUFFLE_DELAY_EXCHANGE.equals(declarableName)) {
             return true;
         }
         return false;

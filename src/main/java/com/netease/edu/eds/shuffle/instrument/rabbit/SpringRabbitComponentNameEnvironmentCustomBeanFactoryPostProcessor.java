@@ -7,6 +7,7 @@ import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.config.BindingFactoryBean;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.BeansException;
@@ -59,9 +60,16 @@ public class SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor 
                 processListenContainer(beanName, beanDefinition);
             } else if (RabbitTemplate.class.getName().equals(beanDefinition.getBeanClassName())) {
                 processRabbitTempate(beanName, beanDefinition);
+            } else if (BindingFactoryBean.class.getName().equals(beanDefinition.getBeanClassName())) {
+                processBinding(beanName, beanDefinition);
             }
 
         }
+    }
+
+    private void processBinding(String beanName, BeanDefinition beanDefinition) {
+        TypedStringValue propertyTypedStringValue = (TypedStringValue) beanDefinition.getPropertyValues().get("exchange");
+        changeStringValueIfNotExistedEnvironmentInfo(propertyTypedStringValue);
     }
 
     private void processRabbitTempate(String beanName, BeanDefinition beanDefinition) {

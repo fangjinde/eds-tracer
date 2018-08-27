@@ -4,6 +4,7 @@ import com.netease.edu.eds.shuffle.core.EnvironmentShuffleUtils;
 import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
 import com.netease.edu.eds.shuffle.core.ShuffleRabbitConstants;
 import com.netease.edu.eds.shuffle.support.NamedQueueRawNameRegistry;
+import com.netease.edu.eds.shuffle.support.QueueShuffleUtils;
 import com.netease.edu.eds.shuffle.support.ShuffleEnvironmentInfoProcessUtils;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -50,7 +51,7 @@ public class ShuffleRouteBackLifeCycle implements SmartLifecycle, ApplicationCon
                 ConnectionFactory connectionFactory = (ConnectionFactory) field.get(rabbitAdmin);
                 if (connectionFactory != null) {
                     connectionFactoryKeyMap.put(CONNECTION_FACTORY_KEY,
-                                                connectionFactory.getHost() + connectionFactory.getPort());
+                                                connectionFactory.getHost() + ":" + connectionFactory.getPort());
                 }
             }
         }, (Field field) -> "connectionFactory".equals(field.getName()));
@@ -81,7 +82,7 @@ public class ShuffleRouteBackLifeCycle implements SmartLifecycle, ApplicationCon
         }
         for (Binding originBinding : bindingMap.values()) {
 
-            if (ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE.equals(originBinding.getExchange())) {
+            if (QueueShuffleUtils.isShuffleInnerExchange(originBinding.getExchange())) {
                 continue;
             }
 
@@ -107,8 +108,11 @@ public class ShuffleRouteBackLifeCycle implements SmartLifecycle, ApplicationCon
 
             if (beanFactory instanceof ConfigurableListableBeanFactory) {
                 ConfigurableListableBeanFactory configurableListableBeanFactory = (ConfigurableListableBeanFactory) beanFactory;
-                configurableListableBeanFactory.registerSingleton(ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE
-                                                                  + "." + routeBackRoutingKey, routeBackBinding);
+                String bindingBeanName = ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE + "." + routeBackRoutingKey;
+                if (!configurableListableBeanFactory.containsBean(bindingBeanName)) {
+                    configurableListableBeanFactory.registerSingleton(bindingBeanName, routeBackBinding);
+                }
+
             }
 
             for (RabbitAdmin rabbitAdmin : connectionFactoryRabbitAdminMap.values()) {
