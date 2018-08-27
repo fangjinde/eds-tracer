@@ -20,6 +20,7 @@ import com.netease.edu.eds.shuffle.core.BeanNameConstants;
 import com.netease.edu.eds.shuffle.core.ServiceDirectory;
 import com.netease.edu.eds.shuffle.core.ShuffleProperties;
 import com.netease.edu.eds.shuffle.instrument.rabbit.ShuffleDelayQueueBBP;
+import com.netease.edu.eds.shuffle.instrument.rabbit.ShuffleRouteBackLifeCycle;
 import com.netease.edu.eds.shuffle.instrument.rabbit.SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor;
 import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
 import com.netease.edu.eds.shuffle.spi.KeyValueManager;
@@ -47,6 +48,12 @@ public class ShuffleConfiguration {
     @ConditionalOnProperty(value = "shuffle.turnOn", havingValue = "true", matchIfMissing = false)
     public static ShuffleDelayQueueBBP shuffleDelayQueueBBP() {
         return new ShuffleDelayQueueBBP();
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "shuffle.turnOn", havingValue = "true", matchIfMissing = false)
+    public ShuffleRouteBackLifeCycle shuffleRouteBackLifeCycle(){
+        return new ShuffleRouteBackLifeCycle();
     }
 
     @Bean(name = BeanNameConstants.QUEUE_CONSUMER_MUTEX_CONTEXT)

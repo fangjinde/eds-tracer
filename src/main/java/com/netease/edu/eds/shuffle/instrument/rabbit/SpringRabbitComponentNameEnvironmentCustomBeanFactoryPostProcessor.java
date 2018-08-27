@@ -1,6 +1,7 @@
 package com.netease.edu.eds.shuffle.instrument.rabbit;
 
 import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
+import com.netease.edu.eds.shuffle.support.QueueShuffleUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.FanoutExchange;
@@ -79,6 +80,12 @@ public class SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor 
     private void changeStringValueIfNotExistedEnvironmentInfo(TypedStringValue typedStringValue) {
         if (typedStringValue != null && typedStringValue.getValue() != null) {
             String value = typedStringValue.getValue();
+
+            // shuffle内部队列或交换机不要做环境后缀
+            if (QueueShuffleUtils.isShuffleInnerQueueOrExchange(value)) {
+                return;
+            }
+
             boolean contain = false;
             for (String rabbitEnviromentKey : rabbitEnvironmentKeyList) {
                 if (value != null && value.contains(rabbitEnviromentKey)) {
@@ -128,8 +135,6 @@ public class SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor 
     private void processQueue(String beanName, BeanDefinition beanDefinition) {
         addEnvironmentKeyIfNotExisted(beanDefinition);
     }
-
-
 
     private String getStdDeadLetterQueueRoutingKey(TypedStringValue queueNameTypeStringValue) {
         String queueNameWithoutEnvironmentInfo = getStringValueWithoutEnvironmentInfo(queueNameTypeStringValue);

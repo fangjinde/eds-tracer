@@ -3,6 +3,7 @@ package com.netease.edu.eds.shuffle.support;
 import com.alibaba.fastjson.JSON;
 import com.netease.edu.eds.shuffle.core.EnvironmentShuffleUtils;
 import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
+import com.netease.edu.eds.shuffle.core.ShuffleRabbitConstants;
 import com.netease.edu.eds.shuffle.core.ShuffleSwitch;
 import org.apache.commons.collections.MapUtils;
 import org.slf4j.Logger;
@@ -20,7 +21,25 @@ import java.util.Map;
  **/
 public class QueueShuffleUtils {
 
-    private static final Logger logger = LoggerFactory.getLogger(QueueShuffleUtils.class);
+    private static final Logger logger                    = LoggerFactory.getLogger(QueueShuffleUtils.class);
+
+    private static String       RABBIT_INNER_QUEUE_PREFIX = "amq.";
+
+    public static boolean isShuffleInnerQueueOrExchange(String declarableName) {
+        if (ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE.equals(declarableName)
+            || ShuffleRabbitConstants.SHUFFLE_DELAY_EXCHANGE.equals(declarableName)
+            || ShuffleRabbitConstants.SHUFFLE_DELAY_QUEUE.equals(declarableName)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isShuffleInnerQueue(String declarableName) {
+        if (ShuffleRabbitConstants.SHUFFLE_DELAY_QUEUE.equals(declarableName)) {
+            return true;
+        }
+        return false;
+    }
 
     /**
      * shuffle开关打开时，对queue的参数进行定制化
@@ -39,7 +58,11 @@ public class QueueShuffleUtils {
         }
 
         // 系统queue不做处理
-        if (queue.getName().startsWith("amq.")) {
+        if (queue.getName().startsWith(RABBIT_INNER_QUEUE_PREFIX)) {
+            return;
+        }
+
+        if (isShuffleInnerQueue(queue.getName())) {
             return;
         }
 
@@ -47,7 +70,7 @@ public class QueueShuffleUtils {
         String rawQueueName = ShuffleEnvironmentInfoProcessUtils.getRawNameWithoutCurrentEnvironmentInfo(queue.getName());
         NamedQueueRawNameRegistry.add(rawQueueName);
 
-        //只有测试环境需要对queue有参数定制需求
+        // 只有测试环境需要对queue有参数定制需求
         if (ShufflePropertiesSupport.getStandardEnvName().equals(EnvironmentShuffleUtils.getCurrentEnv())) {
             return;
         }
