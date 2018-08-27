@@ -7,6 +7,7 @@ import brave.propagation.TraceContext;
 import com.netease.edu.eds.shuffle.core.EnvironmentShuffleUtils;
 import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
 import com.netease.edu.eds.shuffle.core.ShuffleSwitch;
+import com.netease.edu.eds.shuffle.instrument.rabbit.RabbitShuffleSendContext;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
@@ -61,6 +62,10 @@ public class RabbitTemplateInstrumentation implements TraceAgentInstrumetation {
             if (!ShuffleSwitch.isTurnOn()) {
                 return traceDoSend(args, invoker);
 
+            }
+
+            if (RabbitShuffleSendContext.shouldIgnoreShuffle()) {
+                return traceDoSend(args, invoker);
             }
 
             String exchange = (String) args[1];

@@ -7,9 +7,11 @@ import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
 import com.netease.edu.eds.shuffle.core.*;
+import com.netease.edu.eds.shuffle.instrument.rabbit.RabbitShuffleSendContext;
 import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
 import com.netease.edu.eds.shuffle.spi.KeyValueManager;
 import com.netease.edu.eds.shuffle.support.InterProcessMutexContext;
+import com.netease.edu.eds.shuffle.support.ShuffleEnvironmentInfoProcessUtils;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
@@ -36,6 +38,7 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.ChannelAwareMessageListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.AbstractMessageListenerContainer;
 import org.springframework.util.ReflectionUtils;
 import zipkin2.Endpoint;
@@ -220,12 +223,16 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
         }
 
         private static Object doDelay(Object[] args, Invoker invoker, KeyValueManager keyValueManager,
-                                      String messageDelayAndRouteBackStdQueueCountKey, Object proxy) {
+                                      String messageDelayAndRouteBackStdQueueCountKey, Object proxy, Message message) {
             // 标记delay，后续messageListen会被替换为delay实现。
             processModeThreadLocal.set(DELAY);
+            RabbitShuffleSendContext.ignoreShuffle();
+            RabbitShuffleSendContext.getDelaySendContextThreadLocal().set(new RabbitShuffleSendContext.DelaySendContext(message));
             try {
                 return byPassProxyIfPossible(args, invoker, proxy);
             } finally {
+                RabbitShuffleSendContext.getDelaySendContextThreadLocal().remove();
+                RabbitShuffleSendContext.reset();
                 processModeThreadLocal.remove();
                 // 累加delay次数
                 keyValueManager.increment(messageDelayAndRouteBackStdQueueCountKey, 1,
@@ -262,7 +269,8 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                                                       messageDelayAndRouteBackStdQueueCountKey, environmentDetector);
             if (DELAY == caseToProcess) {
 
-                return doDelay(args, invoker, keyValueManager, messageDelayAndRouteBackStdQueueCountKey, proxy);
+                return doDelay(args, invoker, keyValueManager, messageDelayAndRouteBackStdQueueCountKey, proxy,
+                               message);
 
             } else if (PROCESS == caseToProcess) {
 
@@ -271,7 +279,8 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                 try {
                     acquired = lock.acquire(3600, TimeUnit.SECONDS);
                 } catch (Exception e) {
-                    return doDelay(args, invoker, keyValueManager, messageDelayAndRouteBackStdQueueCountKey, proxy);
+                    return doDelay(args, invoker, keyValueManager, messageDelayAndRouteBackStdQueueCountKey, proxy,
+                                   message);
                 }
                 // 长时间仍锁定超时，丢弃该消息。即由能获取锁定的消费者处理(基准环境）
                 if (!acquired) {
@@ -290,7 +299,8 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                         // 执行消息消费
                         return doRealProcess(args, invoker, keyValueManager, messageOwnerEnvKey, curEnv);
                     } else if (DELAY == caseToProcessSecondTimeCheck) {
-                        return doDelay(args, invoker, keyValueManager, messageDelayAndRouteBackStdQueueCountKey, proxy);
+                        return doDelay(args, invoker, keyValueManager, messageDelayAndRouteBackStdQueueCountKey, proxy,
+                                       message);
                     } else {
                         return doIgnore(args, invoker, proxy);
                     }
@@ -386,53 +396,80 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
         }
 
-        public static Object getMessageListener(Object[] args, Invoker invoker) throws Exception {
+        private static RabbitTemplate getRabbitSenderOnSameBroker(Object proxy) {
+            if (proxy instanceof AbstractMessageListenerContainer) {
+                AbstractMessageListenerContainer listenerContainer = (AbstractMessageListenerContainer) proxy;
+                RabbitTemplate dleSender = new RabbitTemplate(listenerContainer.getConnectionFactory());
+                return dleSender;
+            }
+            return null;
+
+        }
+
+        public static Object getMessageListener(Object[] args, Invoker invoker, Object proxy) throws Exception {
 
             Integer processMode = processModeThreadLocal.get();
 
             Object retObject = invoker.invoke(args);
 
             if (new Integer(DELAY).equals(processMode)) {
-                String errorMessage = "reject caused by current shuffled consumer can't decide yet, wait next ttl comes to decide.";
-                if (retObject instanceof MessageListener) {
-                    return new MessageListener() {
 
-                        @Override
-                        public void onMessage(Message message) {
-                            throw new AmqpRejectAndDontRequeueException(errorMessage);
-                        }
-                    };
+                boolean delaySucessfullyBySend = false;
 
-                } else if (retObject instanceof ChannelAwareMessageListener) {
-                    return new ChannelAwareMessageListener() {
+                RabbitTemplate dleSender = getRabbitSenderOnSameBroker(proxy);
+                RabbitShuffleSendContext.DelaySendContext delaySendContext = RabbitShuffleSendContext.getDelaySendContextThreadLocal().get();
+                if (delaySendContext != null && delaySendContext.getMessage() != null && dleSender != null) {
+                    Message originMessage = delaySendContext.getMessage();
+                    // raw queue name
+                    String delayRoutingKey = ShuffleEnvironmentInfoProcessUtils.getRawNameWithoutCurrentEnvironmentInfo(originMessage.getMessageProperties().getConsumerQueue());
+                    if (StringUtils.isNotBlank(delayRoutingKey)) {
+                        dleSender.send(ShuffleRabbitConstants.SHUFFLE_DELAY_EXCHANGE, delayRoutingKey, originMessage);
+                        delaySucessfullyBySend = true;
+                    }
 
-                        @Override
-                        public void onMessage(Message message, Channel channel) throws Exception {
-                            throw new AmqpRejectAndDontRequeueException(errorMessage);
-                        }
-                    };
                 }
+
+                return getMockedMessageLister(!delaySucessfullyBySend, retObject);
 
             } else if (new Integer(IGNORE).equals(processMode)) {
-                if (retObject instanceof MessageListener) {
-                    return new MessageListener() {
-
-                        @Override
-                        public void onMessage(Message message) {
-                        }
-                    };
-
-                } else if (retObject instanceof ChannelAwareMessageListener) {
-                    return new ChannelAwareMessageListener() {
-
-                        @Override
-                        public void onMessage(Message message, Channel channel) throws Exception {
-                        }
-                    };
-                }
+                return getMockedMessageLister(false, retObject);
             }
             return retObject;
 
+        }
+
+        static String errorMessage = "reject caused by current shuffled consumer can't decide yet, wait next ttl comes to decide.";
+
+        /**
+         * @param rejectAndDontRequeue true：通过异常，触发死信。false： NOOP
+         * @param originMessageListener
+         * @return
+         */
+        private static Object getMockedMessageLister(boolean rejectAndDontRequeue, Object originMessageListener) {
+            if (originMessageListener instanceof MessageListener) {
+                return new MessageListener() {
+
+                    @Override
+                    public void onMessage(Message message) {
+                        if (rejectAndDontRequeue) {
+                            throw new AmqpRejectAndDontRequeueException(errorMessage);
+                        }
+                    }
+                };
+
+            } else if (originMessageListener instanceof ChannelAwareMessageListener) {
+                return new ChannelAwareMessageListener() {
+
+                    @Override
+                    public void onMessage(Message message, Channel channel) throws Exception {
+
+                        if (rejectAndDontRequeue) {
+                            throw new AmqpRejectAndDontRequeueException(errorMessage);
+                        }
+                    }
+                };
+            }
+            return originMessageListener;
         }
 
         @RuntimeType
@@ -441,7 +478,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
             // do for "getMessageListener" method
             if (method.getName().equals("getMessageListener")) {
-                return getMessageListener(args, invoker);
+                return getMessageListener(args, invoker, proxy);
             }
 
             // do for "invokeListener" method
