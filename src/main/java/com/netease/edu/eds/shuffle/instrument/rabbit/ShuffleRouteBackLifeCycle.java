@@ -1,12 +1,7 @@
 package com.netease.edu.eds.shuffle.instrument.rabbit;
 
-import com.netease.edu.eds.shuffle.core.EnvironmentShuffleUtils;
-import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
 import com.netease.edu.eds.shuffle.core.ShuffleRabbitConstants;
-import com.netease.edu.eds.shuffle.support.NamedQueueRawNameRegistry;
-import com.netease.edu.eds.shuffle.support.QueueShuffleUtils;
-import com.netease.edu.eds.shuffle.support.ShuffleEnvironmentInfoProcessUtils;
-import org.springframework.amqp.core.Binding;
+import com.netease.edu.eds.shuffle.support.BindingResitry;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.BeansException;
@@ -20,6 +15,7 @@ import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -37,6 +33,7 @@ public class ShuffleRouteBackLifeCycle implements SmartLifecycle, ApplicationCon
     private boolean            initialized            = false;
     String                     CONNECTION_FACTORY_KEY = "connectionFactoryKey";
 
+    @Deprecated
     private String getConnectionFactoryKey(RabbitAdmin rabbitAdmin) {
 
         Map<String, String> connectionFactoryKeyMap = new HashMap<>();
@@ -68,56 +65,20 @@ public class ShuffleRouteBackLifeCycle implements SmartLifecycle, ApplicationCon
 
         initialized = true;
 
-        Map<String, RabbitAdmin> rabbitAdminMap = applicationContext.getBeansOfType(RabbitAdmin.class);
-
-        // 根据broker地址去重
-        Map<String, RabbitAdmin> connectionFactoryRabbitAdminMap = new HashMap<>();
-        for (RabbitAdmin rabbitAdmin : rabbitAdminMap.values()) {
-            connectionFactoryRabbitAdminMap.put(getConnectionFactoryKey(rabbitAdmin), rabbitAdmin);
-        }
-
-        Map<String, Binding> bindingMap = applicationContext.getBeansOfType(Binding.class);
-        if (bindingMap == null) {
-            return;
-        }
-        for (Binding originBinding : bindingMap.values()) {
-
-            if (QueueShuffleUtils.isShuffleInnerExchange(originBinding.getExchange())) {
-                continue;
-            }
-
-            // 裸queueName做为RouteBackRoutingKey。
-            String routeBackRoutingKey = ShuffleEnvironmentInfoProcessUtils.getRawNameWithoutCurrentEnvironmentInfo(originBinding.getDestination());
-
-            // 注册表里面的queue都是非匿名queue。因此不用额外查询所有Queue Bean进行过滤。
-            if (!NamedQueueRawNameRegistry.contain(routeBackRoutingKey)) {
-                continue;
-            }
-
-            // 替换为对应std环境的queueName
-            String relatedStdQueueName = originBinding.getDestination();
-            if (!ShufflePropertiesSupport.getStandardEnvName().equals(EnvironmentShuffleUtils.getCurrentEnv())) {
-                relatedStdQueueName = ShuffleEnvironmentInfoProcessUtils.getNameWithNewFixOrRemoveOldFix(originBinding.getDestination(),
-                                                                                                         EnvironmentShuffleUtils.getCurrentEnv(),
-                                                                                                         ShufflePropertiesSupport.getStandardEnvName());
-            }
-
-            Binding routeBackBinding = new Binding(relatedStdQueueName, originBinding.getDestinationType(),
-                                                   ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE,
-                                                   routeBackRoutingKey, null);
-
+        Iterator<BindingResitry.BindingHolder> bindingHolderIterator = BindingResitry.getIterator();
+        while (bindingHolderIterator.hasNext()) {
+            BindingResitry.BindingHolder bindingHolder = bindingHolderIterator.next();
             if (beanFactory instanceof ConfigurableListableBeanFactory) {
                 ConfigurableListableBeanFactory configurableListableBeanFactory = (ConfigurableListableBeanFactory) beanFactory;
-                String bindingBeanName = ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE + "." + routeBackRoutingKey;
+                String bindingBeanName = ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE + "."
+                                         + bindingHolder.getBinding().getRoutingKey();
                 if (!configurableListableBeanFactory.containsBean(bindingBeanName)) {
-                    configurableListableBeanFactory.registerSingleton(bindingBeanName, routeBackBinding);
+                    configurableListableBeanFactory.registerSingleton(bindingBeanName, bindingHolder.getBinding());
                 }
 
             }
 
-            for (RabbitAdmin rabbitAdmin : connectionFactoryRabbitAdminMap.values()) {
-                rabbitAdmin.declareBinding(routeBackBinding);
-            }
+            bindingHolder.getRabbitAdmin().declareBinding(bindingHolder.getBinding());
 
         }
 

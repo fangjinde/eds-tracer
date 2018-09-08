@@ -2,8 +2,10 @@ package com.netease.edu.eds.shuffle.instrument.rabbit;
 
 import com.alibaba.fastjson.JSON;
 import com.netease.edu.eds.shuffle.core.BeanNameConstants;
-import com.netease.edu.eds.shuffle.support.InterProcessMutexContext;
-import com.netease.edu.eds.shuffle.support.QueueShuffleUtils;
+import com.netease.edu.eds.shuffle.core.EnvironmentShuffleUtils;
+import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
+import com.netease.edu.eds.shuffle.core.ShuffleRabbitConstants;
+import com.netease.edu.eds.shuffle.support.*;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.AgentSupport;
@@ -20,6 +22,7 @@ import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.Declarable;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.ChannelProxy;
@@ -66,7 +69,6 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
 
     public static class Interceptor {
         // private DeclareOk[] declareQueues(final Channel channel, final Queue... queues) throws IOException
-        // private void declareBindings(final Channel channel, final Binding... bindings) throws IOException
 
         private static Logger                  logger                                 = LoggerFactory.getLogger(Interceptor.class);
 
@@ -425,8 +427,43 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
             }
         }
 
+        // private void declareBindings(final Channel channel, final Binding... bindings) throws IOException
         private static Object declareBindings(Object[] args, Invoker invoker, Method method,
                                               Object proxy) throws IOException {
+
+            Binding[] bindings = (Binding[]) args[1];
+            RabbitAdmin rabbitAdmin = (RabbitAdmin) proxy;
+
+            for (Binding originBinding : bindings) {
+
+                if (QueueShuffleUtils.isShuffleInnerExchange(originBinding.getExchange())) {
+                    continue;
+                }
+
+                // 裸queueName做为RouteBackRoutingKey。
+                String routeBackRoutingKey = ShuffleEnvironmentInfoProcessUtils.getRawNameWithoutCurrentEnvironmentInfo(originBinding.getDestination());
+
+                // 注册表里面的queue都是非匿名queue。因此不用额外查询所有Queue Bean进行过滤。
+                if (!NamedQueueRawNameRegistry.contain(routeBackRoutingKey)) {
+                    continue;
+                }
+
+                // 替换为对应std环境的queueName
+                String relatedStdQueueName = originBinding.getDestination();
+                if (!ShufflePropertiesSupport.getStandardEnvName().equals(EnvironmentShuffleUtils.getCurrentEnv())) {
+                    relatedStdQueueName = ShuffleEnvironmentInfoProcessUtils.getNameWithNewFixOrRemoveOldFix(originBinding.getDestination(),
+                                                                                                             EnvironmentShuffleUtils.getCurrentEnv(),
+                                                                                                             ShufflePropertiesSupport.getStandardEnvName());
+                }
+
+                Binding routeBackBinding = new Binding(relatedStdQueueName, originBinding.getDestinationType(),
+                                                       ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE,
+                                                       routeBackRoutingKey, null);
+
+                BindingResitry.add(new BindingResitry.BindingHolder(routeBackBinding, rabbitAdmin));
+
+            }
+
             return invoker.invoke(args);
         }
     }
