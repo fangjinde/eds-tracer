@@ -1,17 +1,22 @@
 package com.netease.edu.eds.shuffle.instrument.rabbit;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
-
-import java.lang.instrument.Instrumentation;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
+import brave.Tracing;
+import com.netease.edu.eds.shuffle.core.*;
+import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
+import com.netease.edu.eds.shuffle.spi.KeyValueManager;
+import com.netease.edu.eds.shuffle.support.InterProcessMutexContext;
+import com.netease.edu.eds.shuffle.support.ShuffleEnvironmentInfoProcessUtils;
+import com.netease.edu.eds.trace.core.Invoker;
+import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
+import com.netease.edu.eds.trace.support.AgentSupport;
+import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
+import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
+import com.netease.edu.eds.trace.utils.PropagationUtils;
+import com.rabbitmq.client.Channel;
+import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.bind.annotation.*;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
@@ -26,24 +31,17 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.AbstractMessageListenerContainer;
 import org.springframework.util.ReflectionUtils;
 
-import com.netease.edu.eds.shuffle.core.*;
-import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
-import com.netease.edu.eds.shuffle.spi.KeyValueManager;
-import com.netease.edu.eds.shuffle.support.InterProcessMutexContext;
-import com.netease.edu.eds.shuffle.support.ShuffleEnvironmentInfoProcessUtils;
-import com.netease.edu.eds.trace.core.Invoker;
-import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
-import com.netease.edu.eds.trace.support.AgentSupport;
-import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
-import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
-import com.netease.edu.eds.trace.utils.PropagationUtils;
-import com.rabbitmq.client.Channel;
+import java.lang.instrument.Instrumentation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
-import brave.Tracing;
-import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.implementation.bind.annotation.*;
-import net.bytebuddy.matcher.ElementMatcher;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * @author hzfjd
