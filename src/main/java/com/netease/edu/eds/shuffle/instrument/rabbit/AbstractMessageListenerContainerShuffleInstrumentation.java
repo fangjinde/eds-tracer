@@ -1,22 +1,17 @@
 package com.netease.edu.eds.shuffle.instrument.rabbit;
 
-import brave.Tracing;
-import com.netease.edu.eds.shuffle.core.*;
-import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
-import com.netease.edu.eds.shuffle.spi.KeyValueManager;
-import com.netease.edu.eds.shuffle.support.InterProcessMutexContext;
-import com.netease.edu.eds.shuffle.support.ShuffleEnvironmentInfoProcessUtils;
-import com.netease.edu.eds.trace.core.Invoker;
-import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
-import com.netease.edu.eds.trace.support.AgentSupport;
-import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
-import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
-import com.netease.edu.eds.trace.utils.PropagationUtils;
-import com.rabbitmq.client.Channel;
-import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.implementation.bind.annotation.*;
-import net.bytebuddy.matcher.ElementMatcher;
+import static net.bytebuddy.matcher.ElementMatchers.*;
+
+import java.lang.instrument.Instrumentation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
@@ -31,17 +26,24 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.AbstractMessageListenerContainer;
 import org.springframework.util.ReflectionUtils;
 
-import java.lang.instrument.Instrumentation;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import com.netease.edu.eds.shuffle.core.*;
+import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
+import com.netease.edu.eds.shuffle.spi.KeyValueManager;
+import com.netease.edu.eds.shuffle.support.InterProcessMutexContext;
+import com.netease.edu.eds.shuffle.support.ShuffleEnvironmentInfoProcessUtils;
+import com.netease.edu.eds.trace.core.Invoker;
+import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
+import com.netease.edu.eds.trace.support.AgentSupport;
+import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
+import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
+import com.netease.edu.eds.trace.utils.PropagationUtils;
+import com.rabbitmq.client.Channel;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import brave.Tracing;
+import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.bind.annotation.*;
+import net.bytebuddy.matcher.ElementMatcher;
 
 /**
  * @author hzfjd
@@ -129,7 +131,8 @@ public class AbstractMessageListenerContainerShuffleInstrumentation implements T
             if (testEnv.equals(ownerEnv)) {
 
                 // 测试环境标记过，目前当前消息为对应回游消息，则std消费之。
-                if (ShuffleConstants.SHUFFLE_ROUTE_BACK_EXCHANGE.equals(message.getMessageProperties().getReceivedExchange())) {
+                if (isExpireThenRouteBackLetterFromTestEnv(message)) {
+
                     return PROCESS;
                 }
 
@@ -162,6 +165,33 @@ public class AbstractMessageListenerContainerShuffleInstrumentation implements T
             // 暂时下线,delay处理。
             return DELAY;
 
+        }
+
+        private static boolean isExpireThenRouteBackLetterFromTestEnv(Message message) {
+
+            // 从route back exchange 过来
+            if (!ShuffleConstants.SHUFFLE_ROUTE_BACK_EXCHANGE.equals(message.getMessageProperties().getReceivedExchange())) {
+                return false;
+            }
+
+            // 并且不是delay分支
+            return !isDelayTypeRouteBack(message);
+
+        }
+
+        private static boolean isDelayTypeRouteBack(Message message) {
+            List<Map<String, Object>> xDeathInfos = (List<Map<String, Object>>) message.getMessageProperties().getHeaders().get("x-death");
+            if (CollectionUtils.isEmpty(xDeathInfos)) {
+                return false;
+            }
+
+            Map<String, Object> lastXDeathInfo = xDeathInfos.get(xDeathInfos.size() - 1);
+
+            if ("shuffle.delay.exchange".equals(lastXDeathInfo.get("exchange"))) {
+                return true;
+            }
+
+            return false;
         }
 
         private static Object byPassProxyIfPossible(Object[] args, Invoker invoker, Object proxy) {
