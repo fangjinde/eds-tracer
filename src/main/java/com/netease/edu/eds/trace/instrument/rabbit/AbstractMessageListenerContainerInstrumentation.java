@@ -387,17 +387,6 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
         }
 
-        private static String getQueueName(Message message) {
-            String queueName = null;
-            if (message != null && message.getMessageProperties() != null) {
-                queueName = message.getMessageProperties().getConsumerQueue();
-            }
-            if (queueName == null) {
-                queueName = "default.queue";
-            }
-            return queueName;
-        }
-
         private static String getShuffleSendId(Message message) {
             String shuffleSendId = null;
             if (message != null && message.getMessageProperties() != null) {
@@ -417,8 +406,8 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
          */
         private static String getMessageIdKey(Message message) {
             try {
-                return Tracing.currentTracer().currentSpan().context().traceIdString() + "-" + getQueueName(message)
-                       + "-" + getShuffleSendId(message);
+                return Tracing.currentTracer().currentSpan().context().traceIdString() + "-"
+                       + getShuffleSendId(message);
             } catch (Exception e) {
                 return UUID.randomUUID().toString().replaceAll("-", "");
             }
