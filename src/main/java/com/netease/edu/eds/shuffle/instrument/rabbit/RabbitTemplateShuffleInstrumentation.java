@@ -1,10 +1,9 @@
-package com.netease.edu.eds.shuffle.dubbo;
+package com.netease.edu.eds.shuffle.instrument.rabbit;
 
 import com.netease.edu.eds.shuffle.core.EnvironmentShuffleUtils;
 import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
 import com.netease.edu.eds.shuffle.core.ShuffleRabbitConstants;
 import com.netease.edu.eds.shuffle.core.ShuffleSwitch;
-import com.netease.edu.eds.shuffle.instrument.rabbit.RabbitShuffleSendContext;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.instrument.rabbit.RabbitTemplateInstrumentation;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
