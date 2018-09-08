@@ -115,12 +115,6 @@ public final class DubboTraceFilter implements Filter {
             }
 
             if (rpcContext.isConsumerSide()) {
-                SpanUtils.safeTag(span, "clientOriginEnv", PropagationUtils.getOriginEnv());
-            } else {
-                SpanUtils.safeTag(span, "serverOriginEnv", PropagationUtils.getOriginEnv());
-            }
-
-            if (rpcContext.isConsumerSide()) {
                 onValue("args", invocation.getArguments(), span, rpcContext.isConsumerSide());
             }
 
