@@ -6,6 +6,7 @@ import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
 import com.netease.edu.eds.shuffle.core.EnvironmentShuffleUtils;
 import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
+import com.netease.edu.eds.shuffle.core.ShuffleRabbitConstants;
 import com.netease.edu.eds.shuffle.core.ShuffleSwitch;
 import com.netease.edu.eds.shuffle.instrument.rabbit.RabbitShuffleSendContext;
 import com.netease.edu.eds.trace.constants.SpanType;
@@ -29,10 +30,7 @@ import org.springframework.amqp.core.MessageProperties;
 import zipkin2.Endpoint;
 
 import java.lang.instrument.Instrumentation;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -78,6 +76,11 @@ public class RabbitTemplateInstrumentation implements TraceAgentInstrumetation {
             Object originResult = null;
 
             int loopIndex = 0;
+            String shffleSendId = UUID.randomUUID().toString().replaceAll("-", "");
+            Message message = (Message) args[3];
+            message.getMessageProperties().setHeader(ShuffleRabbitConstants.HeaderName.SHUFFLE_SEND_ID_HEADER_NAME,
+                                                     shffleSendId);
+
             for (String shuffleExchange : allShuffleExchanges) {
                 args[1] = shuffleExchange;
                 if (loopIndex >= 1) {

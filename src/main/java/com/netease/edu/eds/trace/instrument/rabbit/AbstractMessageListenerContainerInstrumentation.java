@@ -18,7 +18,6 @@ import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.AgentSupport;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
-import com.netease.edu.eds.trace.utils.MD5Utils;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.rabbitmq.client.Channel;
@@ -50,6 +49,7 @@ import java.net.InetAddress;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -387,11 +387,40 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
         }
 
+        private static String getQueueName(Message message) {
+            String queueName = null;
+            if (message != null && message.getMessageProperties() != null) {
+                queueName = message.getMessageProperties().getConsumerQueue();
+            }
+            if (queueName == null) {
+                queueName = "default.queue";
+            }
+            return queueName;
+        }
+
+        private static String getShuffleSendId(Message message) {
+            String shuffleSendId = null;
+            if (message != null && message.getMessageProperties() != null) {
+                shuffleSendId = (String) message.getMessageProperties().getHeaders().get(ShuffleRabbitConstants.HeaderName.SHUFFLE_SEND_ID_HEADER_NAME);
+            }
+            if (shuffleSendId == null) {
+                shuffleSendId = "NullSendId";
+            }
+            return shuffleSendId;
+        }
+
+        /**
+         * traceId-queueName-md5(body)
+         * 
+         * @param message
+         * @return
+         */
         private static String getMessageIdKey(Message message) {
             try {
-                return Tracing.currentTracer().currentSpan().context().traceIdString();
+                return Tracing.currentTracer().currentSpan().context().traceIdString() + "-" + getQueueName(message)
+                       + "-" + getShuffleSendId(message);
             } catch (Exception e) {
-                return MD5Utils.digest(message.getBody());
+                return UUID.randomUUID().toString().replaceAll("-", "");
             }
 
         }

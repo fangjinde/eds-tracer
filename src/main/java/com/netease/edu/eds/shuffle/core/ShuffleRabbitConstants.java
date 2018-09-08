@@ -10,6 +10,11 @@ public interface ShuffleRabbitConstants {
     String SHUFFLE_DELAY_QUEUE         = "shuffle.delay.queue";
     String SHUFFLE_ROUTE_BACK_EXCHANGE = "shuffle.route.back.exchange";
 
+    interface HeaderName {
+
+        String SHUFFLE_SEND_ID_HEADER_NAME = "shuffle.send.id";
+    }
+
     interface ParamName {
 
         String X_DEAD_LETTER_EXCHANGE = "x-dead-letter-exchange";
