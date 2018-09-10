@@ -8,9 +8,12 @@ import brave.http.HttpTracing;
 import brave.propagation.Propagation.Getter;
 import brave.propagation.TraceContext;
 import brave.servlet.HttpServletAdapter;
+import com.netease.edu.eds.trace.constants.PropagationConstants;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
+import com.netease.edu.eds.trace.utils.TraceContextPropagationUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.web.util.UrlPathHelper;
 
@@ -26,12 +29,20 @@ public final class TracingFilter implements Filter {
                                                                 @Override
                                                                 public String get(HttpServletRequest carrier,
                                                                                   String key) {
+
+                                                                    String traceContextHexString = carrier.getParameter(PropagationConstants.TRACE_CONTEXT_PROPAGATION_KEY);
+                                                                    String value = TraceContextPropagationUtils.getTraceContextValue(traceContextHexString,
+                                                                                                                                     key);
+                                                                    if (StringUtils.isNotBlank(value)) {
+                                                                        return value;
+                                                                    }
+
                                                                     return carrier.getHeader(key);
                                                                 }
 
                                                                 @Override
                                                                 public String toString() {
-                                                                    return "HttpServletRequest::getHeader";
+                                                                    return "HttpServletRequest::getParameter(PropagationConstants.TRACE_CONTEXT_PROPAGATION_KEY) , or fall back to HttpServletRequest::getHeader";
                                                                 }
                                                             };
     static final HttpServletAdapter                 ADAPTER = new HttpServletAdapter();
@@ -75,6 +86,9 @@ public final class TracingFilter implements Filter {
             chain.doFilter(httpRequest, httpResponse);
             return;
         }
+
+        // 对http 302做增强
+        httpResponse = new HttpServletResponseTracedWrapper(httpResponse);
 
         // Prevent duplicate spans for the same request
         if (request.getAttribute("TracingFilter") != null) {
