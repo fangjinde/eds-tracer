@@ -9,7 +9,6 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
@@ -25,16 +24,8 @@ import java.util.Map;
 
 public class HttpServletResponseTracedWrapper extends HttpServletResponseWrapper {
 
-    private HttpServletRequest httpServletRequest;
-
     public HttpServletResponseTracedWrapper(HttpServletResponse response) {
         super(response);
-
-    }
-
-    public HttpServletResponseTracedWrapper(HttpServletResponse response, HttpServletRequest httpServletRequest) {
-        super(response);
-        this.httpServletRequest = httpServletRequest;
 
     }
 
