@@ -103,7 +103,7 @@ public final class TracingFilter implements Filter {
         SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.HTTP);
 
         if (span != null && !span.isNoop() && environment != null) {
-            SpanUtils.safeTag(span, "env", environment.getProperty("spring.profiles.active"));
+            SpanUtils.safeTag(span, "serverEnv", environment.getProperty("spring.profiles.active"));
         }
 
         // Add attributes for explicit access to customization or span context
@@ -115,7 +115,6 @@ public final class TracingFilter implements Filter {
 
             // 一定要放在SpanInScope中，否则CurrentContext不正确。
             PropagationUtils.setOriginEnvIfNotExists(span.context(), environment.getProperty("spring.profiles.active"));
-            SpanUtils.safeTag(span, "originEnv", PropagationUtils.getOriginEnv());
             // any downstream code can see Tracer.currentSpan() or use Tracer.currentSpanCustomizer()
             SpanUtils.tagPropagationInfos(span);
             chain.doFilter(httpRequest, httpResponse);

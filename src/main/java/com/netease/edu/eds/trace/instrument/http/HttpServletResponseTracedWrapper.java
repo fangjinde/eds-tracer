@@ -1,12 +1,18 @@
 package com.netease.edu.eds.trace.instrument.http;
 
+import brave.Span;
+import brave.Tracer;
 import brave.Tracing;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
 import com.netease.edu.eds.trace.constants.PropagationConstants;
+import com.netease.edu.eds.trace.constants.SpanType;
+import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.edu.eds.trace.utils.TraceContextPropagationUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
 
 import javax.servlet.http.HttpServletResponse;
@@ -50,21 +56,32 @@ public class HttpServletResponseTracedWrapper extends HttpServletResponseWrapper
     public void sendRedirect(String location) throws IOException {
 
         Tracing tracing = Tracing.current();
-        String newLocation = null;
         if (tracing != null) {
-            if (tracing.currentTraceContext() != null) {
-                TraceContext traceContext = tracing.currentTraceContext().get();
-                if (traceContext != null) {
-                    TraceContext.Injector<Map<String, String>> injector = tracing.propagation().injector(SETTER);
-                    Map<String, String> tracePropagationMap = new LinkedHashMap<>();
-                    injector.inject(traceContext, tracePropagationMap);
-                    newLocation = addTracePropagationToLocation(location, tracePropagationMap);
-                }
-            }
-        }
 
-        if (StringUtils.isNotBlank(newLocation)) {
-            super.sendRedirect(newLocation);
+            Span span = tracing.tracer().nextSpan();
+            span.kind(Span.Kind.CLIENT).name(location == null ? "null" : location);
+            SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.HTTP_REDIRECT);
+            SpanUtils.tagPropagationInfos(span);
+
+            Environment environment = SpringBeanFactorySupport.getBean(Environment.class);
+            if (environment != null) {
+                SpanUtils.safeTag(span, "clientEnv", environment.getProperty("spring.profiles.active"));
+            }
+
+            span.start();
+            try (Tracer.SpanInScope spanInScope = tracing.tracer().withSpanInScope(span)) {
+                TraceContext.Injector<Map<String, String>> injector = tracing.propagation().injector(SETTER);
+                Map<String, String> tracePropagationMap = new LinkedHashMap<>();
+                injector.inject(span.context(), tracePropagationMap);
+                String newLocation = addTracePropagationToLocation(location, tracePropagationMap);
+                if (StringUtils.isNotBlank(newLocation)) {
+                    location = newLocation;
+                }
+
+                super.sendRedirect(location);
+
+            }
+
         } else {
             super.sendRedirect(location);
         }
