@@ -59,8 +59,9 @@ public class HttpServletResponseTracedWrapper extends HttpServletResponseWrapper
         if (tracing != null) {
 
             Span span = tracing.tracer().nextSpan();
-            span.kind(Span.Kind.CLIENT).name(location == null ? "null" : location);
-            SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.HTTP_REDIRECT);
+            span.kind(Span.Kind.CLIENT).name(location);
+            SpanUtils.safeTag(span, SpanType.HttpSubType.LOCATION, location);
+            SpanUtils.safeTag(span, SpanType.HttpSubType.TAG_KEY, SpanType.HttpSubType.REDIRECT);
             SpanUtils.tagPropagationInfos(span);
 
             Environment environment = SpringBeanFactorySupport.getBean(Environment.class);
@@ -80,6 +81,18 @@ public class HttpServletResponseTracedWrapper extends HttpServletResponseWrapper
 
                 super.sendRedirect(location);
 
+            } catch (Exception e) {
+                SpanUtils.tagError(span, e);
+                if (e instanceof RuntimeException) {
+                    throw (RuntimeException) e;
+                } else if (e instanceof IOException) {
+                    throw (IOException) e;
+                } else {
+                    throw new RuntimeException(e);
+                }
+
+            } finally {
+                span.finish();
             }
 
         } else {

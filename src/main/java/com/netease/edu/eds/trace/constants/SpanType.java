@@ -5,18 +5,24 @@ package com.netease.edu.eds.trace.constants;
  */
 public interface SpanType {
 
-    String TAG_KEY       = "SpanType";
+    String TAG_KEY     = "SpanType";
 
-    String DDB           = "Ddb";
-    String NDIR          = "Ndir";
-    String MEMCACHE      = "Memcache";
-    String ASYNC         = "Async";
-    String TRANSACTION   = "Transaction";
-    String DUBBO         = "Dubbo";
-    String RABBIT        = "Rabbit";
-    String REDIS         = "Redis";
-    String HTTP          = "Http";
-    String HTTP_REDIRECT = "Redirect";
+    String DDB         = "Ddb";
+    String NDIR        = "Ndir";
+    String MEMCACHE    = "Memcache";
+    String ASYNC       = "Async";
+    String TRANSACTION = "Transaction";
+    String DUBBO       = "Dubbo";
+    String RABBIT      = "Rabbit";
+    String REDIS       = "Redis";
+    String HTTP        = "Http";
+
+    interface HttpSubType {
+
+        String TAG_KEY  = "HttpSubType";
+        String REDIRECT = "Redirect";
+        String LOCATION = "Location";
+    }
 
     interface AsyncSubType {
 
