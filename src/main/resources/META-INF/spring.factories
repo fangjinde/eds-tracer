@@ -20,5 +20,5 @@ com.netease.edu.eds.shuffle.configuration.ShuffleConfiguration
 #com.netease.edu.eds.trace.boot.listener.DeferedInstrumentationSpringApplicationRunListener
 
 # ApplicationContextInitializer
-#org.springframework.context.ApplicationContextInitializer=\
-#com.netease.edu.eds.trace.boot.PluginLoaderApplicationContextInitializer
+org.springframework.context.ApplicationContextInitializer=\
+com.netease.edu.eds.trace.boot.PluginLoaderApplicationContextInitializer
