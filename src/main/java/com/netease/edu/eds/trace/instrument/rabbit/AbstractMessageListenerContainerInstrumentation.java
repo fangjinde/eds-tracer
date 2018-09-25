@@ -75,6 +75,12 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
                                                                                         extractor);
 
             Tracer tracer = rabbitTracing.tracing().tracer();
+
+            // 无上游追踪信息的消费者，一般为一些死循环任务。不做追踪支持。
+            if (extracted == null || extracted.context() == null) {
+                return invoker.invoke(args);
+            }
+
             Span consumerSpan = tracer.nextSpan(extracted).kind(CONSUMER).name("on-message");
             SpanUtils.safeTag(consumerSpan, SpanType.TAG_KEY, SpanType.RABBIT);
 
