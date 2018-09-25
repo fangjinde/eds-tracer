@@ -29,6 +29,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * @create 18/9/8
  **/
 public class RabbitTemplateShuffleInstrumentation implements TraceAgentInstrumetation {
+
     @Override
     public void premain(Map<String, String> props, Instrumentation inst) {
 
@@ -43,7 +44,7 @@ public class RabbitTemplateShuffleInstrumentation implements TraceAgentInstrumet
 
         private static Logger logger = LoggerFactory.getLogger(RabbitTemplateInstrumentation.TraceInterceptor.class);
 
-        private static Object originSend(Object[] args, Invoker invoker){
+        private static Object originSend(Object[] args, Invoker invoker) {
             return invoker.invoke(args);
         }
 
@@ -60,6 +61,12 @@ public class RabbitTemplateShuffleInstrumentation implements TraceAgentInstrumet
             }
 
             String exchange = (String) args[1];
+
+            // 匿名队列的主题，不做双重发送。目前仅仅是springCloudBus需要。
+            if (ShufflePropertiesSupport.getAnonymousTopicNames().contains(exchange)) {
+                return originSend(args, invoker);
+            }
+
             List<String> envsForSelection = EnvironmentShuffleUtils.getEnvironmentsForPropagationSelection();
             List<String> allShuffleExchanges = getAllShuffleExchangeToSend(envsForSelection, exchange);
             if (CollectionUtils.isEmpty(allShuffleExchanges)) {
@@ -172,8 +179,6 @@ public class RabbitTemplateShuffleInstrumentation implements TraceAgentInstrumet
             }
             return newExchangeSb.toString();
         }
-
-
 
     }
 }
