@@ -1,21 +1,8 @@
 package com.netease.edu.eds.trace.instrument.http;
 
-import java.lang.annotation.Annotation;
-import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Method;
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-
+import brave.Span;
+import brave.SpanCustomizer;
+import brave.http.HttpTracing;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
@@ -23,10 +10,6 @@ import com.netease.edu.eds.trace.utils.ExceptionHandler;
 import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.edu.eds.trace.utils.TraceJsonUtils;
-
-import brave.Span;
-import brave.SpanCustomizer;
-import brave.http.HttpTracing;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
@@ -35,6 +18,20 @@ import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import javax.servlet.http.HttpServletRequest;
+import java.lang.annotation.Annotation;
+import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Method;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * @author hzfjd
@@ -45,8 +42,9 @@ public class ControllerTraceInstrumentation implements TraceAgentInstrumetation 
     @Override
     public void premain(Map<String, String> props, Instrumentation inst) {
         ElementMatcher.Junction controllerAnnoMatch = ElementMatchers.isAnnotatedWith(Controller.class).or(ElementMatchers.isAnnotatedWith(RestController.class));
-        ElementMatcher.Junction inheritsConrollerAnnoMatch = ElementMatchers.inheritsAnnotation(Controller.class).or(ElementMatchers.inheritsAnnotation(RestController.class));
-        ElementMatcher.Junction typeMatch = controllerAnnoMatch.or(inheritsConrollerAnnoMatch).and(ElementMatchers.not(ElementMatchers.isInterface()));
+        // ElementMatcher.Junction inheritsConrollerAnnoMatch =
+        // ElementMatchers.inheritsAnnotation(Controller.class).or(ElementMatchers.inheritsAnnotation(RestController.class));
+        ElementMatcher.Junction typeMatch = controllerAnnoMatch.and(ElementMatchers.not(ElementMatchers.isInterface()));
 
         new AgentBuilder.Default().type(typeMatch)
 
