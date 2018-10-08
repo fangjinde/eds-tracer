@@ -14,6 +14,7 @@ import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.*;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
+import org.directwebremoting.WebContext;
 import org.directwebremoting.WebContextFactory;
 
 import javax.servlet.http.HttpServletRequest;
@@ -63,7 +64,11 @@ public class DwrTraceInstrument implements TraceAgentInstrumetation {
                 }
             }
 
-            HttpServletRequest request = WebContextFactory.get().getHttpServletRequest();
+            WebContext webContext = WebContextFactory.get();
+            HttpServletRequest request = null;
+            if (webContext != null) {
+                request = webContext.getHttpServletRequest();
+            }
 
             Span span = null;
             if (request != null) {
