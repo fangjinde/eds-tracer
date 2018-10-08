@@ -155,10 +155,10 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
                     try {
                         acquired = lock.acquire(600, TimeUnit.SECONDS);
                         if (!acquired) {
-                            logger.error("try lock failed. just do the job what so ever.");
+                            logger.warn("try lock failed. just do the job what so ever.");
                         }
                     } catch (Exception e) {
-                        logger.error("try lock failed. just do the job what so ever.");
+                        logger.warn("try lock failed. just do the job what so ever.");
                     }
                     // 锁定成功或锁定超时，都进行操作
                     try {
@@ -167,7 +167,12 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
                                                       String.valueOf(triedTimes), queue.getName()));
                             deleteOps.run();
                         }
-                        return originDeclareOps.call();
+                        Object ret = originDeclareOps.call();
+                        if (triedTimes >= 2) {
+                            logger.info(String.format("triedTimes=%s, deleting queue=%s, retried successfully.",
+                                                      String.valueOf(triedTimes), queue.getName()));
+                        }
+                        return ret;
                         // 没有异常则创建成功，跳出循环
                     } finally {
                         try {
@@ -175,14 +180,14 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
                                 lock.release();
                             }
                         } catch (Exception e) {
-                            logger.error("release lock failed. nothing left to do.");
+                            logger.warn("release lock failed. nothing left to do.");
                         }
                     }
 
                 } catch (Exception e) {
                     lastException = e;
                     if (isContainInequivalentArgExceptionCause(e)) {
-                        logger.error(String.format("triedTimes=%s, queue=%s, exception is worth retry. retrying...",
+                        logger.warn(String.format("triedTimes=%s, queue=%s, exception is worth retry. retrying...",
                                                    String.valueOf(triedTimes), queue.getName()),
                                      e);
                         // 符合重试条件
@@ -209,79 +214,6 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
                 throw lastException;
             }
             return null;
-
-        }
-
-        /**
-         * 未抽取公共重试逻辑的历史方法，保留一段时间
-         * 
-         * @param channel
-         * @param queue
-         * @param declareOks
-         * @throws IOException
-         */
-        @Deprecated
-        private static void innerDeclareQueueWithRetry(Channel channel, Queue queue,
-                                                       List<AMQP.Queue.DeclareOk> declareOks) throws IOException {
-            int triedTimes = 1;
-            IOException lastException = null;
-            do {
-
-                try {
-
-                    InterProcessMutexContext queueRedeclareMutexContext = SpringBeanFactorySupport.getBean(BeanNameConstants.QUEUE_REDECLARE_MUTEX_CONTEXT);
-                    InterProcessMutex lock = queueRedeclareMutexContext.getLock(queue.getName());
-                    // 第二次开始进行删除
-                    boolean acquired = false;
-                    try {
-                        acquired = lock.acquire(600, TimeUnit.SECONDS);
-                        if (!acquired) {
-                            logger.error("try lock failed. just do the job what so ever.");
-                        }
-                    } catch (Exception e) {
-                        logger.error("try lock failed. just do the job what so ever.");
-                    }
-                    // 锁定成功或锁定超时，都进行操作
-                    try {
-                        if (triedTimes >= 2) {
-                            channel.queueDelete(queue.getName());
-                        }
-                        innerDeclareQueue(channel, queue, declareOks);
-                        // 没有异常则创建成功，跳出循环
-                        return;
-                    } finally {
-                        try {
-                            if (acquired = true) {
-                                lock.release();
-                            }
-                        } catch (Exception e) {
-                            logger.error("release lock failed. nothing left to do.");
-                        }
-                    }
-
-                } catch (IOException e) {
-                    lastException = e;
-                    if (isContainInequivalentArgExceptionCause(e)) {
-                        // 符合重试条件
-                        triedTimes++;
-                        try {
-                            Thread.sleep(1000L);
-                        } catch (InterruptedException e1) {
-
-                        }
-                    } else {
-                        // 不符合重试条件，直接抛异常
-                        throw e;
-                    }
-
-                }
-
-            } while (triedTimes <= 3);
-
-            // 重试2次后仍然失败，抛最后一个异常
-            if (lastException != null) {
-                throw lastException;
-            }
 
         }
 
