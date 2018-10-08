@@ -163,6 +163,8 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
                     // 锁定成功或锁定超时，都进行操作
                     try {
                         if (triedTimes >= 2) {
+                            logger.info(String.format("triedTimes=%s, deleting queue=%s, then retrying...",
+                                                      String.valueOf(triedTimes), queue.getName()));
                             deleteOps.run();
                         }
                         return originDeclareOps.call();
@@ -180,6 +182,9 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
                 } catch (Exception e) {
                     lastException = e;
                     if (isContainInequivalentArgExceptionCause(e)) {
+                        logger.error(String.format("triedTimes=%s, queue=%s, exception is worth retry. retrying...",
+                                                   String.valueOf(triedTimes), queue.getName()),
+                                     e);
                         // 符合重试条件
                         triedTimes++;
                         try {
@@ -188,6 +193,9 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
 
                         }
                     } else {
+                        logger.error(String.format("triedTimes=%s, queue=%s, exception is not worth retry.",
+                                                   String.valueOf(triedTimes), queue.getName()),
+                                     e);
                         // 不符合重试条件，直接抛异常
                         throw e;
                     }

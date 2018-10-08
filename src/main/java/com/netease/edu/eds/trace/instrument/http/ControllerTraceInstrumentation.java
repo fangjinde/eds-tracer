@@ -44,7 +44,7 @@ public class ControllerTraceInstrumentation implements TraceAgentInstrumetation 
         ElementMatcher.Junction controllerAnnoMatch = ElementMatchers.isAnnotatedWith(Controller.class).or(ElementMatchers.isAnnotatedWith(RestController.class));
         // ElementMatcher.Junction inheritsConrollerAnnoMatch =
         // ElementMatchers.inheritsAnnotation(Controller.class).or(ElementMatchers.inheritsAnnotation(RestController.class));
-        ElementMatcher.Junction typeMatch = controllerAnnoMatch.and(ElementMatchers.not(ElementMatchers.isInterface()));
+        ElementMatcher.Junction typeMatch = ElementMatchers.not(ElementMatchers.isInterface()).and(controllerAnnoMatch);
 
         new AgentBuilder.Default().type(typeMatch)
 

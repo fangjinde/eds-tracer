@@ -80,9 +80,7 @@ public class ByteBuddyUtils {
 
     }
 
-    public static void main(String[] args)
-            throws IllegalAccessException, InstantiationException, NDirClientException, IOException {
-
+    public static void serviceLoaderTest() throws NDirClientException, IOException {
         ServiceLoader<TraceAgentInstrumetation> serviceLoader = ServiceLoader.load(TraceAgentInstrumetation.class);
         Iterator<TraceAgentInstrumetation> iterator = serviceLoader.iterator();
         while (iterator.hasNext()) {
@@ -92,12 +90,18 @@ public class ByteBuddyUtils {
 
         //System.out.println(args);
 
-      //  String sql = SqlBuilder.inSql("name", Arrays.asList("name1", "name2"));
-       // System.out.println(sql);
+        //  String sql = SqlBuilder.inSql("name", Arrays.asList("name1", "name2"));
+        // System.out.println(sql);
         //System.out.println(new TargetClass().pubGet("pp:"));
 
         System.out.println(new TargetClass2().pubGet("pp2:"));
         //System.out.println(args);
+    }
+
+    public static void main(String[] args)
+            throws IllegalAccessException, InstantiationException, NDirClientException, IOException {
+
+
 
     }
 }
