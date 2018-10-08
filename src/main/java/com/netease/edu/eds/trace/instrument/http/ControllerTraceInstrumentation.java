@@ -7,7 +7,6 @@ import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.ExceptionHandler;
-import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.edu.eds.trace.utils.TraceJsonUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
@@ -29,7 +28,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.lang.annotation.Annotation;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
-import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -71,32 +69,6 @@ public class ControllerTraceInstrumentation implements TraceAgentInstrumetation 
         return -1;
     }
 
-    private static void tagRequestParams(HttpServletRequest request, Span span) {
-        if (request == null || span == null || span.isNoop()) {
-            return;
-        }
-        Enumeration<String> paraNames = request.getParameterNames();
-        while (paraNames.hasMoreElements()) {
-            String paramName = paraNames.nextElement();
-            String paramValue = request.getParameter(paramName);
-            SpanUtils.safeTag(span, "p_" + paramName, paramValue);
-
-        }
-    }
-
-    private static void tagRequestHeaders(HttpServletRequest request, Span span) {
-        if (request == null || span == null || span.isNoop()) {
-            return;
-        }
-        Enumeration<String> paraNames = request.getHeaderNames();
-        while (paraNames.hasMoreElements()) {
-            String paramName = paraNames.nextElement();
-            String paramValue = request.getHeader(paramName);
-            SpanUtils.safeTag(span, "h_" + paramName, paramValue);
-
-        }
-    }
-
     public static class TraceInterceptor {
 
         @RuntimeType
@@ -119,8 +91,8 @@ public class ControllerTraceInstrumentation implements TraceAgentInstrumetation 
                 request = servletRequestAttributes.getRequest();
                 if (request != null) {
                     span = (Span) request.getAttribute(SpanCustomizer.class.getName());
-                    tagRequestParams(request, span);
-                    tagRequestHeaders(request, span);
+                    HttpTagUtils.tagRequestParams(request, span);
+                    HttpTagUtils.tagRequestHeaders(request, span);
                 }
 
             }
@@ -137,7 +109,8 @@ public class ControllerTraceInstrumentation implements TraceAgentInstrumetation 
                 SpanUtils.safeTag(span, "return", TraceJsonUtils.toJson(ret));
                 return ret;
             } catch (Exception e) {
-                SpanUtils.safeTag(span, "controller invoke error. ", ExceptionStringUtils.getStackTraceString(e));
+                SpanUtils.tagErrorMark(span);
+                SpanUtils.tagError(span, e);
                 throw ExceptionHandler.wrapToRuntimeException(e);
             }
 
