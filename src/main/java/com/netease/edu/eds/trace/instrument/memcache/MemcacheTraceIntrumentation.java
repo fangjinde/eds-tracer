@@ -6,7 +6,6 @@ import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
-import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.edu.eds.trace.utils.TraceJsonUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
@@ -84,7 +83,7 @@ public class MemcacheTraceIntrumentation implements TraceAgentInstrumetation {
                 span.kind(Span.Kind.CLIENT).name(method.getDeclaringClass().getSimpleName() + "." + method.getName());
 
                 String argsJson = TraceJsonUtils.toJson(args);
-                span.tag("args", argsJson);
+                SpanUtils.safeTag(span, "args", argsJson);
                 span.start();
             }
 
@@ -94,10 +93,11 @@ public class MemcacheTraceIntrumentation implements TraceAgentInstrumetation {
 
                 Object ret = callable.call();
                 String retJson = TraceJsonUtils.toJson(ret);
-                span.tag("return", retJson);
+                SpanUtils.safeTag(span, "return", retJson);
                 return ret;
             } catch (Exception e) {
-                span.tag("memcache_error", ExceptionStringUtils.getStackTraceString(e));
+                SpanUtils.tagErrorMark(span);
+                SpanUtils.tagError(span, e);
                 if (e instanceof RuntimeException) {
                     throw (RuntimeException) e;
                 } else {
