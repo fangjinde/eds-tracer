@@ -10,6 +10,7 @@ com.netease.edu.eds.trace.instrument.ddb.DBConnectionInstrumentation
 com.netease.edu.eds.trace.instrument.ddb.SqlManagerInstrumentation
 com.netease.edu.eds.trace.instrument.async.ThreadPoolExecutorInstrumentation
 com.netease.edu.eds.trace.instrument.http.ControllerTraceInstrumentation
+com.netease.edu.eds.trace.instrument.http.DwrTraceInstrument
 com.netease.edu.eds.trace.instrument.rabbit.RabbitTemplateInstrumentation
 com.netease.edu.eds.shuffle.instrument.rabbit.RabbitTemplateShuffleInstrumentation
 com.netease.edu.eds.shuffle.instrument.rabbit.AbstractMessageListenerContainerShuffleInstrumentation

@@ -68,9 +68,18 @@ public class DwrTraceInstrument implements TraceAgentInstrumetation {
             Span span = null;
             if (request != null) {
                 span = (Span) request.getAttribute(SpanCustomizer.class.getName());
-                HttpTagUtils.tagRequestHeaders(request, span);
+
             }
 
+            if (span == null) {
+                try {
+                    return callable.call();
+                } catch (Exception e) {
+                    throw ExceptionHandler.wrapToRuntimeException(e);
+                }
+            }
+
+            HttpTagUtils.tagRequestHeaders(request, span);
             String argsJson = TraceJsonUtils.toJson(args);
             SpanUtils.safeTag(span, "args", argsJson);
 
