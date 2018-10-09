@@ -79,11 +79,6 @@ public class RegistryDirectoryInstrument implements TraceAgentInstrumetation {
                 return invoker.invoke(args);
             }
 
-            Tracer tracer = SpringBeanFactorySupport.getBean(Tracer.class);
-            if (tracer == null || tracer.currentSpan() == null) {
-                return invoker.invoke(args);
-            }
-
             List<com.alibaba.dubbo.rpc.Invoker<T>> invokerList = (List<com.alibaba.dubbo.rpc.Invoker<T>>) args[0];
             String methodName = (String) args[1];
 
