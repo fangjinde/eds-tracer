@@ -34,7 +34,7 @@ public class DwrTraceInstrument implements TraceAgentInstrumetation {
 
         ElementMatcher.Junction classMatcher = ElementMatchers.isAnnotatedWith(ElementMatchers.namedIgnoreCase("org.directwebremoting.annotations.RemoteProxy"));
 
-        ElementMatcher.Junction methodMatcher = ElementMatchers.isPublic().and(ElementMatchers.isAnnotatedWith(ElementMatchers.namedIgnoreCase("org.directwebremoting.annotations.RemoteMethod")));
+        ElementMatcher.Junction methodMatcher = ElementMatchers.isPublic().and(ElementMatchers.isAnnotatedWith(ElementMatchers.namedIgnoreCase("org.directwebremoting.annotations.RemoteMethod"))).and(ElementMatchers.not(ElementMatchers.isStatic()));
 
         addTransformer(classMatcher, methodMatcher, inst);
     }
