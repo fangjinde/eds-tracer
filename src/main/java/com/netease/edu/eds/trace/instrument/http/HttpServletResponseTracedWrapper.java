@@ -59,7 +59,7 @@ public class HttpServletResponseTracedWrapper extends HttpServletResponseWrapper
         if (tracing != null) {
 
             Span span = tracing.tracer().nextSpan();
-            span.kind(Span.Kind.CLIENT).name(location);
+            span.kind(Span.Kind.CLIENT).name("redirect:" + location);
             SpanUtils.safeTag(span, SpanType.HttpSubType.LOCATION, location);
             SpanUtils.safeTag(span, SpanType.HttpSubType.TAG_KEY, SpanType.HttpSubType.REDIRECT);
             SpanUtils.tagPropagationInfos(span);
@@ -82,6 +82,7 @@ public class HttpServletResponseTracedWrapper extends HttpServletResponseWrapper
                 super.sendRedirect(location);
 
             } catch (Exception e) {
+                SpanUtils.tagErrorMark(span);
                 SpanUtils.tagError(span, e);
                 if (e instanceof RuntimeException) {
                     throw (RuntimeException) e;

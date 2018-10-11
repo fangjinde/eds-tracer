@@ -92,7 +92,7 @@ public final class TracingFilter implements Filter {
 
         // Prevent duplicate spans for the same request
         if (request.getAttribute("TracingFilter") != null) {
-            chain.doFilter(request, response);
+            chain.doFilter(request, httpResponse);
             return;
         }
 
