@@ -34,7 +34,7 @@ public class SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor 
     private static final String       LISTENER_CONTAINER_FACTORY_BEAN_CLASS_NAME = "org.springframework.amqp.rabbit.config.ListenerContainerFactoryBean";
 
     private static final String[]     rabbitEnvironmentKeyArray                  = { "${local_service_version_suffix}",
-                                                                                     "${spring.profiles.active}" };
+                                                                                     "${spring.profiles.active}","${mq_namespace}","${dubbo_provider_version}" };
     private static final List<String> rabbitEnvironmentKeyList                   = Arrays.asList(rabbitEnvironmentKeyArray);
 
     private static final String       rabbitEnvironmentDefaultSuffix             = "${local_service_version_suffix}";
