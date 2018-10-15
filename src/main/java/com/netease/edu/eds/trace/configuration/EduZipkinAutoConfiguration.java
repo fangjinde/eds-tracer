@@ -11,6 +11,7 @@ package com.netease.edu.eds.trace.configuration;/**
                                                  */
 
 import brave.sampler.Sampler;
+import com.netease.edu.eds.trace.properties.KafkaRawProperties;
 import com.netease.edu.eds.trace.sentry.TraceSentryReporter;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +20,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.sleuth.autoconfig.TraceAutoConfiguration;
@@ -56,7 +57,7 @@ import java.util.concurrent.TimeUnit;
  * @since 1.0.0
  */
 @Configuration
-@EnableConfigurationProperties({ ZipkinProperties.class, SamplerProperties.class })
+@EnableConfigurationProperties({ SamplerProperties.class })
 @ConditionalOnProperty(value = "spring.zipkin.enabled", matchIfMissing = true)
 @AutoConfigureBefore(TraceAutoConfiguration.class)
 public class EduZipkinAutoConfiguration {
@@ -84,7 +85,14 @@ public class EduZipkinAutoConfiguration {
         private String topic;
 
         @Bean
-        Sender kafkaSender(KafkaProperties config) {
+        @ConfigurationProperties(prefix = "trace.kafka")
+        public KafkaRawProperties kafkaRawProperties() {
+            return new KafkaRawProperties();
+        }
+
+        @Bean
+        Sender kafkaSender() {
+            KafkaRawProperties config = kafkaRawProperties();
             Map<String, Object> properties = config.buildProducerProperties();
             properties.put("key.serializer", ByteArraySerializer.class.getName());
             properties.put("value.serializer", ByteArraySerializer.class.getName());
