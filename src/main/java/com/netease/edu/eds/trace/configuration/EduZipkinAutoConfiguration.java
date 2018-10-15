@@ -57,7 +57,7 @@ import java.util.concurrent.TimeUnit;
  * @since 1.0.0
  */
 @Configuration
-@EnableConfigurationProperties({ SamplerProperties.class })
+@EnableConfigurationProperties({ ZipkinProperties.class,SamplerProperties.class })
 @ConditionalOnProperty(value = "spring.zipkin.enabled", matchIfMissing = true)
 @AutoConfigureBefore(TraceAutoConfiguration.class)
 public class EduZipkinAutoConfiguration {
