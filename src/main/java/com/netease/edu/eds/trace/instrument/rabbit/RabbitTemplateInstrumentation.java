@@ -10,6 +10,7 @@ import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.AgentSupport;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
+import com.netease.edu.eds.trace.utils.EnvironmentUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.rabbitmq.client.Channel;
 import net.bytebuddy.agent.builder.AgentBuilder;
@@ -79,6 +80,7 @@ public class RabbitTemplateInstrumentation implements TraceAgentInstrumetation {
 
                     RabbitTracing.tagSendMessageInfo(span, exchange, routingKey);
                     RabbitTracing.tagMessagePayload(span, message.toString());
+                    SpanUtils.safeTag(span, "clientEnv", EnvironmentUtils.getCurrentEnv());
                     Endpoint.Builder builder = Endpoint.newBuilder();
                     if (rabbitTracing.remoteServiceName() != null) {
                         builder.serviceName(rabbitTracing.remoteServiceName());

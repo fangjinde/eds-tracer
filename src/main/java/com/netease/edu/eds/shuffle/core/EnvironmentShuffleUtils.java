@@ -1,9 +1,8 @@
 package com.netease.edu.eds.shuffle.core;
 
-import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
+import com.netease.edu.eds.trace.utils.EnvironmentUtils;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.core.env.Environment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,11 +19,7 @@ public class EnvironmentShuffleUtils {
      * @return
      */
     public static String getCurrentEnv() {
-        Environment environment = SpringBeanFactorySupport.getBean(Environment.class);
-        if (environment == null) {
-            return null;
-        }
-        return environment.getProperty("spring.profiles.active");
+        return EnvironmentUtils.getCurrentEnv();
     }
 
     /**
@@ -33,11 +28,7 @@ public class EnvironmentShuffleUtils {
      * @return
      */
     public static String getCurrentApplicationName() {
-        Environment environment = SpringBeanFactorySupport.getBean(Environment.class);
-        if (environment == null) {
-            return null;
-        }
-        return environment.getProperty("spring.application.name");
+        return EnvironmentUtils.getCurrentApplicationName();
     }
 
     /**

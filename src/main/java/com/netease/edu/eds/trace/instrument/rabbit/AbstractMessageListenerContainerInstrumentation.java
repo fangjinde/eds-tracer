@@ -11,6 +11,7 @@ import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.AgentSupport;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
+import com.netease.edu.eds.trace.utils.EnvironmentUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -83,6 +84,7 @@ public class AbstractMessageListenerContainerInstrumentation implements TraceAge
 
             Span consumerSpan = tracer.nextSpan(extracted).kind(CONSUMER).name("on-message");
             SpanUtils.safeTag(consumerSpan, SpanType.TAG_KEY, SpanType.RABBIT);
+            SpanUtils.safeTag(consumerSpan, "serverEnv", EnvironmentUtils.getCurrentEnv());
 
             if (!consumerSpan.isNoop()) {
                 consumerSpan.start();
