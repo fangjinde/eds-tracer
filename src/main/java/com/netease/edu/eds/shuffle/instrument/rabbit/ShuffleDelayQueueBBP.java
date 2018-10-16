@@ -1,5 +1,6 @@
 package com.netease.edu.eds.shuffle.instrument.rabbit;
 
+import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
 import com.netease.edu.eds.shuffle.core.ShuffleRabbitConstants;
 import org.springframework.amqp.core.*;
 import org.springframework.beans.BeansException;
@@ -32,7 +33,8 @@ public class ShuffleDelayQueueBBP implements BeanFactoryPostProcessor {
         Map<String, Object> queueArguments = new LinkedHashMap<>();
         queueArguments.put(ShuffleRabbitConstants.ParamName.X_DEAD_LETTER_EXCHANGE,
                            ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE);
-        queueArguments.put(ShuffleRabbitConstants.ParamName.X_MESSAGE_TTL, 180000L);
+        queueArguments.put(ShuffleRabbitConstants.ParamName.X_MESSAGE_TTL,
+                           ShufflePropertiesSupport.getTestEnvQueueMessageTtl());
         Queue delayQueue = new Queue(ShuffleRabbitConstants.SHUFFLE_DELAY_QUEUE, true, false, false, queueArguments);
         beanFactory.registerSingleton(ShuffleRabbitConstants.SHUFFLE_DELAY_QUEUE, delayQueue);
 

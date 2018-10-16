@@ -90,10 +90,10 @@ public class QueueShuffleUtils {
             queueArguments = new HashMap<>();
         }
 
-        queueArguments.put("x-dead-letter-exchange", "shuffle.delay.exchange");
+        queueArguments.put("x-dead-letter-exchange", ShuffleRabbitConstants.SHUFFLE_ROUTE_BACK_EXCHANGE);
         queueArguments.put("x-dead-letter-routing-key", rawQueueName);
-        queueArguments.put("x-message-ttl", 1800000L);
-        queueArguments.put("x-expires", 3600000L);
+        queueArguments.put("x-message-ttl", ShufflePropertiesSupport.getTestEnvQueueMessageTtl());
+        queueArguments.put("x-expires", ShufflePropertiesSupport.getTestEnvQueueExpirePeriod());
 
         try {
             setQueueArguments(queue, queueArguments);

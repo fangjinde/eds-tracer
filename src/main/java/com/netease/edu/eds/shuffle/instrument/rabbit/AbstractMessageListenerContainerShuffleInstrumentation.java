@@ -123,7 +123,7 @@ public class AbstractMessageListenerContainerShuffleInstrumentation implements T
                 return PROCESS;
             }
 
-            int STD_IN_QUEUE_COUNT_THRESHOLD = 3;
+            int STD_IN_QUEUE_RETRY_THRESHOLD = 1;
             boolean testEnvExisted = environmentDetector.exist(testEnv, currentApplicationName);
             // 测试环境占用标记存在
             if (testEnv.equals(ownerEnv)) {
@@ -156,7 +156,7 @@ public class AbstractMessageListenerContainerShuffleInstrumentation implements T
                                                                     ShuffleConstants.DUPLICATE_CHECK_VALID_PERIOD);
             // 测试环境不存活。需要区分测试环境是暂时下线，还是销毁。通过重入队列次数，亦即MESSAGE TTL周期数。
             // 延迟3小时后再由原业务重试。正常情况下，走到延迟队列的都不需要及时处理。重试次数4*重试间隔3h=12小时后，测试环境暂用过，却又不存活的，则std接管处理。
-            if (messageStdInQueueCount > STD_IN_QUEUE_COUNT_THRESHOLD) {
+            if (messageStdInQueueCount > STD_IN_QUEUE_RETRY_THRESHOLD) {
                 // 销毁
                 return PROCESS;
             }

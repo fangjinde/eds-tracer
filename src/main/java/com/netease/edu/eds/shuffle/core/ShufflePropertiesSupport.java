@@ -34,4 +34,20 @@ public class ShufflePropertiesSupport {
         }
         return shuffleProperties.getAnonymousTopicNames();
     }
+
+    public static long getTestEnvQueueExpirePeriod() {
+        ShuffleProperties shuffleProperties = SpringBeanFactorySupport.getBean(ShuffleProperties.class);
+        if (shuffleProperties == null) {
+            return ShuffleProperties.DEFAULT_TEST_ENV_QUEUE_EXPIRE_PERIOD;
+        }
+        return shuffleProperties.getTestEnvQueueExpirePeriod();
+    }
+
+    public static long getTestEnvQueueMessageTtl(){
+        ShuffleProperties shuffleProperties = SpringBeanFactorySupport.getBean(ShuffleProperties.class);
+        if (shuffleProperties == null) {
+            return ShuffleProperties.DEFAULT_TEST_ENV_QUEUE_MESSAGE_TTL;
+        }
+        return shuffleProperties.getTestEnvQueueMessageTtl();
+    }
 }
