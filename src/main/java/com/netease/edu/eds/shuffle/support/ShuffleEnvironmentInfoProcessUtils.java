@@ -38,6 +38,10 @@ public class ShuffleEnvironmentInfoProcessUtils {
             return originName;
         }
 
+        if (oldValue.equals(newValue)) {
+            return originName;
+        }
+
         if (originName.startsWith(oldValue)) {
             originName = originName.substring(oldValue.length());
             if (StringUtils.isBlank(newValue)) {
