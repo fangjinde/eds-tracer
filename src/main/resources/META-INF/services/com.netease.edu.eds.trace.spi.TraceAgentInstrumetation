@@ -12,9 +12,12 @@ com.netease.edu.eds.trace.instrument.async.ThreadPoolExecutorInstrumentation
 com.netease.edu.eds.trace.instrument.http.ControllerTraceInstrumentation
 com.netease.edu.eds.trace.instrument.http.DwrTraceInstrument
 com.netease.edu.eds.trace.instrument.rabbit.RabbitTemplateInstrumentation
+com.netease.edu.eds.trace.instrument.transaction.message.TransactionMessageServiceTraceInstrument
+com.netease.edu.eds.trace.instrument.transaction.message.RabbitTemplateForTransactionMessageInstrument
 com.netease.edu.eds.shuffle.instrument.rabbit.RabbitTemplateShuffleInstrumentation
 com.netease.edu.eds.shuffle.instrument.rabbit.AbstractMessageListenerContainerShuffleInstrumentation
 com.netease.edu.eds.trace.instrument.rabbit.AbstractMessageListenerContainerInstrumentation
 com.netease.edu.eds.shuffle.dubbo.DubboUrlUtilsInstrument
 com.netease.edu.eds.shuffle.dubbo.RegistryDirectoryInstrument
 com.netease.edu.eds.shuffle.instrument.rabbit.RabbitAdminInstrument
+
