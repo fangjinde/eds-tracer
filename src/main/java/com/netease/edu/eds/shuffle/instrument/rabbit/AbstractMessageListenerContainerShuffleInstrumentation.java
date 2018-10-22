@@ -12,6 +12,7 @@ import com.netease.edu.eds.trace.support.AgentSupport;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
+import com.netease.edu.eds.trace.utils.TraceJsonUtils;
 import com.rabbitmq.client.Channel;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.type.TypeDescription;
@@ -37,7 +38,6 @@ import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -344,6 +344,12 @@ public class AbstractMessageListenerContainerShuffleInstrumentation implements T
             Channel channel = (Channel) args[0];
             Message message = (Message) args[1];
 
+            // 不是shuffle发送的消息，使用原生消费。
+            String shuffleSendId = getShuffleSendId(message);
+            if (StringUtils.isBlank(shuffleSendId)) {
+                return invoker.invoke(args);
+            }
+
             String currentApplicationName = EnvironmentShuffleUtils.getCurrentApplicationName();
             String curEnv = EnvironmentShuffleUtils.getCurrentEnv();
             String stdEnv = ShufflePropertiesSupport.getStandardEnvName();
@@ -408,9 +414,6 @@ public class AbstractMessageListenerContainerShuffleInstrumentation implements T
             if (message != null && message.getMessageProperties() != null) {
                 shuffleSendId = (String) message.getMessageProperties().getHeaders().get(ShuffleRabbitConstants.HeaderName.SHUFFLE_SEND_ID_HEADER_NAME);
             }
-            if (shuffleSendId == null) {
-                shuffleSendId = "NullSendId";
-            }
             return shuffleSendId;
         }
 
@@ -424,8 +427,9 @@ public class AbstractMessageListenerContainerShuffleInstrumentation implements T
             try {
                 return Tracing.currentTracer().currentSpan().context().traceIdString() + "-"
                        + getShuffleSendId(message);
-            } catch (Exception e) {
-                return UUID.randomUUID().toString().replaceAll("-", "");
+            } catch (RuntimeException e) {
+                logger.error("getMessageIdKey error, message:" + TraceJsonUtils.toJson(message), e);
+                throw e;
             }
 
         }
