@@ -32,13 +32,13 @@ public class EnvironmentShuffleUtils {
     }
 
     /**
-     * 获取用于传播的环境名称,按照优先序返回列表。传播过来的环境 > 当前环境 > 基准环境
+     * 获取用于传播的环境名称,按照优先序返回列表。传播过来的环境 > 基准环境
      * 
      * @return
      */
     public static List<String> getEnvironmentsForPropagationSelection() {
 
-        return getAllEnvironmentsForPropagationSelection(true);
+        return getAllEnvironmentsForPropagationSelection(false);
 
     }
 
