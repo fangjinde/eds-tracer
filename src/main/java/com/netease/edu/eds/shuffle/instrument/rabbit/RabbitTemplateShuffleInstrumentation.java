@@ -99,6 +99,25 @@ public class RabbitTemplateShuffleInstrumentation implements TraceAgentInstrumet
         }
 
         /**
+         * 根据RabbitTemplate的实现原理，获取生效的Exchange。
+         * 
+         * @param args
+         * @param proxy
+         * @return
+         */
+        private static String getExchangeMergeWithTemplate(Object[] args, Object proxy) {
+            String originExchange = (String) args[1];
+
+            // 这里不能使用StringUtils.isBlank。因为""是有意义的，代表default Exchange。
+            if (originExchange == null) {
+                RabbitTemplate rabbitTemplate = (RabbitTemplate) proxy;
+                originExchange = rabbitTemplate.getExchange();
+            }
+
+            return originExchange;
+        }
+
+        /**
          * 根据RabbitTemplate的实现原理，获取生效的RoutingKey。
          * 
          * @param args
@@ -138,7 +157,7 @@ public class RabbitTemplateShuffleInstrumentation implements TraceAgentInstrumet
                 return originSend(args, invoker);
             }
 
-            String originExchange = (String) args[1];
+            String originExchange = getExchangeMergeWithTemplate(args, proxy);
             String originRoutingKey = getRoutingKeyMergeWithTemplate(args, proxy);
 
             // 匿名队列的主题，不做双重发送。目前仅仅是springCloudBus需要。
@@ -155,7 +174,6 @@ public class RabbitTemplateShuffleInstrumentation implements TraceAgentInstrumet
             }
 
             Object originResult = null;
-
 
             String shffleSendId = UUID.randomUUID().toString().replaceAll("-", "");
             Message message = (Message) args[3];
@@ -246,26 +264,27 @@ public class RabbitTemplateShuffleInstrumentation implements TraceAgentInstrumet
                 return null;
             }
 
-            String originExchangeEnv = null;
+            String originDestinationEnv = null;
             for (String env : envsForSelection) {
                 if (originDestination.startsWith(env) || originDestination.endsWith(env)) {
-                    originExchangeEnv = env;
+                    originDestinationEnv = env;
                     break;
                 }
             }
             // 为规避cloud bus等统一环境exchange的情况，原exchange若无环境属性，则不做shuffle处理
-            if (originExchangeEnv == null) {
+            // 原destination无环境信息的，不做shuffle处理。
+            if (originDestinationEnv == null) {
                 return null;
             }
 
             Map<String, String> allShuffleDestination = new LinkedHashMap();
-            allShuffleDestination.put(originExchangeEnv, originDestination);
+            allShuffleDestination.put(originDestinationEnv, originDestination);
             // 增加其他环境的exchange，修改对应的环境属性
             for (String newEnv : envsForSelection) {
 
-                if (!originExchangeEnv.equals(newEnv)) {
+                if (!originDestinationEnv.equals(newEnv)) {
                     String newShuffleDestination = ShuffleEnvironmentInfoProcessUtils.getNameWithNewFixOrRemoveOldFix(originDestination,
-                                                                                                                      originExchangeEnv,
+                                                                                                                      originDestinationEnv,
                                                                                                                       newEnv);
                     if (StringUtils.isNotBlank(newShuffleDestination)) {
                         allShuffleDestination.put(newEnv, newShuffleDestination);
