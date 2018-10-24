@@ -5,15 +5,19 @@ import brave.Tracer;
 import brave.Tracing;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.support.AbstractTraceAgentInstrumetation;
+import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.edu.eds.trace.utils.TraceJsonUtils;
-import com.netease.edu.job.dao.domain.DelayTask;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.annotation.*;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.JavaModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.ReflectionUtils;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
 
@@ -28,6 +32,8 @@ public class JobServiceTraceInstrument extends AbstractTraceAgentInstrumetation 
     private static final String SEND_DELAY_TASK_MESSAGE_METHOD = "sendDelayTaskMessage";
 
     private static final String BUILD_QUEUE_NAME_METHOD        = "buildQueueName";
+
+    private static final Logger logger                         = LoggerFactory.getLogger(JobServiceTraceInstrument.class);
 
     @Override
     protected ElementMatcher.Junction defineTypeMatcher(Map<String, String> props) {
@@ -53,6 +59,9 @@ public class JobServiceTraceInstrument extends AbstractTraceAgentInstrumetation 
     }
 
     public static class Interceptor {
+
+        private static Field            s_delayTaskClazzEnvField = null;
+        private static volatile boolean loadedEnvField           = false;
 
         @RuntimeType
         public static Object intercept(@AllArguments Object[] args, @Morph Invoker invoker, @Origin Method method,
@@ -92,16 +101,71 @@ public class JobServiceTraceInstrument extends AbstractTraceAgentInstrumetation 
                 return invoker.invoke(args);
             }
 
-            Object arg0 = args[0];
-            if (!(arg0 instanceof DelayTask)) {
-                return invoker.invoke(args);
+            // 从DelayTask中恢复环境信息
+            Object delayTask = args[0];
+            SpanUtils.safeTag(span, "DelayTask", TraceJsonUtils.toJson(delayTask));
+            String originEnv = getEnvFromDelayTaskObject(delayTask, span);
+            PropagationUtils.setOriginEnvIfNotExists(span.context(), originEnv);
+
+            return invoker.invoke(args);
+
+        }
+
+        private static String getEnvFromDelayTaskObject(Object delayTask, Span span) {
+
+            Field envField = getDelayTaskEnvFieldWithCache();
+
+            if (envField == null) {
+                SpanUtils.safeTag(span, "GetEnvFromDelayTaskError", "no field of environment");
+                logger.error("GetEnvFromDelayTaskError: no field of environment.");
+                return null;
             }
 
-            // 从DelayTask中恢复环境信息
-            DelayTask delayTask = (DelayTask) arg0;
-            PropagationUtils.setOriginEnvIfNotExists(span.context(), delayTask.getEnvironment());
-            SpanUtils.safeTag(span, "DelayTask", TraceJsonUtils.toJson(delayTask));
-            return invoker.invoke(args);
+            try {
+                return (String) envField.get(delayTask);
+            } catch (Exception e) {
+                SpanUtils.safeTag(span, "GetEnvFromDelayTaskError", ExceptionStringUtils.getStackTraceString(e));
+                logger.error("GetEnvFromDelayTaskError", e);
+                return null;
+            }
+
+        }
+
+        private static Field getDelayTaskEnvFieldWithCache() {
+
+            if (loadedEnvField) {
+                return s_delayTaskClazzEnvField;
+            }
+
+            synchronized (Interceptor.class) {
+
+                if (loadedEnvField) {
+                    return s_delayTaskClazzEnvField;
+                }
+
+                s_delayTaskClazzEnvField = getDelayTaskEnvironmentField();
+                loadedEnvField = true;
+
+            }
+
+            return s_delayTaskClazzEnvField;
+
+        }
+
+        private static Field getDelayTaskEnvironmentField() {
+            Class delayTaskClazz = null;
+            try {
+                delayTaskClazz = Class.forName("com.netease.edu.job.dao.domain.DelayTask");
+            } catch (ClassNotFoundException e) {
+                return null;
+            }
+
+            if (delayTaskClazz != null) {
+                Field envField = ReflectionUtils.findField(delayTaskClazz, "environment", String.class);
+                return envField;
+            }
+
+            return null;
 
         }
 

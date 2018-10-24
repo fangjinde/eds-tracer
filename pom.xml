@@ -61,30 +61,30 @@
             </dependency>
 
             <!--<dependency>-->
-                <!--<groupId>io.zipkin.zipkin2</groupId>-->
-                <!--<artifactId>zipkin</artifactId>-->
-                <!--<version>${zipkin.version}</version>-->
+            <!--<groupId>io.zipkin.zipkin2</groupId>-->
+            <!--<artifactId>zipkin</artifactId>-->
+            <!--<version>${zipkin.version}</version>-->
             <!--</dependency>-->
 
             <!--<dependency>-->
-                <!--<groupId>io.zipkin.brave</groupId>-->
-                <!--<artifactId>brave</artifactId>-->
-                <!--<version>${brave.version}</version>-->
+            <!--<groupId>io.zipkin.brave</groupId>-->
+            <!--<artifactId>brave</artifactId>-->
+            <!--<version>${brave.version}</version>-->
             <!--</dependency>-->
             <!--<dependency>-->
-                <!--<groupId>io.zipkin.brave</groupId>-->
-                <!--<artifactId>brave-context-log4j2</artifactId>-->
-                <!--<version>${brave.version}</version>-->
+            <!--<groupId>io.zipkin.brave</groupId>-->
+            <!--<artifactId>brave-context-log4j2</artifactId>-->
+            <!--<version>${brave.version}</version>-->
             <!--</dependency>-->
             <!--<dependency>-->
-                <!--<groupId>io.zipkin.brave</groupId>-->
-                <!--<artifactId>brave-instrumentation-spring-web</artifactId>-->
-                <!--<version>${brave.version}</version>-->
+            <!--<groupId>io.zipkin.brave</groupId>-->
+            <!--<artifactId>brave-instrumentation-spring-web</artifactId>-->
+            <!--<version>${brave.version}</version>-->
             <!--</dependency>-->
             <!--<dependency>-->
-                <!--<groupId>io.zipkin.brave</groupId>-->
-                <!--<artifactId>brave-instrumentation-spring-webmvc</artifactId>-->
-                <!--<version>${brave.version}</version>-->
+            <!--<groupId>io.zipkin.brave</groupId>-->
+            <!--<artifactId>brave-instrumentation-spring-webmvc</artifactId>-->
+            <!--<version>${brave.version}</version>-->
             <!--</dependency>-->
 
             <dependency>
@@ -120,7 +120,7 @@
 
             <dependency>
                 <groupId>com.netease.edu</groupId>
-                <artifactId>job-service</artifactId>
+                <artifactId>job-client</artifactId>
                 <version>1.0.7</version>
                 <scope>provided</scope>
             </dependency>
@@ -268,7 +268,7 @@
 
         <dependency>
             <groupId>com.netease.edu</groupId>
-            <artifactId>job-service</artifactId>
+            <artifactId>job-client</artifactId>
             <scope>provided</scope>
         </dependency>
 

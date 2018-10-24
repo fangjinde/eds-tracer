@@ -1,3 +1,4 @@
+#order should be respected
 com.netease.edu.eds.trace.instrument.ndir.NdirSearchClientInstrumentation
 com.netease.edu.eds.trace.instrument.ndir.NdirIndexClientIntrumentation
 com.netease.edu.eds.trace.instrument.redis.RedisTemplateIntrumentation
@@ -14,6 +15,8 @@ com.netease.edu.eds.trace.instrument.http.DwrTraceInstrument
 com.netease.edu.eds.trace.instrument.rabbit.RabbitTemplateInstrumentation
 com.netease.edu.eds.trace.instrument.transaction.message.TransactionMessageServiceTraceInstrument
 com.netease.edu.eds.trace.instrument.transaction.message.RabbitTemplateForTransactionMessageInstrument
+com.netease.edu.eds.trace.instrument.jobservice.JobServiceTraceInstrument
+com.netease.edu.eds.shuffle.instrument.jobservice.JobServiceShuffleInstrument
 com.netease.edu.eds.shuffle.instrument.rabbit.RabbitTemplateShuffleInstrumentation
 com.netease.edu.eds.shuffle.instrument.rabbit.AbstractMessageListenerContainerShuffleInstrumentation
 com.netease.edu.eds.trace.instrument.rabbit.AbstractMessageListenerContainerInstrumentation
