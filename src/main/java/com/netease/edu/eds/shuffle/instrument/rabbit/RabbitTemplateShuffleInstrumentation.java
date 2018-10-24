@@ -191,7 +191,8 @@ public class RabbitTemplateShuffleInstrumentation implements TraceAgentInstrumet
                     doDelayForNextSend();
                 }
                 Object result = originSend(args, invoker);
-                if (originExchange.equals(curEnvRabbitInfo.getExchange())) {
+                // 提取首个环境的返回值
+                if (originResult == null) {
                     originResult = result;
                 }
                 loopIndex++;
@@ -220,9 +221,15 @@ public class RabbitTemplateShuffleInstrumentation implements TraceAgentInstrumet
             }
         }
 
+        private static final String DEFAULT_EXCHANGE = "";
+
         private static Map<String, EnvRabbitInfo> getAllShuffleExchangeToSend(List<String> envsForSelection,
                                                                               String originExchange,
                                                                               String originRoutingKey) {
+
+            if (DEFAULT_EXCHANGE.equals(originExchange)) {
+                return getAllShuffleExchangeToSendForDefaultExchangeCase(envsForSelection, originRoutingKey);
+            }
 
             Map<String, String> allShuffleExchanges = getAllShuffleDestination(envsForSelection, originExchange);
 
@@ -249,6 +256,33 @@ public class RabbitTemplateShuffleInstrumentation implements TraceAgentInstrumet
 
             return allShuffleRabbitInfo;
 
+        }
+
+        /**
+         * 处理DEFAULT_EXCHANGE的情况，此时仅跟进routingKey的环境进行区分和路由
+         * 
+         * @param envsForSelection
+         * @param originRoutingKey
+         * @return
+         */
+        private static Map<String, EnvRabbitInfo> getAllShuffleExchangeToSendForDefaultExchangeCase(List<String> envsForSelection,
+                                                                                                    String originRoutingKey) {
+
+            Map<String, String> allShuffleRoutingKeys = getAllShuffleDestination(envsForSelection, originRoutingKey);
+
+            if (MapUtils.isEmpty(allShuffleRoutingKeys)) {
+                return null;
+            }
+
+            Map<String, EnvRabbitInfo> allShuffleRabbitInfo = new LinkedHashMap();
+
+            for (Map.Entry<String, String> entry : allShuffleRoutingKeys.entrySet()) {
+                EnvRabbitInfo envRabbitInfo = new EnvRabbitInfo(DEFAULT_EXCHANGE,
+                                                                entry.getKey()).withRoutingKey(entry.getValue());
+                allShuffleRabbitInfo.put(entry.getKey(), envRabbitInfo);
+            }
+
+            return allShuffleRabbitInfo;
         }
 
         /**
