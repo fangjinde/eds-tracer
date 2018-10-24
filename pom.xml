@@ -119,6 +119,14 @@
             </dependency>
 
             <dependency>
+                <groupId>com.netease.edu</groupId>
+                <artifactId>job-service</artifactId>
+                <version>1.0.7</version>
+                <scope>provided</scope>
+            </dependency>
+
+
+            <dependency>
                 <groupId>com.netease.sentry</groupId>
                 <artifactId>sentry-javaagent-collector</artifactId>
                 <version>1.2.7</version>
@@ -255,6 +263,12 @@
         <dependency>
             <groupId>com.netease.edu.web</groupId>
             <artifactId>edu-base-web</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.netease.edu</groupId>
+            <artifactId>job-service</artifactId>
             <scope>provided</scope>
         </dependency>
 

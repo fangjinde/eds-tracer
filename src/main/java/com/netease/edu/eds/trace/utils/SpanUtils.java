@@ -40,6 +40,14 @@ public class SpanUtils {
         return tag;
     }
 
+    public static void safeTagArgs(Span span, Object[] args) {
+        safeTag(span, "args", TraceJsonUtils.toJson(args));
+    }
+
+    public static void safeTagReturn(Span span, Object returnObj) {
+        safeTag(span, "return", TraceJsonUtils.toJson(returnObj));
+    }
+
     public static void safeTag(Span span, String name, String value) {
         if (span != null && !span.isNoop() && name != null && name.length() > 0 && value != null) {
             span.tag(name, value);
@@ -55,6 +63,11 @@ public class SpanUtils {
     public static void tagErrorMark(SpanCustomizer span) {
         SpanUtils.safeTag(span, "has_error", String.valueOf(true));
 
+    }
+
+    public static void safeTagError(SpanCustomizer span, Throwable e) {
+        tagErrorMark(span);
+        tagError(span, e);
     }
 
     public static void tagError(SpanCustomizer span, Throwable e) {

@@ -37,11 +37,13 @@ public class DubboUrlUtilsInstrument implements TraceAgentInstrumetation {
 
         @RuntimeType
         public static Object intercept(@AllArguments Object[] args, @Morph Invoker invoker) {
-            if (ShuffleSwitch.isTurnOn()) {
-                return isMatch((URL) args[0], (URL) args[1]);
+
+            if (!ShuffleSwitch.isTurnOn()) {
+                return invoker.invoke(args);
             }
 
-            return invoker.invoke(args);
+            return isMatch((URL) args[0], (URL) args[1]);
+
         }
 
         /**

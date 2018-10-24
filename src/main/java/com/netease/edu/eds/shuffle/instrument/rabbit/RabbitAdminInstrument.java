@@ -1,10 +1,7 @@
 package com.netease.edu.eds.shuffle.instrument.rabbit;
 
 import com.alibaba.fastjson.JSON;
-import com.netease.edu.eds.shuffle.core.BeanNameConstants;
-import com.netease.edu.eds.shuffle.core.EnvironmentShuffleUtils;
-import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
-import com.netease.edu.eds.shuffle.core.ShuffleRabbitConstants;
+import com.netease.edu.eds.shuffle.core.*;
 import com.netease.edu.eds.shuffle.support.*;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
@@ -77,6 +74,10 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
         @RuntimeType
         public static Object intercept(@AllArguments Object[] args, @Morph Invoker invoker, @Origin Method method,
                                        @This Object proxy) throws IOException {
+
+            if (!ShuffleSwitch.isTurnOn()) {
+                return invoker.invoke(args);
+            }
 
             if (method.getName().equals("declareQueues")) {
                 return declareQueues(args, invoker, method, proxy);

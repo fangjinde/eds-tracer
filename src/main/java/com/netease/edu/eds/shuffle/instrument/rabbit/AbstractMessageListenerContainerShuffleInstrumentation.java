@@ -336,10 +336,7 @@ public class AbstractMessageListenerContainerShuffleInstrumentation implements T
         }
 
         public static Object shuffleInvokeListener(Object[] args, Invoker invoker, Object proxy) throws Exception {
-
-            if (!ShuffleSwitch.isTurnOn()) {
-                return invoker.invoke(args);
-            }
+            
 
             Channel channel = (Channel) args[0];
             Message message = (Message) args[1];
@@ -513,6 +510,11 @@ public class AbstractMessageListenerContainerShuffleInstrumentation implements T
         @RuntimeType
         public static Object intercept(@AllArguments Object[] args, @Morph Invoker invoker, @Origin Method method,
                                        @This Object proxy) throws Exception {
+
+
+            if (!ShuffleSwitch.isTurnOn()) {
+                return invoker.invoke(args);
+            }
 
             // do for "getMessageListener" method
             if (method.getName().equals("getMessageListener")) {
