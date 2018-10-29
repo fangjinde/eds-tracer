@@ -2,15 +2,11 @@ package com.netease.edu.eds.trace.instrument.redis;
 
 import brave.Span;
 import brave.Tracer;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
-import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
-import com.netease.edu.eds.trace.utils.TraceJsonUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
@@ -52,10 +48,9 @@ public class JedisClientIntrumentation implements TraceAgentInstrumetation {
             if (redisTracing == null) {
                 try {
                     return callable.call();
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     if (e instanceof RuntimeException) {
                         throw (RuntimeException) e;
-
                     } else {
                         throw new RuntimeException("unknown redis operation exception", e);
                     }
@@ -69,26 +64,17 @@ public class JedisClientIntrumentation implements TraceAgentInstrumetation {
 
             if (!span.isNoop()) {
                 span.kind(Span.Kind.CLIENT).name(method.getDeclaringClass().getSimpleName() + "." + method.getName());
-
-                String argsJson = TraceJsonUtils.toJson(args);
-                span.tag("args", argsJson);
+                SpanUtils.safeTagArgs(span,args);
                 span.start();
             }
 
             try (Tracer.SpanInScope spanInScope = redisTracing.tracing().tracer().withSpanInScope(span)) {
-
                 RedisTraceContext.setSpan(span);
-
                 Object ret = callable.call();
-                try {
-                    String retJson = new ObjectMapper().writeValueAsString(ret);
-                    span.tag("return", retJson);
-                } catch (JsonProcessingException e) {
-
-                }
+                SpanUtils.safeTagReturn(span,ret);
                 return ret;
-            } catch (Exception e) {
-                span.tag("redis_error", ExceptionStringUtils.getStackTraceString(e));
+            } catch (Throwable e) {
+                SpanUtils.safeTagError(span,e);
                 if (e instanceof RuntimeException) {
                     throw (RuntimeException) e;
                 } else {

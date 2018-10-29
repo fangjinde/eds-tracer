@@ -38,7 +38,6 @@ public class JedisConnectionInstrumentation implements TraceAgentInstrumetation 
 
                                     @SuperCall Callable<Object> callable) {
             try {
-
                 Span span = RedisTraceContext.currentSpan();
                 if (span != null && !span.isNoop()) {
                     if (proxy instanceof Connection) {
@@ -47,7 +46,7 @@ public class JedisConnectionInstrumentation implements TraceAgentInstrumetation 
                     }
                 }
                 return callable.call();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 if (e instanceof RuntimeException) {
                     throw (RuntimeException) e;
                 } else {
