@@ -6,6 +6,12 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
+ * *
+ * 在spring容器实例化ConfigurationPropertiesBindingPostProcessor.class前的应用场景，是无法通过获取ShuffleProperties来获取值。典型场景就是在postProcessBeanFactory，
+ * * * 此时调用，或导致ShuffleProperties对象没有被ConfigurationPropertiesBindingPostProcessor处理。 这些地方改成从Environment中直接获取。
+ * 
+ * @See ShufflePropertiesSupport.class
+ * 安全起见，生命周期不能确定是否晚于ConfigurationPropertiesBindingPostProcessor实例化的，统一直接从Environment中获取。具体参见ShufflePropertiesSupport
  * @author hzfjd
  * @create 18/7/20
  **/
@@ -13,31 +19,12 @@ import java.util.List;
 public class ShuffleProperties {
 
     /**
-     * switch
-     */
-    private boolean            turnOn;
-
-    /**
-     * standard env name, default is edu-std.
-     */
-    private String             standardEnvName                      = STANDARD_ENV_NAME;
-    /**
      * wait 150ms to send message to latter environment to reduce cross environment consumer compete as less as
      * possible.
      */
     private int                delayMSToSendLatter                  = DELAY_MS_TO_SEND_LATTER;
 
-    /**
-     * queue message ttl in test env. default is 3h.
-     */
-    private long               testEnvQueueMessageTtl               = DEFAULT_TEST_ENV_QUEUE_MESSAGE_TTL;
-
     public static final long   DEFAULT_TEST_ENV_QUEUE_MESSAGE_TTL   = 1000L * 3600 * 3;
-
-    /**
-     * queue expire period in test env. default is 3d.
-     */
-    private long               testEnvQueueExpirePeriod             = DEFAULT_TEST_ENV_QUEUE_EXPIRE_PERIOD;
 
     public static final long   DEFAULT_TEST_ENV_QUEUE_EXPIRE_PERIOD = 1000L * 3600 * 24 * 3;
 
@@ -53,22 +40,6 @@ public class ShuffleProperties {
         this.anonymousTopicNames = anonymousTopicNames;
     }
 
-    public boolean isTurnOn() {
-        return turnOn;
-    }
-
-    public void setTurnOn(boolean turnOn) {
-        this.turnOn = turnOn;
-    }
-
-    public String getStandardEnvName() {
-        return standardEnvName;
-    }
-
-    public void setStandardEnvName(String standardEnvName) {
-        this.standardEnvName = standardEnvName;
-    }
-
     public int getDelayMSToSendLatter() {
         return delayMSToSendLatter;
     }
@@ -77,19 +48,4 @@ public class ShuffleProperties {
         this.delayMSToSendLatter = delayMSToSendLatter;
     }
 
-    public long getTestEnvQueueMessageTtl() {
-        return testEnvQueueMessageTtl;
-    }
-
-    public void setTestEnvQueueMessageTtl(long testEnvQueueMessageTtl) {
-        this.testEnvQueueMessageTtl = testEnvQueueMessageTtl;
-    }
-
-    public long getTestEnvQueueExpirePeriod() {
-        return testEnvQueueExpirePeriod;
-    }
-
-    public void setTestEnvQueueExpirePeriod(long testEnvQueueExpirePeriod) {
-        this.testEnvQueueExpirePeriod = testEnvQueueExpirePeriod;
-    }
 }

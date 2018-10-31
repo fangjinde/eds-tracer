@@ -12,6 +12,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
+import org.springframework.core.env.Environment;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,7 +29,7 @@ public class SpringBeanFactorySupport implements BeanFactoryAware, BeanDefinitio
 
     private static final Logger                            logger        = LoggerFactory.getLogger(SpringBeanFactorySupport.class);
 
-    private static final ConcurrentHashMap<Class, Object> byTypeCache = new ConcurrentHashMap();
+    private static final ConcurrentHashMap<Class, Object>  byTypeCache   = new ConcurrentHashMap();
 
     private static final ConcurrentHashMap<String, Object> byNameCache   = new ConcurrentHashMap();
 
@@ -41,6 +42,10 @@ public class SpringBeanFactorySupport implements BeanFactoryAware, BeanDefinitio
 
     public static BeanFactory getBeanFactory() {
         return s_beanFactory;
+    }
+
+    public static Environment getEnvironment() {
+        return getBean(Environment.class);
     }
 
     public static Optional<BeanFactory> getBeanFactorySafely() {
@@ -131,4 +136,5 @@ public class SpringBeanFactorySupport implements BeanFactoryAware, BeanDefinitio
     public int getOrder() {
         return Ordered.HIGHEST_PRECEDENCE + 2;
     }
+
 }

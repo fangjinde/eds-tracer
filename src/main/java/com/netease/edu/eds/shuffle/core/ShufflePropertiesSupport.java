@@ -1,22 +1,55 @@
 package com.netease.edu.eds.shuffle.core;
 
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.core.env.Environment;
 
 import java.util.Collections;
 import java.util.List;
 
 /**
+ * 在spring容器实例化ConfigurationPropertiesBindingPostProcessor.class前的应用场景，是无法通过获取ShuffleProperties来获取值。典型场景就是在postProcessBeanFactory，
+ * * 此时调用，或导致ShuffleProperties对象没有被ConfigurationPropertiesBindingPostProcessor处理。 这些地方改成从Environment中直接获取。
+ * 
  * @author hzfjd
  * @create 18/7/20
  **/
 public class ShufflePropertiesSupport {
 
-    public static String getStandardEnvName() {
-        ShuffleProperties shuffleProperties = SpringBeanFactorySupport.getBean(ShuffleProperties.class);
-        if (shuffleProperties == null) {
-            return ShuffleProperties.STANDARD_ENV_NAME;
+    /**
+     * switch
+     */
+    public static boolean turnOn() {
+        Environment environment = SpringBeanFactorySupport.getEnvironment();
+        String turnOnValue = null;
+        if (environment != null) {
+            turnOnValue = environment.getProperty("shuffle.turnOn");
         }
-        return shuffleProperties.getStandardEnvName();
+
+        if (StringUtils.isNotBlank(turnOnValue)) {
+            return Boolean.parseBoolean(turnOnValue);
+        }
+
+        return false;
+    }
+
+    /**
+     * standard env name, default is edu-std.
+     */
+    public static String getStandardEnvName() {
+
+        Environment environment = SpringBeanFactorySupport.getEnvironment();
+        String standardEnvName = null;
+        if (environment != null) {
+            standardEnvName = environment.getProperty("shuffle.standardEnvName");
+        }
+
+        if (StringUtils.isNotBlank(standardEnvName)) {
+            return standardEnvName;
+        }
+
+        return ShuffleProperties.STANDARD_ENV_NAME;
+
     }
 
     public static int getDelayMSToSendLatter() {
@@ -35,19 +68,39 @@ public class ShufflePropertiesSupport {
         return shuffleProperties.getAnonymousTopicNames();
     }
 
+    /**
+     * queue expire period in test env. default is 3d.
+     */
     public static long getTestEnvQueueExpirePeriod() {
-        ShuffleProperties shuffleProperties = SpringBeanFactorySupport.getBean(ShuffleProperties.class);
-        if (shuffleProperties == null) {
-            return ShuffleProperties.DEFAULT_TEST_ENV_QUEUE_EXPIRE_PERIOD;
+        Environment environment = SpringBeanFactorySupport.getEnvironment();
+        String testEnvQueueExpirePeriodValue = null;
+        if (environment != null) {
+            testEnvQueueExpirePeriodValue = environment.getProperty("shuffle.testEnvQueueExpirePeriod");
         }
-        return shuffleProperties.getTestEnvQueueExpirePeriod();
+
+        if (StringUtils.isNotBlank(testEnvQueueExpirePeriodValue)) {
+            return Long.parseLong(testEnvQueueExpirePeriodValue);
+        }
+
+        return ShuffleProperties.DEFAULT_TEST_ENV_QUEUE_EXPIRE_PERIOD;
+
     }
 
-    public static long getTestEnvQueueMessageTtl(){
-        ShuffleProperties shuffleProperties = SpringBeanFactorySupport.getBean(ShuffleProperties.class);
-        if (shuffleProperties == null) {
-            return ShuffleProperties.DEFAULT_TEST_ENV_QUEUE_MESSAGE_TTL;
+    /**
+     * queue message ttl in test env. default is 3h.
+     */
+    public static long getTestEnvQueueMessageTtl() {
+        Environment environment = SpringBeanFactorySupport.getEnvironment();
+        String testEnvQueueMessageTtlValue = null;
+        if (environment != null) {
+            testEnvQueueMessageTtlValue = environment.getProperty("shuffle.testEnvQueueMessageTtl");
         }
-        return shuffleProperties.getTestEnvQueueMessageTtl();
+
+        if (StringUtils.isNotBlank(testEnvQueueMessageTtlValue)) {
+            return Long.parseLong(testEnvQueueMessageTtlValue);
+        }
+
+        return ShuffleProperties.DEFAULT_TEST_ENV_QUEUE_MESSAGE_TTL;
     }
+
 }
