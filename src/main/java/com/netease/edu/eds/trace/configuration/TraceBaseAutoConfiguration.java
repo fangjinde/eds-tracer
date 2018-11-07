@@ -11,6 +11,7 @@ import org.springframework.cloud.sleuth.ErrorParser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.netease.edu.eds.trace.properties.TraceProperties;
 import com.netease.edu.eds.trace.support.EduExceptionMessageErrorParser;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 
@@ -20,7 +21,7 @@ import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
  */
 @Configuration
 @EnableConfigurationProperties({ KafkaProperties.class })
-@ConditionalOnProperty(value = "spring.zipkin.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "trace.enabled", matchIfMissing = true)
 @AutoConfigureBefore(EduZipkinAutoConfiguration.class)
 public class TraceBaseAutoConfiguration {
 
@@ -34,5 +35,11 @@ public class TraceBaseAutoConfiguration {
     @ConditionalOnMissingBean
     public static SpringBeanFactorySupport springBeanFactorySupport() {
         return new SpringBeanFactorySupport();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public static TraceProperties traceProperties() {
+        return new TraceProperties();
     }
 }

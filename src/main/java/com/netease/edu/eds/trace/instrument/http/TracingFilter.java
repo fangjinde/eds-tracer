@@ -10,6 +10,7 @@ import brave.propagation.TraceContext;
 import brave.servlet.HttpServletAdapter;
 import com.netease.edu.eds.trace.constants.PropagationConstants;
 import com.netease.edu.eds.trace.constants.SpanType;
+import com.netease.edu.eds.trace.support.TracePropertiesSupport;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.edu.eds.trace.utils.TraceContextPropagationUtils;
@@ -21,6 +22,7 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 public final class TracingFilter implements Filter {
 
@@ -74,12 +76,34 @@ public final class TracingFilter implements Filter {
         this.environment = environment;
     }
 
+    /**
+     * 因为tracingFilter是放在最前端，可能会超过应用这边配置CharacterEncodingFilter的Order。因此，需要补充字符集的设定，否则后续的任何的Request参数提前 解析都会导致乱码。
+     * 
+     * @param httpRequest
+     * @param httpResponse
+     * @throws UnsupportedEncodingException
+     */
+    public void ensureEncodeBeforeAnyRequestParse(HttpServletRequest httpRequest,
+                                                  HttpServletResponse httpResponse) throws UnsupportedEncodingException {
+
+        if (TracePropertiesSupport.isHttpRequestForceEncoding() || httpRequest.getCharacterEncoding() == null) {
+            httpRequest.setCharacterEncoding(TracePropertiesSupport.getHttpRequestEncoding());
+        }
+
+        if (TracePropertiesSupport.isHttpRequestForceEncoding()) {
+            httpResponse.setCharacterEncoding(TracePropertiesSupport.getHttpRequestEncoding());
+        }
+
+    }
+
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException,
                                                                                               ServletException {
 
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) (response);
+
+        ensureEncodeBeforeAnyRequestParse(httpRequest, httpResponse);
 
         String uri = urlPathHelper.getPathWithinApplication(httpRequest);
         if (skipUriMatcher != null && skipUriMatcher.match(uri)) {

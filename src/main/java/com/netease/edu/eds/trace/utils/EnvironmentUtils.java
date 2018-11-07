@@ -34,4 +34,5 @@ public class EnvironmentUtils {
         }
         return environment.getProperty("spring.application.name");
     }
+
 }
