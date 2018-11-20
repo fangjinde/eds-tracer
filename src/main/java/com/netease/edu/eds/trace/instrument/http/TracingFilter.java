@@ -61,12 +61,9 @@ public final class TracingFilter implements Filter {
                                                                     }
 
                                                                     if (cacheValue instanceof Map) {
+                                                                        //若url参数存在，则以url参数为准
                                                                         Map<String, String> traceContextMap = (Map<String, String>) cacheValue;
-                                                                        String traceValue = traceContextMap.get(key);
-                                                                        if (StringUtils.isNotBlank(traceValue)) {
-                                                                            return traceValue;
-                                                                        }
-
+                                                                        return traceContextMap.get(key);
                                                                     }
 
                                                                     return carrier.getHeader(key);
