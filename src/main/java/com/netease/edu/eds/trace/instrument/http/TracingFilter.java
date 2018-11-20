@@ -43,6 +43,10 @@ public final class TracingFilter implements Filter {
 
                                                                     String traceUuid = carrier.getParameter(PropagationConstants.TRACE_CONTEXT_PROPAGATION_KEY);
 
+                                                                    if (StringUtils.isBlank(traceUuid)) {
+                                                                        return carrier.getHeader(key);
+                                                                    }
+
                                                                     LoadingCache<String, Object> traceContextCache = SpringBeanFactorySupport.getBean("traceContextCache");
                                                                     Object cacheValue = null;
                                                                     String traceCacheKey = TraceContextPropagationUtils.getTraceUniqueKeyWithCachePrefix(traceUuid);

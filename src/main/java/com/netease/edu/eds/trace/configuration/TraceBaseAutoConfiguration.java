@@ -103,7 +103,7 @@ public class TraceBaseAutoConfiguration {
             }
         };
         LoadingCache<String, Object> loadingCache = CacheBuilder.newBuilder().maximumSize(traceProperties.getCache().getMaximumSize()).expireAfterAccess(traceProperties.getCache().getExpireAfterAccess(),
-                                                                                                                                                         TimeUnit.MILLISECONDS).weakKeys().weakValues().build(cacheLoader);
+                                                                                                                                                         TimeUnit.MILLISECONDS).build(cacheLoader);
         return loadingCache;
     }
 }
