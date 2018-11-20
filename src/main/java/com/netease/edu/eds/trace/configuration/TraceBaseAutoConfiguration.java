@@ -12,6 +12,7 @@ import com.netease.edu.eds.trace.properties.TraceProperties;
 import com.netease.edu.eds.trace.support.EduExceptionMessageErrorParser;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.support.TraceRedisSupport;
+import com.netease.edu.eds.trace.utils.TraceContextPropagationUtils;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -96,9 +97,17 @@ public class TraceBaseAutoConfiguration {
             public Object load(String key) throws Exception {
 
                 Object value = TraceRedisSupport.unsafeGet(key);
+
+                if (!(value instanceof String)) {
+                    return PropagationConstants.NULL_OBJECT;
+                }
+
+                value = TraceContextPropagationUtils.parseTraceContextFromJsonString((String) value);
+
                 if (value == null) {
                     return PropagationConstants.NULL_OBJECT;
                 }
+
                 return value;
             }
         };
