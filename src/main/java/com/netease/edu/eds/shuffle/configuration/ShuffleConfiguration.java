@@ -1,5 +1,6 @@
 package com.netease.edu.eds.shuffle.configuration;
 
+import com.netease.edu.eds.trace.properties.RedisProperties;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.x.discovery.*;
 import org.apache.curator.x.discovery.details.InstanceSerializer;

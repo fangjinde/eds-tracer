@@ -7,7 +7,7 @@
  * License.
  */
 
-package com.netease.edu.eds.shuffle.support;
+package com.netease.edu.eds.trace.properties;
 
 import java.util.List;
 

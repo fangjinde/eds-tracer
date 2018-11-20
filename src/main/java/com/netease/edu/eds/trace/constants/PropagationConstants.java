@@ -7,5 +7,6 @@ package com.netease.edu.eds.trace.constants;
 public interface PropagationConstants {
 
     String ORIGIN_ENV                    = "traceoriginenv";
-    String TRACE_CONTEXT_PROPAGATION_KEY = "_trace_c_p_k_";
+    String TRACE_CONTEXT_PROPAGATION_KEY = "_trace_c_p_k2_";
+    Object NULL_OBJECT                   = new Object();
 }

@@ -6,10 +6,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author hzfjd
@@ -17,16 +14,31 @@ import java.util.Map;
  **/
 public class TraceContextPropagationUtils {
 
-    private static final Logger logger = LoggerFactory.getLogger(TraceContextPropagationUtils.class);
+    private static final Logger logger                                = LoggerFactory.getLogger(TraceContextPropagationUtils.class);
 
-    public static Map<String, String> parseTraceContextFromString(String traceContextHexString) {
+    public static final String  TRACE_HTTP_REDIRECT_UNIQUE_KEY_PREFIX = "trace_hruk_";
+
+
+
+
+    public static String generateTraceUniqueKey() {
+       return UUID.randomUUID().toString().replaceAll("-", "");
+    }
+
+    public static String getTraceUniqueKeyWithCachePrefix(String rawKey) {
+
+        if (rawKey == null) {
+            rawKey = "";
+        }
+        return TRACE_HTTP_REDIRECT_UNIQUE_KEY_PREFIX + rawKey;
+
+    }
+
+    public static Map<String, String> parseTraceContextFromJsonString(String traceContextJsonString) {
         try {
-            if (StringUtils.isNotBlank(traceContextHexString)) {
-                String json = HexUtils.hexStringToBytesStr(traceContextHexString);
-                if (StringUtils.isNotBlank(json)) {
-                    Map<String, String> map = JSON.parseObject(json, LinkedHashMap.class);
-                    return map;
-                }
+            if (StringUtils.isNotBlank(traceContextJsonString)) {
+                Map<String, String> map = JSON.parseObject(traceContextJsonString, LinkedHashMap.class);
+                return map;
             }
         } catch (Exception e) {
             logger.error("parseTraceContextFromString error", e);
@@ -36,35 +48,17 @@ public class TraceContextPropagationUtils {
 
     }
 
-    public static String getTraceContextValue(String traceContextHexString, String key) {
-        Map<String, String> map = parseTraceContextFromString(traceContextHexString);
-        if (map != null) {
-            String value = map.get(key);
-            if (StringUtils.isNotBlank(value)) {
-                return value;
-            }
-        }
-        return null;
-
-    }
-
-    public static String generateTraceContextHexString(Map<String, String> traceContextMap) {
+    public static String generateTraceContextJson(Map<String, String> traceContextMap) {
 
         if (MapUtils.isEmpty(traceContextMap)) {
             return null;
         }
 
         try {
-            String json = JSON.toJSONString(traceContextMap);
-            if (StringUtils.isBlank(json)) {
-                return null;
-            }
-            String jsonHex = HexUtils.bytesStrToHexStr(json);
-            if (StringUtils.isNotBlank(jsonHex)) {
-                return jsonHex;
-            }
+            return JSON.toJSONString(traceContextMap);
+
         } catch (Exception e) {
-            logger.error("generateTraceContextHexString error", e);
+            logger.error("generateTraceContextJson error", e);
         }
 
         return null;
@@ -80,13 +74,14 @@ public class TraceContextPropagationUtils {
         extra.add(new Long(99999999));
         traceContext.put("extra", JSON.toJSONString(extra));
 
-        String traceContextHexStr = generateTraceContextHexString(traceContext);
-        System.out.println(traceContextHexStr);
+        String traceContextJsonStr = generateTraceContextJson(traceContext);
+        System.out.println(traceContextJsonStr);
 
-        String traceId = getTraceContextValue(traceContextHexStr, "traceId");
+        Map<String, String> map = parseTraceContextFromJsonString(traceContextJsonStr);
+        String traceId = map.get("traceId");
         System.out.println(traceId);
 
-        String extraString = getTraceContextValue(traceContextHexStr, "extra");
+        String extraString = map.get("extra");
         System.out.println(extraString);
 
     }

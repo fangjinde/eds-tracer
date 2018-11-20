@@ -12,6 +12,7 @@ package com.netease.edu.eds.trace.configuration;
 import brave.http.HttpTracing;
 import com.netease.edu.eds.trace.agent.constants.BeanNameConstants;
 import com.netease.edu.eds.trace.instrument.http.*;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -75,11 +76,11 @@ public class TraceWebServletAutoConfigurationLegacy {
     @Bean
     @ConditionalOnMissingBean(name = BeanNameConstants.TRACE_FILTER)
     public FilterRegistrationBean traceFilter(HttpTracing httpTracing, SkipUriMatcher skipUriMatcher,
-                                              WebDebugMatcher webDebugMatcher, Environment environment) {
+                                              WebDebugMatcher webDebugMatcher, Environment environment,BeanFactory beanFactory) {
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(TracingFilter.create(httpTracing,
                                                                                                         skipUriMatcher,
                                                                                                         webDebugMatcher,
-                                                                                                        environment));
+                                                                                                        environment,beanFactory));
         filterRegistrationBean.setDispatcherTypes(ASYNC, ERROR, FORWARD, INCLUDE, REQUEST);
         filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         return filterRegistrationBean;

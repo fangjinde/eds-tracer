@@ -8,6 +8,8 @@ import brave.propagation.TraceContext;
 import com.netease.edu.eds.trace.constants.PropagationConstants;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
+import com.netease.edu.eds.trace.support.TracePropertiesSupport;
+import com.netease.edu.eds.trace.support.TraceRedisSupport;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.edu.eds.trace.utils.TraceContextPropagationUtils;
 import org.apache.commons.collections.MapUtils;
@@ -22,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author hzfjd
@@ -73,8 +76,16 @@ public class HttpServletResponseTracedWrapper extends HttpServletResponseWrapper
             try (Tracer.SpanInScope spanInScope = tracing.tracer().withSpanInScope(span)) {
                 TraceContext.Injector<Map<String, String>> injector = tracing.propagation().injector(SETTER);
                 Map<String, String> tracePropagationMap = new LinkedHashMap<>();
+
                 injector.inject(span.context(), tracePropagationMap);
-                String newLocation = addTracePropagationToLocation(location, tracePropagationMap);
+                String tracePropagationInfoStr = TraceContextPropagationUtils.generateTraceContextJson(tracePropagationMap);
+                String uuid = TraceContextPropagationUtils.generateTraceUniqueKey();
+                TraceRedisSupport.unsafeSet(TraceContextPropagationUtils.getTraceUniqueKeyWithCachePrefix(uuid),
+                                            tracePropagationInfoStr,
+                                            TracePropertiesSupport.getRedirectTraceCacheExpireSeconds(),
+                                            TimeUnit.SECONDS);
+
+                String newLocation = addTracePropagationToLocation(location, uuid);
                 if (StringUtils.isNotBlank(newLocation)) {
                     location = newLocation;
                 }
@@ -102,11 +113,10 @@ public class HttpServletResponseTracedWrapper extends HttpServletResponseWrapper
 
     }
 
-    private String addTracePropagationToLocation(String location, Map<String, String> tracePropagationMap) {
-        String traceContextHexString = TraceContextPropagationUtils.generateTraceContextHexString(tracePropagationMap);
-        if (StringUtils.isNotBlank(traceContextHexString)) {
+    private String addTracePropagationToLocation(String location, String traceUuid) {
+        if (StringUtils.isNotBlank(traceUuid)) {
             String newLocation = new UrlParameterManagerDto(location).addParamValuePairWithEncode(PropagationConstants.TRACE_CONTEXT_PROPAGATION_KEY,
-                                                                                                  traceContextHexString).toUrl();
+                                                                                                  traceUuid).toUrl();
             if (StringUtils.isNotBlank(newLocation)) {
                 return newLocation;
 

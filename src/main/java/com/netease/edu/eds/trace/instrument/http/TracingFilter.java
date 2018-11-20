@@ -8,13 +8,18 @@ import brave.http.HttpTracing;
 import brave.propagation.Propagation.Getter;
 import brave.propagation.TraceContext;
 import brave.servlet.HttpServletAdapter;
+import com.google.common.cache.LoadingCache;
 import com.netease.edu.eds.trace.constants.PropagationConstants;
 import com.netease.edu.eds.trace.constants.SpanType;
+import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.support.TracePropertiesSupport;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.edu.eds.trace.utils.TraceContextPropagationUtils;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.web.util.UrlPathHelper;
 
@@ -23,8 +28,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public final class TracingFilter implements Filter {
+
+    private static final Logger                     logger  = LoggerFactory.getLogger(TracingFilter.class);
 
     static final Getter<HttpServletRequest, String> GETTER  = new Getter<HttpServletRequest, String>() {
 
@@ -32,11 +41,28 @@ public final class TracingFilter implements Filter {
                                                                 public String get(HttpServletRequest carrier,
                                                                                   String key) {
 
-                                                                    String traceContextHexString = carrier.getParameter(PropagationConstants.TRACE_CONTEXT_PROPAGATION_KEY);
-                                                                    String value = TraceContextPropagationUtils.getTraceContextValue(traceContextHexString,
-                                                                                                                                     key);
-                                                                    if (StringUtils.isNotBlank(value)) {
-                                                                        return value;
+                                                                    String traceUuid = carrier.getParameter(PropagationConstants.TRACE_CONTEXT_PROPAGATION_KEY);
+
+                                                                    LoadingCache<String, Object> traceContextCache = SpringBeanFactorySupport.getBean("traceContextCache");
+                                                                    Object cacheValue = null;
+                                                                    String traceCacheKey = TraceContextPropagationUtils.getTraceUniqueKeyWithCachePrefix(traceUuid);
+                                                                    if (traceContextCache != null) {
+                                                                        try {
+                                                                            cacheValue = traceContextCache.get(traceCacheKey);
+                                                                        } catch (ExecutionException e) {
+                                                                            logger.error(String.format("getCacheFrom trace loadingCache error, with key=%s",
+                                                                                                       traceCacheKey),
+                                                                                         e);
+                                                                        }
+                                                                    }
+
+                                                                    if (cacheValue instanceof Map) {
+                                                                        Map<String, String> traceContextMap = (Map<String, String>) cacheValue;
+                                                                        String traceValue = traceContextMap.get(key);
+                                                                        if (StringUtils.isNotBlank(traceValue)) {
+                                                                            return traceValue;
+                                                                        }
+
                                                                     }
 
                                                                     return carrier.getHeader(key);
@@ -50,13 +76,14 @@ public final class TracingFilter implements Filter {
     static final HttpServletAdapter                 ADAPTER = new HttpServletAdapter();
 
     public static Filter create(Tracing tracing, SkipUriMatcher skipUriMatcher, WebDebugMatcher webDebugMatcher,
-                                Environment environment) {
-        return new TracingFilter(HttpTracing.create(tracing), skipUriMatcher, webDebugMatcher, environment);
+                                Environment environment, BeanFactory beanFactory) {
+        return new TracingFilter(HttpTracing.create(tracing), skipUriMatcher, webDebugMatcher, environment,
+                                 beanFactory);
     }
 
     public static Filter create(HttpTracing httpTracing, SkipUriMatcher skipUriMatcher, WebDebugMatcher webDebugMatcher,
-                                Environment environment) {
-        return new TracingFilter(httpTracing, skipUriMatcher, webDebugMatcher, environment);
+                                Environment environment, BeanFactory beanFactory) {
+        return new TracingFilter(httpTracing, skipUriMatcher, webDebugMatcher, environment, beanFactory);
     }
 
     private SkipUriMatcher                                           skipUriMatcher;
@@ -64,16 +91,19 @@ public final class TracingFilter implements Filter {
     final HttpServerHandler<HttpServletRequest, HttpServletResponse> handler;
     final TraceContext.Extractor<HttpServletRequest>                 extractor;
     private Environment                                              environment;
+    private BeanFactory                                              beanFactory;
 
     private final UrlPathHelper                                      urlPathHelper = new UrlPathHelper();
 
     TracingFilter(HttpTracing httpTracing, SkipUriMatcher skipUriMatcher, WebDebugMatcher webDebugMatcher,
-                  Environment environment) {
+                  Environment environment, BeanFactory beanFactory) {
         tracer = httpTracing.tracing().tracer();
         handler = HttpServerHandler.create(httpTracing, ADAPTER, webDebugMatcher);
         extractor = httpTracing.tracing().propagation().extractor(GETTER);
         this.skipUriMatcher = skipUriMatcher;
         this.environment = environment;
+        this.beanFactory = beanFactory;
+
     }
 
     /**

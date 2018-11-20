@@ -24,4 +24,12 @@ public class TracePropertiesSupport {
         return traceProperties.getHttp().isForceEncoding();
     }
 
+    public static int getRedirectTraceCacheExpireSeconds() {
+        TraceProperties traceProperties = SpringBeanFactorySupport.getBean(TraceProperties.class);
+        if (traceProperties == null) {
+            return TraceProperties.DEFAULT_REDIRECT_TRACE_CACHE_EXPIRE_SECONDS;
+        }
+        return traceProperties.getHttp().getRedirectTraceCacheExpireSeconds();
+    }
+
 }
