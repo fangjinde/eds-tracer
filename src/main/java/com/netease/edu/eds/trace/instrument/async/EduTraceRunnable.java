@@ -55,6 +55,8 @@ public class EduTraceRunnable implements Runnable {
         if (currentSpan != null) {
             String spanName = name != null ? name : spanNamer.name(delegate, DEFAULT_SPAN_NAME);
             this.span = this.tracer.nextSpan().name(spanName);
+        } else {
+            this.span = null;
         }
 
         this.errorParser = errorParser;
