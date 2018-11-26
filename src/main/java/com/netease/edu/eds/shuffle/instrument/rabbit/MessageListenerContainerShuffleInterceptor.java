@@ -1,5 +1,7 @@
 package com.netease.edu.eds.shuffle.instrument.rabbit;
 
+import brave.Span;
+import brave.Tracer;
 import brave.Tracing;
 import com.netease.edu.eds.shuffle.core.*;
 import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
@@ -57,6 +59,18 @@ public class MessageListenerContainerShuffleInterceptor {
                                    @This Object proxy) throws Exception {
 
         if (!ShuffleSwitch.isTurnOn()) {
+            return invoker.invoke(args);
+        }
+
+        // 保护下。因为在某些场景下，首次入口如果在Listener上，会不做追踪（具体看Trace部分的实现）。
+        Tracer tracer = Tracing.currentTracer();
+        Span span = null;
+        if (tracer != null) {
+            span = tracer.currentSpan();
+
+        }
+
+        if (span == null) {
             return invoker.invoke(args);
         }
 
