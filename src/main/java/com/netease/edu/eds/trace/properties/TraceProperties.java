@@ -42,6 +42,7 @@ public class TraceProperties {
         private String  encoding                        = DEFAULT_ENCODING;
         private boolean forceEncoding                   = DEFAULT_FORCE_ENCODING;
         private int     redirectTraceCacheExpireSeconds = DEFAULT_REDIRECT_TRACE_CACHE_EXPIRE_SECONDS;
+        private String  needTraceRedirectUrlPattern;
 
         public String getEncoding() {
             return encoding;
@@ -65,6 +66,14 @@ public class TraceProperties {
 
         public void setRedirectTraceCacheExpireSeconds(int redirectTraceCacheExpireSeconds) {
             this.redirectTraceCacheExpireSeconds = redirectTraceCacheExpireSeconds;
+        }
+
+        public String getNeedTraceRedirectUrlPattern() {
+            return needTraceRedirectUrlPattern;
+        }
+
+        public void setNeedTraceRedirectUrlPattern(String needTraceRedirectUrlPattern) {
+            this.needTraceRedirectUrlPattern = needTraceRedirectUrlPattern;
         }
     }
 
