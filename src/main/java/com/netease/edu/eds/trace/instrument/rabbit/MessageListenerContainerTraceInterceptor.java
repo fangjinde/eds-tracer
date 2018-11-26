@@ -33,7 +33,7 @@ public class MessageListenerContainerTraceInterceptor {
 
     private static Logger                     logger                = LoggerFactory.getLogger(MessageListenerContainerTraceInterceptor.class);
 
-    private static final ThreadLocal<Boolean> interceptedMarkHolder = new ThreadLocal();
+    private static final ThreadLocal<Boolean> invokeListerInterceptedMarkHolder = new ThreadLocal();
 
     @RuntimeType
     public static Object intercept(@AllArguments Object[] args, @Morph Invoker invoker, @Origin Method method,
@@ -41,15 +41,15 @@ public class MessageListenerContainerTraceInterceptor {
 
         // 为了兼容1和2版本的spring
         // rabbit，所以在AbstractMessageListenerContainer和SimpleMessageListenerContainer都做了相同的拦截。因此需要这里这下防重保护。
-        if (Boolean.TRUE.equals(interceptedMarkHolder.get())) {
+        if (Boolean.TRUE.equals(invokeListerInterceptedMarkHolder.get())) {
             return invoker.invoke(args);
         }
 
         try {
-            interceptedMarkHolder.set(true);
+            invokeListerInterceptedMarkHolder.set(true);
             return innerTraceIntercept(args, invoker, method, proxy);
         } finally {
-            interceptedMarkHolder.remove();
+            invokeListerInterceptedMarkHolder.remove();
         }
 
     }
