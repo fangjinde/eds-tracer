@@ -28,6 +28,24 @@ import java.util.concurrent.TimeUnit;
  **/
 public class PropagationUtils {
 
+    public static void main(String[] args) {
+
+        test("http://test.com/abc.htm?p1=123&p2=456#hash");
+        test("abc.htm?p1=123&p2=456#hash");
+        test("//test.com/abc.htm?p1=123&p2=456#hash");
+        test("test.com/abc.htm?p1=123&p2=456#hash");
+
+    }
+
+    public static void test(String location) {
+        try {
+            URL locationUrl = new URL(location);
+            System.out.println(locationUrl.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(PropagationUtils.class);
 
     public static void setOriginEnvIfNotExists(TraceContext context, String currentEnv) {
@@ -75,8 +93,13 @@ public class PropagationUtils {
             }
 
         } catch (MalformedURLException e) {
-            logger.error(String.format("MalformedURLException on: %s, so don't add trace context to it", location), e);
-            return location;
+            // 正常的外域重定向，肯定有正确的protocol和host信息。如果不正常，都当做内部域名重定向。
+            if (e.getMessage() == null || !e.getMessage().startsWith("no protocol")) {
+                logger.error(String.format("MalformedURLException on: %s, so don't add trace context to it", location),
+                             e);
+                return location;
+            }
+
         }
 
         TraceContext.Injector<Map<String, String>> injector = tracing.propagation().injector(SETTER);
