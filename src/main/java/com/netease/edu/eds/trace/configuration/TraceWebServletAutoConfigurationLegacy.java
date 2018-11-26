@@ -12,6 +12,8 @@ package com.netease.edu.eds.trace.configuration;
 import brave.http.HttpTracing;
 import com.netease.edu.eds.trace.agent.constants.BeanNameConstants;
 import com.netease.edu.eds.trace.instrument.http.*;
+import com.netease.edu.eds.trace.properties.TraceProperties;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -27,6 +29,8 @@ import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.util.regex.Pattern;
+
 import static javax.servlet.DispatcherType.*;
 
 /**
@@ -41,6 +45,22 @@ import static javax.servlet.DispatcherType.*;
 @ConditionalOnProperty(value = "spring.sleuth.web.enabled", matchIfMissing = true)
 @AutoConfigureAfter(TraceHttpAutoConfiguration.class)
 public class TraceWebServletAutoConfigurationLegacy {
+
+    @Configuration
+    public static class RedirectUrlTraceConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean
+        @RefreshScope
+        public RedirectUrlTraceMatcher redirectUrlTraceMatcher(TraceProperties traceProperties) {
+
+            if (StringUtils.isBlank(traceProperties.getHttp().getNeedTraceRedirectUrlPattern())) {
+                return new RediectUrlTraceMatcherRegexImpl(null);
+            }
+            Pattern pattern = Pattern.compile(traceProperties.getHttp().getNeedTraceRedirectUrlPattern());
+            return new RediectUrlTraceMatcherRegexImpl(pattern);
+        }
+    }
 
     /**
      * Nested config that configures Web MVC if it's present (without adding a runtime dependency to it)
@@ -76,11 +96,13 @@ public class TraceWebServletAutoConfigurationLegacy {
     @Bean
     @ConditionalOnMissingBean(name = BeanNameConstants.TRACE_FILTER)
     public FilterRegistrationBean traceFilter(HttpTracing httpTracing, SkipUriMatcher skipUriMatcher,
-                                              WebDebugMatcher webDebugMatcher, Environment environment,BeanFactory beanFactory) {
+                                              WebDebugMatcher webDebugMatcher, Environment environment,
+                                              BeanFactory beanFactory) {
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(TracingFilter.create(httpTracing,
                                                                                                         skipUriMatcher,
                                                                                                         webDebugMatcher,
-                                                                                                        environment,beanFactory));
+                                                                                                        environment,
+                                                                                                        beanFactory));
         filterRegistrationBean.setDispatcherTypes(ASYNC, ERROR, FORWARD, INCLUDE, REQUEST);
         filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         return filterRegistrationBean;

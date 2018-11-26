@@ -12,6 +12,7 @@ package com.netease.edu.eds.trace.instrument.async;
 import brave.Span;
 import brave.Tracer;
 import com.netease.edu.eds.trace.constants.SpanType;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -46,16 +47,25 @@ public class EduTraceAsyncAspect {
 
     @Around("execution (@org.springframework.scheduling.annotation.Async  * *.*(..))")
     public Object traceBackgroundThread(final ProceedingJoinPoint pjp) throws Throwable {
+
+        Span span = this.tracer.currentSpan();
+        // 异步只做衔接，不发追踪发起。否则会导致无意义的追踪的信息太多。
+        // 异步追踪，如果之前没有追踪上下文则不新起追踪.
+        if (span == null) {
+            return pjp.proceed();
+        }
+
         String spanName = this.spanNamer.name(getMethod(pjp, pjp.getTarget()),
                                               SpanNameUtil.toLowerHyphen(SpanType.AsyncSubType.SPRING_ASYNC + ":"
                                                                          + pjp.getTarget().getClass().getSimpleName()
                                                                          + "." + pjp.getSignature().getName()));
-        Span span = this.tracer.currentSpan().name(spanName);
+        span.name(spanName);
         try (Tracer.SpanInScope ws = this.tracer.withSpanInScope(span)) {
-            span.tag(this.traceKeys.getAsync().getPrefix() + this.traceKeys.getAsync().getClassNameKey(),
-                     pjp.getTarget().getClass().getSimpleName());
-            span.tag(this.traceKeys.getAsync().getPrefix() + this.traceKeys.getAsync().getMethodNameKey(),
-                     pjp.getSignature().getName());
+            SpanUtils.safeTag(span, this.traceKeys.getAsync().getPrefix() + this.traceKeys.getAsync().getClassNameKey(),
+                              pjp.getTarget().getClass().getSimpleName());
+            SpanUtils.safeTag(span,
+                              this.traceKeys.getAsync().getPrefix() + this.traceKeys.getAsync().getMethodNameKey(),
+                              pjp.getSignature().getName());
             return pjp.proceed();
         } finally {
             span.finish();

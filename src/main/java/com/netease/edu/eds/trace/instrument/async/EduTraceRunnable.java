@@ -49,13 +49,28 @@ public class EduTraceRunnable implements Runnable {
         this.tracer = tracer;
         this.delegate = delegate;
         this.asyncType = name;
-        String spanName = name != null ? name : spanNamer.name(delegate, DEFAULT_SPAN_NAME);
-        this.span = this.tracer.nextSpan().name(spanName);
+        // 异步只做衔接，不发追踪发起。否则会导致无意义的追踪的信息太多。
+        // 异步追踪，如果之前没有追踪上下文则不新起追踪.
+        Span currentSpan = this.tracer.currentSpan();
+        if (currentSpan != null) {
+            String spanName = name != null ? name : spanNamer.name(delegate, DEFAULT_SPAN_NAME);
+            this.span = this.tracer.nextSpan().name(spanName);
+        } else {
+            this.span = null;
+        }
+
         this.errorParser = errorParser;
     }
 
     @Override
     public void run() {
+        // 异步只做衔接，不发追踪发起。否则会导致无意义的追踪的信息太多。
+        // 异步追踪，如果之前没有追踪上下文则不新起追踪.
+        if (span == null) {
+            this.delegate.run();
+            return;
+        }
+
         Throwable error = null;
         try (SpanInScope ws = this.tracer.withSpanInScope(this.span.start())) {
             SpanUtils.safeTag(span, SpanType.AsyncSubType.TAG_KEY, asyncType);

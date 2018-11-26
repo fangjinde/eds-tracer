@@ -11,28 +11,28 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * @author hzfjd
- * @create 18/7/10
+ * @create 18/11/23
  **/
-public class AbstractMessageListenerContainerShuffleInstrumentation extends AbstractTraceAgentInstrumetation {
+public class SimpleMessageListenerContainerShuffleInstrumentation extends AbstractTraceAgentInstrumetation {
+
+    private static final String INVOKE_LISTENER_METHOD_NAME = "invokeListener";
 
     @Override
     protected ElementMatcher.Junction defineTypeMatcher(Map<String, String> props) {
-        return namedIgnoreCase("org.springframework.amqp.rabbit.listener.AbstractMessageListenerContainer");
+        return namedIgnoreCase("org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer");
     }
 
     @Override
     protected ElementMatcher.Junction defineMethodMatcher(Map<String, String> props, TypeDescription typeDescription,
                                                           ClassLoader classLoader, JavaModule module) {
         // protected void invokeListener(Channel channel, Message message) throws Exception
-        ElementMatcher.Junction invokeListener2 = isDeclaredBy(typeDescription).and(namedIgnoreCase("invokeListener")).and(takesArguments(2)).and(isProtected());
-        // public Object getMessageListener()
-        ElementMatcher.Junction getMessageListener0 = isDeclaredBy(typeDescription).and(namedIgnoreCase("getMessageListener")).and(takesArguments(0)).and(isPublic());
-        return invokeListener2.or(getMessageListener0);
+
+        ElementMatcher.Junction invokeListener2 = isDeclaredBy(typeDescription).and(namedIgnoreCase(INVOKE_LISTENER_METHOD_NAME)).and(takesArguments(2)).and(isProtected());
+        return invokeListener2;
     }
 
     @Override
     protected Class defineInterceptorClass(Map<String, String> props) {
         return MessageListenerContainerShuffleInterceptor.class;
     }
-
 }

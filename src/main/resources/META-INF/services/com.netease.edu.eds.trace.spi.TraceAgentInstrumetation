@@ -19,7 +19,9 @@ com.netease.edu.eds.trace.instrument.jobservice.JobServiceTraceInstrument
 com.netease.edu.eds.shuffle.instrument.jobservice.JobServiceShuffleInstrument
 com.netease.edu.eds.shuffle.instrument.rabbit.RabbitTemplateShuffleInstrumentation
 com.netease.edu.eds.shuffle.instrument.rabbit.AbstractMessageListenerContainerShuffleInstrumentation
+com.netease.edu.eds.shuffle.instrument.rabbit.SimpleMessageListenerContainerShuffleInstrumentation
 com.netease.edu.eds.trace.instrument.rabbit.AbstractMessageListenerContainerInstrumentation
+com.netease.edu.eds.trace.instrument.rabbit.SimpleMessageListenerContainerTraceInstrumentation
 com.netease.edu.eds.shuffle.dubbo.DubboUrlUtilsInstrument
 com.netease.edu.eds.shuffle.dubbo.RegistryDirectoryInstrument
 com.netease.edu.eds.shuffle.instrument.rabbit.RabbitAdminInstrument

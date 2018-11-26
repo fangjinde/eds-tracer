@@ -22,7 +22,8 @@ public class AsyncTraceInterceptorSupport {
                                    TraceRunnableInstaller traceRunnableInstaller) {
 
         AsyncTracing asyncTracing = SpringBeanFactorySupport.getBean(AsyncTracing.class);
-        // 异步追踪，如果之前没有追踪上下文则不新起追踪
+        // 异步只做衔接，不发追踪发起。否则会导致无意义的追踪的信息太多。
+        // 异步追踪，如果之前没有追踪上下文则不新起追踪.
         if (asyncTracing == null || asyncTracing.tracing().tracer().currentSpan() == null) {
             try {
                 return originalCall.call();
