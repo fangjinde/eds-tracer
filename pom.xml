@@ -4,7 +4,7 @@
 
     <groupId>com.netease.edu.eds</groupId>
     <artifactId>eds-tracer</artifactId>
-    <version>1.1.0-RELEASE</version>
+    <version>1.0.9-fjd-20181120-RELEASE</version>
     <packaging>jar</packaging>
 
     <name>eds-tracer</name>
@@ -14,8 +14,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <edu-second-party-base.version>1.0.706</edu-second-party-base.version>
         <edu-third-party-base.version>1.0.3</edu-third-party-base.version>
-        <zipkin.version>2.7.1-fjd-incubating-SNAPSHOT</zipkin.version>
-        <brave.version>4.18.3-fjd-incubating-SNAPSHOT</brave.version>
+        <zipkin.version>2.7.1-fjd-20181120-RELEASE</zipkin.version>
+        <brave.version>4.18.3-fjd-20181120-RELEASE</brave.version>
     </properties>
 
     <dependencyManagement>
@@ -42,7 +42,34 @@
             <dependency>
                 <groupId>com.netease.edu.eds</groupId>
                 <artifactId>eds-tracer-agent</artifactId>
-                <version>0.9.0-incubating-SNAPSHOT</version>
+                <version>1.1.0-fjd-20181120-RELEASE</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.zipkin.zipkin2</groupId>
+                <artifactId>zipkin</artifactId>
+                <version>${zipkin.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave</artifactId>
+                <version>${brave.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave-context-log4j2</artifactId>
+                <version>${brave.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave-instrumentation-spring-web</artifactId>
+                <version>${brave.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave-instrumentation-spring-webmvc</artifactId>
+                <version>${brave.version}</version>
             </dependency>
 
             <dependency>
@@ -50,6 +77,8 @@
                 <artifactId>spring-rabbit</artifactId>
                 <version>2.0.3.RELEASE</version>
             </dependency>
+
+
 
 
             <dependency>
