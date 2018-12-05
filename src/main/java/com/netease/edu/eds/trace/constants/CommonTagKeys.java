@@ -6,6 +6,10 @@ package com.netease.edu.eds.trace.constants;
  **/
 public interface CommonTagKeys {
 
-    String ERROR = "Error";
+    String ERROR      = "error";
+    String CLASS      = "class";
+    String METHOD     = "method";
+    String CLIENT_ENV = "clientEnv";
+    String SERVER_ENV = "serverEnv";
 
 }

@@ -9,6 +9,7 @@ import brave.propagation.Propagation.Getter;
 import brave.propagation.TraceContext;
 import brave.servlet.HttpServletAdapter;
 import com.google.common.cache.LoadingCache;
+import com.netease.edu.eds.trace.constants.CommonTagKeys;
 import com.netease.edu.eds.trace.constants.PropagationConstants;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
@@ -61,7 +62,7 @@ public final class TracingFilter implements Filter {
                                                                     }
 
                                                                     if (cacheValue instanceof Map) {
-                                                                        //若url参数存在，则以url参数为准
+                                                                        // 若url参数存在，则以url参数为准
                                                                         Map<String, String> traceContextMap = (Map<String, String>) cacheValue;
                                                                         return traceContextMap.get(key);
                                                                     }
@@ -158,7 +159,7 @@ public final class TracingFilter implements Filter {
         SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.HTTP);
 
         if (span != null && !span.isNoop() && environment != null) {
-            SpanUtils.safeTag(span, "serverEnv", environment.getProperty("spring.profiles.active"));
+            SpanUtils.safeTag(span, CommonTagKeys.SERVER_ENV, environment.getProperty("spring.profiles.active"));
         }
 
         // Add attributes for explicit access to customization or span context

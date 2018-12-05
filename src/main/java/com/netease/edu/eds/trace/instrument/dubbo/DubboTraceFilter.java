@@ -13,6 +13,7 @@ import com.alibaba.dubbo.remoting.exchange.ResponseCallback;
 import com.alibaba.dubbo.rpc.*;
 import com.alibaba.dubbo.rpc.protocol.dubbo.FutureAdapter;
 import com.alibaba.dubbo.rpc.support.RpcUtils;
+import com.netease.edu.eds.trace.constants.CommonTagKeys;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
@@ -80,7 +81,8 @@ public final class DubboTraceFilter implements Filter {
 
         SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.DUBBO);
         SpanUtils.safeTag(span, "service", service);
-        SpanUtils.safeTag(span, "method", method);
+        SpanUtils.safeTag(span, CommonTagKeys.CLASS, service);
+        SpanUtils.safeTag(span, CommonTagKeys.METHOD, method);
 
         if (!span.isNoop()) {
 
@@ -96,9 +98,9 @@ public final class DubboTraceFilter implements Filter {
             }
 
             if (kind.equals(Kind.CLIENT)) {
-                SpanUtils.safeTag(span, "clientEnv", environment.getProperty("spring.profiles.active"));
+                SpanUtils.safeTag(span, CommonTagKeys.CLIENT_ENV, environment.getProperty("spring.profiles.active"));
             } else {
-                SpanUtils.safeTag(span, "serverEnv", environment.getProperty("spring.profiles.active"));
+                SpanUtils.safeTag(span, CommonTagKeys.SERVER_ENV, environment.getProperty("spring.profiles.active"));
             }
 
             Endpoint ep = remoteEndpoint.build();

@@ -3,12 +3,10 @@ package com.netease.edu.eds.trace.instrument.jobservice;
 import brave.Span;
 import brave.Tracer;
 import brave.Tracing;
+import com.netease.edu.eds.trace.constants.CommonTagKeys;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.support.AbstractTraceAgentInstrumetation;
-import com.netease.edu.eds.trace.utils.ExceptionStringUtils;
-import com.netease.edu.eds.trace.utils.PropagationUtils;
-import com.netease.edu.eds.trace.utils.SpanUtils;
-import com.netease.edu.eds.trace.utils.TraceJsonUtils;
+import com.netease.edu.eds.trace.utils.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.annotation.*;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -182,7 +180,13 @@ public class JobServiceTraceInstrument extends AbstractTraceAgentInstrumetation 
 
             Span span = tracer.nextSpan();
             if (!span.isNoop()) {
-                span.name(method.getName()).kind(Span.Kind.PRODUCER).start();
+
+                String className = method.getDeclaringClass().getSimpleName();
+                String methodName = method.getName();
+                span.name(className + "." + methodName).kind(Span.Kind.PRODUCER).start();
+                SpanUtils.safeTag(span, CommonTagKeys.CLIENT_ENV, EnvironmentUtils.getCurrentEnv());
+                SpanUtils.safeTag(span, CommonTagKeys.CLASS, className);
+                SpanUtils.safeTag(span, CommonTagKeys.METHOD, methodName);
             }
 
             try (Tracer.SpanInScope spanInScope = tracer.withSpanInScope(span)) {
