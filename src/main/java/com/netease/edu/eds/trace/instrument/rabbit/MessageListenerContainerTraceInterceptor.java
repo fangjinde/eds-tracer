@@ -5,6 +5,7 @@ import brave.Tracer;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
+import com.netease.edu.eds.trace.constants.CommonTagKeys;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
@@ -31,7 +32,7 @@ import static brave.Span.Kind.CONSUMER;
  **/
 public class MessageListenerContainerTraceInterceptor {
 
-    private static Logger                     logger                = LoggerFactory.getLogger(MessageListenerContainerTraceInterceptor.class);
+    private static Logger                     logger                            = LoggerFactory.getLogger(MessageListenerContainerTraceInterceptor.class);
 
     private static final ThreadLocal<Boolean> invokeListerInterceptedMarkHolder = new ThreadLocal();
 
@@ -78,7 +79,7 @@ public class MessageListenerContainerTraceInterceptor {
 
         Span consumerSpan = tracer.nextSpan(extracted).kind(CONSUMER).name("on-message");
         SpanUtils.safeTag(consumerSpan, SpanType.TAG_KEY, SpanType.RABBIT);
-        SpanUtils.safeTag(consumerSpan, "serverEnv", EnvironmentUtils.getCurrentEnv());
+        SpanUtils.safeTag(consumerSpan, CommonTagKeys.SERVER_ENV, EnvironmentUtils.getCurrentEnv());
 
         if (!consumerSpan.isNoop()) {
             consumerSpan.start();

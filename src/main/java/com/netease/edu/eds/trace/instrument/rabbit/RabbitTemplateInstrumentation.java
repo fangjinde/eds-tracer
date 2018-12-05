@@ -4,6 +4,7 @@ import brave.Span;
 import brave.Tracer;
 import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
+import com.netease.edu.eds.trace.constants.CommonTagKeys;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
@@ -80,7 +81,7 @@ public class RabbitTemplateInstrumentation implements TraceAgentInstrumetation {
 
                     RabbitTracing.tagSendMessageInfo(span, exchange, routingKey);
                     RabbitTracing.tagMessagePayload(span, message.toString());
-                    SpanUtils.safeTag(span, "clientEnv", EnvironmentUtils.getCurrentEnv());
+                    SpanUtils.safeTag(span, CommonTagKeys.CLIENT_ENV, EnvironmentUtils.getCurrentEnv());
                     Endpoint.Builder builder = Endpoint.newBuilder();
                     if (rabbitTracing.remoteServiceName() != null) {
                         builder.serviceName(rabbitTracing.remoteServiceName());

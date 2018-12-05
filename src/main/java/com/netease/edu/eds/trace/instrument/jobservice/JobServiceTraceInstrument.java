@@ -103,6 +103,7 @@ public class JobServiceTraceInstrument extends AbstractTraceAgentInstrumetation 
             Object delayTask = args[0];
             SpanUtils.safeTag(span, "DelayTask", TraceJsonUtils.toJson(delayTask));
             String originEnv = getEnvFromDelayTaskObject(delayTask, span);
+            SpanUtils.tagPropagationInfos(span);
             PropagationUtils.setOriginEnvIfNotExists(span.context(), originEnv);
 
             return invoker.invoke(args);
