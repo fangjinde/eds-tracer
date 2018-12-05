@@ -161,6 +161,7 @@ public class JobServiceTraceInstrument extends AbstractTraceAgentInstrumetation 
 
             if (delayTaskClazz != null) {
                 Field envField = ReflectionUtils.findField(delayTaskClazz, "environment", String.class);
+                ReflectionUtils.makeAccessible(envField);
                 return envField;
             }
 
