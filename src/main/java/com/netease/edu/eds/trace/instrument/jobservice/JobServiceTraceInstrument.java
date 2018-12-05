@@ -48,7 +48,7 @@ public class JobServiceTraceInstrument extends AbstractTraceAgentInstrumetation 
 
         // private String buildQueueName(DelayTask delayTask)
         ElementMatcher.Junction buildQueueName1 = isDeclaredBy(typeDescription).and(isPrivate()).and(namedIgnoreCase(BUILD_QUEUE_NAME_METHOD)).and(takesArguments(1));
-        return sendDelayTaskMessage1;
+        return sendDelayTaskMessage1.or(buildQueueName1);
     }
 
     @Override
