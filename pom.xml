@@ -4,7 +4,7 @@
 
     <groupId>com.netease.edu.eds</groupId>
     <artifactId>eds-tracer-parent</artifactId>
-    <version>0.9.0-incubating-SNAPSHOT</version>
+    <version>1.1.0-incubating-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>eds-tracer-parent</name>
@@ -13,6 +13,7 @@
     <modules>
         <module>eds-tracer-dependencies</module>
         <module>eds-tracer</module>
+        <module>eds-tracer-service</module>
         <module>eds-tracer-demo</module>
     </modules>
 
