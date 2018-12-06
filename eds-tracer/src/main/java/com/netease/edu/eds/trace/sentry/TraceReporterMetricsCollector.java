@@ -18,6 +18,7 @@ public class TraceReporterMetricsCollector extends Collector {
     private TraceReporterMetricsCollector() {
     }
 
+    @Override
     public String getCollectorName() {
         return TraceReporterMetricsCollector.class.getSimpleName();
     }
