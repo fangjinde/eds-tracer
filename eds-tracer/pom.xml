@@ -33,27 +33,20 @@
             <artifactId>brave</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.netease.edu.eds</groupId>
+            <artifactId>eds-tracer-agent</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.netease.sentry</groupId>
+            <artifactId>sentry-javaagent-collector</artifactId>
+        </dependency>
+
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-actuator</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-zookeeper</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.curator</groupId>
-            <artifactId>curator-x-discovery</artifactId>
         </dependency>
 
         <dependency>
@@ -77,40 +70,49 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-actuator</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-zookeeper</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-x-discovery</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy-agent</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.netease.edu.eds</groupId>
-            <artifactId>eds-tracer-agent</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.netease.sentry</groupId>
-            <artifactId>sentry-javaagent-collector</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>com.google.auto.value</groupId>
             <artifactId>auto-value</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>commons-collections</groupId>
             <artifactId>commons-collections</artifactId>
             <version>3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
         </dependency>
 
         <dependency>
@@ -121,10 +123,7 @@
         </dependency>
 
 
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-        </dependency>
+
 
         <dependency>
             <groupId>com.netease.framework</groupId>
