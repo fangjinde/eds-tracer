@@ -1,2 +1,0 @@
-DubboTraceFilter=com.netease.edu.eds.trace.instrument.dubbo.DubboTraceFilter
-
