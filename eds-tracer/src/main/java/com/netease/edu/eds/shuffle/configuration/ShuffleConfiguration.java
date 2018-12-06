@@ -1,6 +1,5 @@
 package com.netease.edu.eds.shuffle.configuration;
 
-import com.netease.edu.eds.trace.properties.RedisProperties;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.x.discovery.*;
 import org.apache.curator.x.discovery.details.InstanceSerializer;
@@ -26,6 +25,7 @@ import com.netease.edu.eds.shuffle.instrument.rabbit.SpringRabbitComponentNameEn
 import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
 import com.netease.edu.eds.shuffle.spi.KeyValueManager;
 import com.netease.edu.eds.shuffle.support.*;
+import com.netease.edu.eds.trace.properties.RedisProperties;
 
 /**
  * @author hzfjd
@@ -43,134 +43,159 @@ public class ShuffleConfiguration {
     @ConditionalOnProperty(value = "shuffle.turnOn", havingValue = "true", matchIfMissing = false)
     public static class ShuffleComponentConfiguration {
 
-        @Bean
-        public static SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor springRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor() {
-            return new SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor();
-        }
+        @Configuration
+        @ConditionalOnProperty(value = "shuffle.turnOn", havingValue = "true", matchIfMissing = false)
+        public static class RabbitShuffleConfiguration {
 
-        @Bean
-        public static ShuffleDelayQueueBBP shuffleDelayQueueBBP() {
-            return new ShuffleDelayQueueBBP();
-        }
-
-        @Bean
-        public ShuffleRouteBackLifeCycle shuffleRouteBackLifeCycle() {
-            return new ShuffleRouteBackLifeCycle();
-        }
-
-        @Bean(name = BeanNameConstants.QUEUE_CONSUMER_MUTEX_CONTEXT)
-        public InterProcessMutexContext queueConsumerMutextContext(CuratorFramework client) {
-            return new InterProcessMutexContext(client, BeanNameConstants.QUEUE_CONSUMER_MUTEX_CONTEXT);
-        }
-
-        @Bean(name = BeanNameConstants.QUEUE_REDECLARE_MUTEX_CONTEXT)
-        public InterProcessMutexContext queueRedeclareMutexContext(CuratorFramework client) {
-            return new InterProcessMutexContext(client, BeanNameConstants.QUEUE_REDECLARE_MUTEX_CONTEXT);
-        }
-
-        @Bean(name = BeanNameConstants.ENVIRONMENT_DETECTOR)
-        public EnvironmentDetector environmentDetector() {
-            // return new EnvironmentDetectorServiceDiscoveryImpl();
-            return new EnvironmentDetectorDiscoveryClientImpl();
-        }
-
-        @Bean
-        @ConditionalOnMissingBean
-        public InstanceSerializer<java.util.HashMap> deprecatedInstanceSerializer() {
-            return new JsonInstanceSerializer(java.util.HashMap.class);
-        }
-
-        @Bean
-        @ConditionalOnMissingBean
-        public ZookeeperDiscoveryProperties zookeeperDiscoveryProperties(InetUtils inetUtils) {
-            return new ZookeeperDiscoveryProperties(inetUtils);
-        }
-
-        @Bean
-        @ConditionalOnMissingBean
-        public ServiceInstance serviceInstance(ApplicationContext context, ZookeeperDiscoveryProperties properties) {
-            String appName = context.getEnvironment().getProperty("spring.application.name", "application");
-            String profile = context.getEnvironment().getProperty("spring.profiles.active", "default");
-            String appNameForServiceDiscovery = appName + "." + profile;
-            String host = properties.getInstanceHost();
-            if (!StringUtils.hasText(host)) {
-                throw new IllegalStateException("instanceHost must not be empty");
+            @Bean
+            public static SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor springRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor() {
+                return new SpringRabbitComponentNameEnvironmentCustomBeanFactoryPostProcessor();
             }
 
-            ServiceInstanceBuilder serviceInstanceBuilder = null;
-            try {
-                serviceInstanceBuilder = ServiceInstance.builder();
-            } catch (Exception e) {
-                throw new RuntimeException("create ServiceInstance.builder() failed. ", e);
+            @Bean
+            public static ShuffleDelayQueueBBP shuffleDelayQueueBBP() {
+                return new ShuffleDelayQueueBBP();
             }
 
-            serviceInstanceBuilder.name(appNameForServiceDiscovery).address(host).payload(properties.getMetadata()).uriSpec(new UriSpec(properties.getUriSpec()));
-
-            if (properties.getInstanceSslPort() != null) {
-                serviceInstanceBuilder.sslPort(properties.getInstanceSslPort());
-            }
-            if (properties.getInstanceId() != null) {
-                serviceInstanceBuilder.id(properties.getInstanceId());
+            @Bean
+            public ShuffleRouteBackLifeCycle shuffleRouteBackLifeCycle() {
+                return new ShuffleRouteBackLifeCycle();
             }
 
-            return serviceInstanceBuilder.build();
+            @Bean(name = BeanNameConstants.QUEUE_CONSUMER_MUTEX_CONTEXT)
+            public InterProcessMutexContext queueConsumerMutextContext(CuratorFramework client) {
+                return new InterProcessMutexContext(client, BeanNameConstants.QUEUE_CONSUMER_MUTEX_CONTEXT);
+            }
+
+            @Bean(name = BeanNameConstants.QUEUE_REDECLARE_MUTEX_CONTEXT)
+            public InterProcessMutexContext queueRedeclareMutexContext(CuratorFramework client) {
+                return new InterProcessMutexContext(client, BeanNameConstants.QUEUE_REDECLARE_MUTEX_CONTEXT);
+            }
         }
 
-        @Bean
-        @ConditionalOnMissingBean
-        public ServiceDiscovery<ServiceInstance> curatorServiceDiscovery(CuratorFramework curatorFramework,
-                                                                         ZookeeperDiscoveryProperties properties,
-                                                                         InstanceSerializer instanceSerializer,
-                                                                         ServiceInstance serviceInstance) {
+        @Configuration
+        @ConditionalOnProperty(value = "shuffle.environment.detector", havingValue = "eureka", matchIfMissing = true)
+        public static class EurekaEnvironmentDetectorConfiguration {
 
-            return ServiceDiscoveryBuilder.builder(ServiceInstance.class).client(curatorFramework).basePath(properties.getRoot()).serializer(instanceSerializer).thisInstance(serviceInstance).watchInstances(true).build();
+            @Bean(name = BeanNameConstants.ENVIRONMENT_DETECTOR)
+            public EnvironmentDetector environmentDetector() {
+                return new EnvironmentDetectorDiscoveryClientImpl();
+            }
         }
 
-        @Bean
-        @ConditionalOnMissingBean
-        public ServiceDiscoveryLifecycle serviceDiscoveryLifecycle() {
-            return new ServiceDiscoveryLifecycle();
+        @Configuration
+        @ConditionalOnProperty(value = "shuffle.environment.detector", havingValue = "zookeeper", matchIfMissing = false)
+        public static class ZookeeperEnvironmentDetectorConfiguration {
+
+            @Bean(name = BeanNameConstants.ENVIRONMENT_DETECTOR)
+            public EnvironmentDetector environmentDetector() {
+                return new EnvironmentDetectorServiceDiscoveryImpl();
+            }
+
+            @Bean
+            @ConditionalOnMissingBean
+            public ServiceDirectory cachedZookeeperServiceDirectory() {
+                return new CachedZookeeperServiceDirectory();
+            }
+
+            @Bean
+            @ConditionalOnMissingBean
+            public ServiceDiscovery<ServiceInstance> curatorServiceDiscovery(CuratorFramework curatorFramework,
+                                                                             ZookeeperDiscoveryProperties properties,
+                                                                             InstanceSerializer instanceSerializer,
+                                                                             ServiceInstance serviceInstance) {
+
+                return ServiceDiscoveryBuilder.builder(ServiceInstance.class).client(curatorFramework).basePath(properties.getRoot()).serializer(instanceSerializer).thisInstance(serviceInstance).watchInstances(true).build();
+            }
+
+            @Bean
+            @ConditionalOnMissingBean
+            public ServiceDiscoveryLifecycle serviceDiscoveryLifecycle() {
+                return new ServiceDiscoveryLifecycle();
+            }
+
+            @Bean
+            @ConditionalOnMissingBean
+            public ZookeeperDiscoveryProperties zookeeperDiscoveryProperties(InetUtils inetUtils) {
+                return new ZookeeperDiscoveryProperties(inetUtils);
+            }
+
+            @Bean
+            @ConditionalOnMissingBean
+            public ServiceInstance serviceInstance(ApplicationContext context,
+                                                   ZookeeperDiscoveryProperties properties) {
+                String appName = context.getEnvironment().getProperty("spring.application.name", "application");
+                String profile = context.getEnvironment().getProperty("spring.profiles.active", "default");
+                String appNameForServiceDiscovery = appName + "." + profile;
+                String host = properties.getInstanceHost();
+                if (!StringUtils.hasText(host)) {
+                    throw new IllegalStateException("instanceHost must not be empty");
+                }
+
+                ServiceInstanceBuilder serviceInstanceBuilder = null;
+                try {
+                    serviceInstanceBuilder = ServiceInstance.builder();
+                } catch (Exception e) {
+                    throw new RuntimeException("create ServiceInstance.builder() failed. ", e);
+                }
+
+                serviceInstanceBuilder.name(appNameForServiceDiscovery).address(host).payload(properties.getMetadata()).uriSpec(new UriSpec(properties.getUriSpec()));
+
+                if (properties.getInstanceSslPort() != null) {
+                    serviceInstanceBuilder.sslPort(properties.getInstanceSslPort());
+                }
+                if (properties.getInstanceId() != null) {
+                    serviceInstanceBuilder.id(properties.getInstanceId());
+                }
+
+                return serviceInstanceBuilder.build();
+            }
+
+            @Bean
+            @ConditionalOnMissingBean
+            public InstanceSerializer<java.util.HashMap> deprecatedInstanceSerializer() {
+                return new JsonInstanceSerializer(java.util.HashMap.class);
+            }
+
         }
 
-        @Bean
-        @ConditionalOnMissingBean
-        public ServiceDirectory cachedZookeeperServiceDirectory() {
-            return new CachedZookeeperServiceDirectory();
-        }
+        @Configuration
+        @ConditionalOnProperty(value = "shuffle.turnOn", havingValue = "true", matchIfMissing = false)
+        public static class ShuffleKeyValueManagerConfiguration {
 
-        @Bean
-        @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_REDIS_CONNECTION_FACTORY)
-        public JedisConnectionFactory shuffleRedisConnectionFactory() {
-            JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();
-            RedisProperties redisProperties = shuffleRedisProperties();
-            jedisConnectionFactory.setHostName(redisProperties.getHost());
-            jedisConnectionFactory.setPassword(redisProperties.getPassword());
-            jedisConnectionFactory.setPort(redisProperties.getPort());
-            jedisConnectionFactory.setTimeout(redisProperties.getTimeout());
-            return jedisConnectionFactory;
-        }
+            @Bean
+            @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_REDIS_KEY_VALUE_MANAGER)
+            public KeyValueManager shuffleRedisKeyValueManager() {
+                return new RedisKeyValueManager();
+            }
 
-        @Bean
-        @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_REDIS_TEMPLATE)
-        public RedisOperations shuffleRedisTemplate() {
-            RedisTemplate redisTemplate = new RedisTemplate();
-            redisTemplate.setConnectionFactory(shuffleRedisConnectionFactory());
-            return redisTemplate;
-        }
+            @Bean
+            @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_REDIS_TEMPLATE)
+            public RedisOperations shuffleRedisTemplate() {
+                RedisTemplate redisTemplate = new RedisTemplate();
+                redisTemplate.setConnectionFactory(shuffleRedisConnectionFactory());
+                return redisTemplate;
+            }
 
-        @Bean
-        @ConfigurationProperties(prefix = "shuffle.redis")
-        public RedisProperties shuffleRedisProperties() {
-            return new RedisProperties();
-        }
+            @Bean
+            @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_REDIS_CONNECTION_FACTORY)
+            public JedisConnectionFactory shuffleRedisConnectionFactory() {
+                JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();
+                RedisProperties redisProperties = shuffleRedisProperties();
+                jedisConnectionFactory.setHostName(redisProperties.getHost());
+                jedisConnectionFactory.setPassword(redisProperties.getPassword());
+                jedisConnectionFactory.setPort(redisProperties.getPort());
+                jedisConnectionFactory.setTimeout(redisProperties.getTimeout());
+                return jedisConnectionFactory;
+            }
 
-        @Bean
-        @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_REDIS_KEY_VALUE_MANAGER)
-        public KeyValueManager shuffleRedisKeyValueManager() {
-            return new RedisKeyValueManager();
-        }
+            @Bean
+            @ConfigurationProperties(prefix = "shuffle.redis")
+            public RedisProperties shuffleRedisProperties() {
+                return new RedisProperties();
+            }
 
-        // @ConditionalOnProperty(value = "edu.service.shuffle.turnOn", havingValue = "true", matchIfMissing = false)
+        }
 
     }
 
