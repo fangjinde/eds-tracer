@@ -18,6 +18,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <transaction-message.version>1.0.8-add_trace_hzfjd_20180710-SNAPSHOT</transaction-message.version>
+        <edu-base-framework.version>1.1.350</edu-base-framework.version>
     </properties>
 
     <dependencyManagement>
@@ -79,6 +81,20 @@
                 <scope>provided</scope>
             </dependency>
 
+            <dependency>
+                <groupId>com.netease.edu</groupId>
+                <artifactId>edu-base-persist</artifactId>
+                <version>${edu-base-framework.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.netease.edu</groupId>
+                <artifactId>edu-base-util</artifactId>
+                <version>${edu-base-framework.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
 
             <dependency>
                 <groupId>com.netease.edu.web</groupId>
@@ -114,6 +130,18 @@
                 <artifactId>dubbo</artifactId>
                 <version>2.4.9</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.netease.edu</groupId>
+                <artifactId>transaction-message-client</artifactId>
+                <version>${transaction-message.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.netease.edu</groupId>
+                <artifactId>transaction-message-common</artifactId>
+                <version>${transaction-message.version}</version>
             </dependency>
 
         </dependencies>
