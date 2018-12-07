@@ -2,7 +2,7 @@ package com.netease.edu.boot.hystrixtest.message;
 
 import com.netease.edu.boot.hystrixtest.constants.TransactionMessageTestContants;
 import com.netease.edu.boot.hystrixtest.service.EduAttributesService;
-import com.netease.edu.transaction.message.client.annotation.TransactionMessage;
+import com.netease.edu.persist.transaction.annotation.EduTransaction;
 import com.netease.edu.transaction.message.share.constants.TransactionMessageConstants;
 import org.springframework.amqp.core.ExchangeTypes;
 import org.springframework.amqp.rabbit.annotation.Exchange;
@@ -24,7 +24,7 @@ public class TransactionMessageTestListener {
     @Autowired
     private EduAttributesService eduAttributesService;
 
-    @TransactionMessage
+    @EduTransaction
     @RabbitListener(containerFactory = TransactionMessageConstants.Bean.rabbitListenerContainerFactory, bindings = { @QueueBinding(key = "${spring.profiles.active}_"
                                                                                                                                          + TransactionMessageTestContants.ROUTING_KEY, value = @Queue(value = "${spring.profiles.active}_"
                                                                                                                                                                                                               + TransactionMessageTestContants.ROUTING_KEY

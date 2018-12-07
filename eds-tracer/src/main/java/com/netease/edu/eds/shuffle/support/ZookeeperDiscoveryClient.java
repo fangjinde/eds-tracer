@@ -12,7 +12,6 @@ import java.util.List;
  **/
 public class ZookeeperDiscoveryClient implements DiscoveryClient {
 
-
     @Autowired
     org.apache.curator.x.discovery.ServiceInstance serviceInstance;
 
@@ -21,7 +20,6 @@ public class ZookeeperDiscoveryClient implements DiscoveryClient {
         return "ZookeeperDiscoveryClient";
     }
 
-    @Override
     public ServiceInstance getLocalServiceInstance() {
         return null;
     }

@@ -6,6 +6,7 @@
         <artifactId>eds-tracer-parent</artifactId>
         <version>1.1.0-incubating-SNAPSHOT</version>
     </parent>
+
     <artifactId>eds-tracer</artifactId>
     <packaging>jar</packaging>
     <name>${project.artifactId}</name>
@@ -14,12 +15,29 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <edu-second-party-base.version>1.0.706</edu-second-party-base.version>
-        <edu-third-party-base.version>1.0.3</edu-third-party-base.version>
-        <zipkin.version>2.7.1-fjd-20181120-RELEASE</zipkin.version>
-        <brave.version>4.18.3-fjd-20181120-RELEASE</brave.version>
     </properties>
 
+
+    <dependencyManagement>
+        <dependencies>
+
+            <dependency>
+                <groupId>com.netease.edu.eds</groupId>
+                <artifactId>eds-tracer-dependencies</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>1.5.10.RELEASE</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
 
@@ -59,6 +77,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter</artifactId>
         </dependency>
@@ -90,81 +113,81 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-actuator</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-zookeeper</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.curator</groupId>
             <artifactId>curator-x-discovery</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy-agent</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>com.google.auto.value</groupId>
             <artifactId>auto-value</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>com.netease.edu.web</groupId>
             <artifactId>edu-base-web</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
 
         <dependency>
             <groupId>com.netease.framework</groupId>
             <artifactId>netease-circle-dao</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>com.netease.mail</groupId>
             <artifactId>dao-framework</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>netease.ddb</groupId>
             <artifactId>db</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>dubbo</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>com.netease.edu</groupId>
             <artifactId>job-client</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
 
         <dependency>
             <groupId>org.directwebremoting</groupId>
             <artifactId>dwr</artifactId>
-            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
 
     </dependencies>
@@ -175,6 +198,5 @@
 
         </plugins>
     </build>
-
 
 </project>
