@@ -75,6 +75,18 @@
                 <version>${sentry-javaagent-collector.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>1.8.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>1.8.0</version>
+            </dependency>
+
             <!-- 以下部分以后放到edu-third-party-base中-->
 
             <dependency>

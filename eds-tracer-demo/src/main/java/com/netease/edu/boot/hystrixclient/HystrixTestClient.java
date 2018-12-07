@@ -52,8 +52,8 @@ public class HystrixTestClient {
         String[] args2 = { "--spring.cloud.stream.bindings.shuffleStreamOutput.binder=serviceBus","--spring.cloud.stream.bindings.shuffleStreamOutput.destination=shuffleCloudStreamDemoTopic","--spring.cloud.stream.rabbit.bindings.shuffleStreamOutput.producer.prefix=${spring.profiles.active}-","--spring.sleuth.web.additionalSkipPattern=/health/status|/web/echoNoTrace",
                            "--edu-hystrix-demo-web_service_version_suffix=-${spring.profiles.active}",
                            "--hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds=3600000",
-                           "--deployAppName=edu-hystrix-demo-web",
-                           "--deployAppClusterName=edu-hystrix-demo-web_${spring.profiles.active}",
+                           "--deployAppName=eds-tracer-demo",
+                           "--deployAppClusterName=eds-tracer-demo_${spring.profiles.active}",
                            "--local_service_version_suffix=-${spring.profiles.active}",
                            "--remote_service_version_suffix=-${spring.profiles.active}" };
         List<String> argsList = new ArrayList<>(args.length + args2.length);

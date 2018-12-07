@@ -31,14 +31,6 @@
 	<!--测试dubbo -->
 
 	<!-- 和本地bean一样实现服务 -->
-	<dubbo:service interface="com.netease.edu.boot.hystrixtest.service.HystrixTestWithFallbackService"
-		ref="hystrixTestWithFallbackService" register="${local_service_enable}"
-		version="1.0.0${local_service_version_suffix}" />
-
-	<dubbo:service interface="com.netease.edu.boot.hystrixtest.service.HystrixTestNoFallbackService"
-				   ref="hystrixTestNoFallbackService" register="${local_service_enable}"
-				   version="1.0.0${local_service_version_suffix}" />
-
 
 	<dubbo:service interface="com.netease.edu.boot.hystrixtest.service.TraceDemoService"
 				   ref="traceDemoServiceImpl" register="${local_service_enable}"
