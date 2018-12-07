@@ -1,4 +1,4 @@
-package com.netease.edu.boot.hystrixclient.message.stream.binding;
+package com.netease.edu.eds.trace.clientdemo.message.stream.binding;
 
 import org.springframework.cloud.stream.annotation.Output;
 import org.springframework.messaging.MessageChannel;

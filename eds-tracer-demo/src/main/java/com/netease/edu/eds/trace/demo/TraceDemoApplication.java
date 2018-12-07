@@ -49,7 +49,7 @@ import java.util.List;
 // @EnableAsync(proxyTargetClass = true)
 @Import(value = { TransactionMessageClientConfig.class })
 @EnableBinding({ShuffleStreamBinding.class})
-public class HystrixTestApplication {
+public class TraceDemoApplication {
 
     public static void main(String[] args) {
 
@@ -64,7 +64,7 @@ public class HystrixTestApplication {
         CollectionUtils.addAll(argsList, args);
         CollectionUtils.addAll(argsList, args2);
 
-        SpringApplication.run(HystrixTestApplication.class, argsList.toArray(new String[0]));
+        SpringApplication.run(TraceDemoApplication.class, argsList.toArray(new String[0]));
     }
 
     @Bean

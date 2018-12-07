@@ -1,4 +1,4 @@
-package com.netease.edu.boot.hystrixclient.service;
+package com.netease.edu.eds.trace.clientdemo.service;
 
 public interface TraceDemoDownstreamService {
     String doSth(String args);

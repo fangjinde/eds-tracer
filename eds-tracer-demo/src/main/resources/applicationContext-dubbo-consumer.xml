@@ -27,7 +27,7 @@
                      interface="com.netease.edu.eds.trace.demo.service.TraceDemoService"
                      check="false" version="1.0.0-std"/>
 
-    <dubbo:service interface="com.netease.edu.boot.hystrixclient.service.TraceDemoDownstreamService"
+    <dubbo:service interface="com.netease.edu.eds.trace.clientdemo.service.TraceDemoDownstreamService"
                    ref="traceDemoDownstreamServiceImpl" register="${local_service_enable}"
                    version="1.0.0${local_service_version_suffix}" />
 

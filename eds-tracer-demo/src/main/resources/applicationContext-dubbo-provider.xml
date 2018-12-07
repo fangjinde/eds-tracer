@@ -13,7 +13,7 @@
 	<dubbo:consumer check="false"/>
 
 	<dubbo:reference id="traceDemoDownstreamService"
-					 interface="com.netease.edu.boot.hystrixclient.service.TraceDemoDownstreamService"
+					 interface="com.netease.edu.eds.trace.clientdemo.service.TraceDemoDownstreamService"
 					 check="false" version="1.0.0${remote_service_version_suffix}"/>
 
 	<dubbo:reference id="jobShareService"

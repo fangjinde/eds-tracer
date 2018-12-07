@@ -1,7 +1,7 @@
-package com.netease.edu.boot.hystrixclient.web.controller;
+package com.netease.edu.eds.trace.clientdemo.web.controller;
 
 import brave.propagation.ExtraFieldPropagation;
-import com.netease.edu.boot.hystrixclient.message.stream.binding.ShuffleStreamBindingForClient;
+import com.netease.edu.eds.trace.clientdemo.message.stream.binding.ShuffleStreamBindingForClient;
 import com.netease.edu.eds.trace.demo.dto.DemoDto;
 import com.netease.edu.eds.trace.demo.service.TraceDemoService;
 import com.netease.edu.web.viewer.ResponseView;

@@ -1,8 +1,8 @@
-package com.netease.edu.boot.hystrixclient;/**
+package com.netease.edu.eds.trace.clientdemo;/**
                                             * Created by hzfjd on 18/1/8.
                                             */
 
-import com.netease.edu.boot.hystrixclient.message.stream.binding.ShuffleStreamBindingForClient;
+import com.netease.edu.eds.trace.clientdemo.message.stream.binding.ShuffleStreamBindingForClient;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringBootConfiguration;
@@ -41,7 +41,7 @@ import java.util.List;
 @EnableDiscoveryClient
 @ImportResource("classpath:applicationContext-client.xml")
 @EnableBinding({ ShuffleStreamBindingForClient.class })
-public class HystrixTestClient {
+public class TracerClientDemoApplication {
 
     public static void main(String[] args) throws InterruptedException {
 
@@ -60,7 +60,7 @@ public class HystrixTestClient {
         CollectionUtils.addAll(argsList, args);
         CollectionUtils.addAll(argsList, args2);
 
-        new SpringApplicationBuilder().bannerMode(Banner.Mode.OFF).sources(HystrixTestClient.class).profiles("client").run(argsList.toArray(new String[0]));
+        new SpringApplicationBuilder().bannerMode(Banner.Mode.OFF).sources(TracerClientDemoApplication.class).profiles("client").run(argsList.toArray(new String[0]));
 
     }
 

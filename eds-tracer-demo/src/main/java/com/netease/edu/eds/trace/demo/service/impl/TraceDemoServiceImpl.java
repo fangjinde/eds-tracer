@@ -1,6 +1,6 @@
 package com.netease.edu.eds.trace.demo.service.impl;
 
-import com.netease.edu.boot.hystrixclient.service.TraceDemoDownstreamService;
+import com.netease.edu.eds.trace.clientdemo.service.TraceDemoDownstreamService;
 import com.netease.edu.eds.trace.demo.service.TraceDemoService;
 import org.springframework.stereotype.Component;
 
