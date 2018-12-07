@@ -24,7 +24,7 @@
     <!---->
 
     <dubbo:reference id="traceDemoService"
-                     interface="com.netease.edu.boot.hystrixtest.service.TraceDemoService"
+                     interface="com.netease.edu.eds.trace.demo.service.TraceDemoService"
                      check="false" version="1.0.0-std"/>
 
     <dubbo:service interface="com.netease.edu.boot.hystrixclient.service.TraceDemoDownstreamService"

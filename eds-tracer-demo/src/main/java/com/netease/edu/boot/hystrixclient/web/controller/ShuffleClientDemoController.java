@@ -2,8 +2,8 @@ package com.netease.edu.boot.hystrixclient.web.controller;
 
 import brave.propagation.ExtraFieldPropagation;
 import com.netease.edu.boot.hystrixclient.message.stream.binding.ShuffleStreamBindingForClient;
-import com.netease.edu.boot.hystrixtest.dto.DemoDto;
-import com.netease.edu.boot.hystrixtest.service.TraceDemoService;
+import com.netease.edu.eds.trace.demo.dto.DemoDto;
+import com.netease.edu.eds.trace.demo.service.TraceDemoService;
 import com.netease.edu.web.viewer.ResponseView;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -28,8 +28,7 @@ import java.util.Map;
 @RestController
 public class ShuffleClientDemoController {
 
-    @Autowired
-    TraceDemoService       traceDemoService;
+    @Autowired TraceDemoService traceDemoService;
 
     @Autowired
     @Qualifier("shuffleDemoAmqpTemplate")

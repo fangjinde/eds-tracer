@@ -58,9 +58,6 @@
     </rabbit:listener-container>
 
 
-    <bean id="traceDemoMessageListener" class="com.netease.edu.boot.hystrixtest.message.TraceDemoMessageListener"/>
-
-
     <!-- shuffle consumer test start-->
 
     <rabbit:topic-exchange name="shuffleDemoTopicExchange${local_service_version_suffix}">
