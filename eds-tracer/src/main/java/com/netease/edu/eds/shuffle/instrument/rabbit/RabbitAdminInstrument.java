@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -241,7 +240,8 @@ public class RabbitAdminInstrument implements TraceAgentInstrumetation {
                     if (channel instanceof ChannelProxy) {
                         ((ChannelProxy) channel).getTargetChannel().close();
                     }
-                } catch (TimeoutException e1) {
+                } catch (Exception e1) {
+                    logger.error("error while trying close channel during declaring queue: '" + queue.getName() + "'",e1);
                 }
                 throw new IOException(e);
             }

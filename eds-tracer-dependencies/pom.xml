@@ -78,12 +78,6 @@
             <!-- 以下部分以后放到edu-third-party-base中-->
 
             <dependency>
-                <groupId>com.rabbitmq</groupId>
-                <artifactId>amqp-client</artifactId>
-                <version>4.0.0</version>
-            </dependency>
-
-            <dependency>
                 <groupId>commons-lang</groupId>
                 <artifactId>commons-lang</artifactId>
                 <version>2.6</version>

@@ -67,6 +67,12 @@
             </dependency>
 
             <dependency>
+                <groupId>com.rabbitmq</groupId>
+                <artifactId>amqp-client</artifactId>
+                <version>5.1.2</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.netease.edu</groupId>
                 <artifactId>edu-third-party-base</artifactId>
                 <version>${edu-third-party-base.version}</version>
@@ -97,6 +103,8 @@
                 <artifactId>spring-rabbit</artifactId>
                 <version>2.0.3.RELEASE</version>
             </dependency>
+
+
 
             <dependency>
                 <groupId>com.netease.edu.boot</groupId>
