@@ -1,5 +1,6 @@
 package com.netease.edu.eds.shuffle.support;
 
+import com.netease.edu.eds.shuffle.core.BeanNameConstants;
 import com.netease.edu.eds.shuffle.spi.KeyValueManager;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.data.redis.core.RedisOperations;
@@ -13,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  **/
 public class RedisKeyValueManager implements KeyValueManager {
 
-    @Resource(name = "shuffleRedisTemplate")
+    @Resource(name = BeanNameConstants.SHUFFLE_REDIS_TEMPLATE)
     RedisOperations<String, String> shuffleRedisTemplate;
 
     @Override

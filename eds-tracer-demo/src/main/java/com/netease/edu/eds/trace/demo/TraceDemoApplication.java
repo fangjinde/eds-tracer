@@ -1,8 +1,9 @@
 package com.netease.edu.eds.trace.demo;/**
-                                          * Created by hzfjd on 18/1/8.
-                                          */
+                                        * Created by hzfjd on 18/1/8.
+                                        */
 
 import com.netease.edu.eds.trace.demo.aop.TransactionAspect;
+import com.netease.edu.eds.trace.demo.constants.ApplicationCommandArgs;
 import com.netease.edu.eds.trace.demo.ioc.ExcludeBeanFactoryPostProcessor;
 import com.netease.edu.eds.trace.demo.message.stream.binding.ShuffleStreamBinding;
 import com.netease.edu.transaction.message.client.config.TransactionMessageClientConfig;
@@ -48,21 +49,17 @@ import java.util.List;
 @ImportResource({ "classpath:applicationContext-server.xml" })
 // @EnableAsync(proxyTargetClass = true)
 @Import(value = { TransactionMessageClientConfig.class })
-@EnableBinding({ShuffleStreamBinding.class})
+@EnableBinding({ ShuffleStreamBinding.class })
 public class TraceDemoApplication {
 
     public static void main(String[] args) {
 
-        //serviceBus
-        //--spring.cloud.stream.bindings.shuffleStreamInput.binder=serviceBus
-        //--spring.cloud.stream.bindings.shuffleStreamInput.destination=shuffleCloudStreamDemoTopic${local_service_version_suffix}
-        //--spring.cloud.stream.bindings.shuffleStreamInput.group=shuffleCloudStreamDemoQueue1${local_service_version_suffix}
-
-        // String[] args2={"--management.health.db=false","--spring.zipkin.kafka.topic=zipkin-fjd"}
-        String[] args2 = { "--spring.cloud.stream.bindings.shuffleStreamInput.binder=serviceBus","--spring.cloud.stream.bindings.shuffleStreamInput.destination=shuffleCloudStreamDemoTopic","--spring.cloud.stream.bindings.shuffleStreamInput.group=shuffleCloudStreamDemoQueue1","--spring.cloud.stream.rabbit.bindings.shuffleStreamInput.consumer.prefix=${spring.profiles.active}-","--management.health.db=false", "--local_service_version_suffix=-${spring.profiles.active}","--remote_service_version_suffix=-${spring.profiles.active}" };
-        List<String> argsList = new ArrayList<>(args.length + args2.length);
+        String[] argsDiff = { "--spring.application.name=eds-tracer-demo" };
+        List<String> argsList = new ArrayList<>(args.length + ApplicationCommandArgs.SAME_ARGS.length
+                                                + argsDiff.length);
         CollectionUtils.addAll(argsList, args);
-        CollectionUtils.addAll(argsList, args2);
+        CollectionUtils.addAll(argsList, ApplicationCommandArgs.SAME_ARGS);
+        CollectionUtils.addAll(argsList, argsDiff);
 
         SpringApplication.run(TraceDemoApplication.class, argsList.toArray(new String[0]));
     }

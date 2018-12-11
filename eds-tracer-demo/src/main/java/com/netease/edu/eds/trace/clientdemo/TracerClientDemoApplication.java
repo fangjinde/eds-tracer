@@ -1,8 +1,9 @@
 package com.netease.edu.eds.trace.clientdemo;/**
-                                            * Created by hzfjd on 18/1/8.
-                                            */
+                                              * Created by hzfjd on 18/1/8.
+                                              */
 
 import com.netease.edu.eds.trace.clientdemo.message.stream.binding.ShuffleStreamBindingForClient;
+import com.netease.edu.eds.trace.demo.constants.ApplicationCommandArgs;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringBootConfiguration;
@@ -45,20 +46,12 @@ public class TracerClientDemoApplication {
 
     public static void main(String[] args) throws InterruptedException {
 
-        //serviceBus
-        //--spring.cloud.stream.bindings.shuffleStreamOutput.binder=serviceBus
-        //--spring.cloud.stream.bindings.shuffleStreamOutput.destination=shuffleCloudStreamDemoTopic${local_service_version_suffix}
-
-        String[] args2 = { "--spring.cloud.stream.bindings.shuffleStreamOutput.binder=serviceBus","--spring.cloud.stream.bindings.shuffleStreamOutput.destination=shuffleCloudStreamDemoTopic","--spring.cloud.stream.rabbit.bindings.shuffleStreamOutput.producer.prefix=${spring.profiles.active}-","--spring.sleuth.web.additionalSkipPattern=/health/status|/web/echoNoTrace",
-                           "--edu-hystrix-demo-web_service_version_suffix=-${spring.profiles.active}",
-                           "--hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds=3600000",
-                           "--deployAppName=eds-tracer-demo",
-                           "--deployAppClusterName=eds-tracer-demo_${spring.profiles.active}",
-                           "--local_service_version_suffix=-${spring.profiles.active}",
-                           "--remote_service_version_suffix=-${spring.profiles.active}" };
-        List<String> argsList = new ArrayList<>(args.length + args2.length);
+        String[] argsDiff = { "--spring.application.name=eds-tracer-demo-client" };
+        List<String> argsList = new ArrayList<>(args.length + ApplicationCommandArgs.SAME_ARGS.length
+                                                + argsDiff.length);
         CollectionUtils.addAll(argsList, args);
-        CollectionUtils.addAll(argsList, args2);
+        CollectionUtils.addAll(argsList, ApplicationCommandArgs.SAME_ARGS);
+        CollectionUtils.addAll(argsList, argsDiff);
 
         new SpringApplicationBuilder().bannerMode(Banner.Mode.OFF).sources(TracerClientDemoApplication.class).profiles("client").run(argsList.toArray(new String[0]));
 
