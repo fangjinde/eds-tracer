@@ -13,6 +13,7 @@
         <module>eds-tracer-dependencies</module>
         <module>eds-tracer</module>
         <module>eds-tracer-service</module>
+        <module>eds-tracer-admin</module>
         <module>eds-tracer-demo</module>
     </modules>
 
