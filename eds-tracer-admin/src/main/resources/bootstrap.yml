@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: eds-tracer-admin
+  profiles:
+    active: mac-linux-dev
+  cloud:
+    config:
+      uri: http://edu-config-test.service.163.org
+      label: overmind_test
+      fail-fast: true
+appLogRootDir: ${user.home}/logs/${spring.application.name}
+---
+spring:
+  profiles: mac-linux-dev,windows-dev
+  cloud:
+    config:
+      uri: http://config.edutest.hz.netease.com
+      fail-fast: true
+---
+spring:
+  profiles: online,pre,pre2,pre3,pre4,pre5,pre6
+  cloud:
+    config:
+      uri: http://edu-config.service.163.org
+      label: master
+      fail-fast: true

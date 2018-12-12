@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd"
+       default-autowire="byName" default-lazy-init="false">
+
+
+    <bean id="studyCounterRedisTemplate" class="com.netease.edu.persist.redis.RedisTemplateFactory"
+          parent="noNamespaceRedisTemplate">
+        <property name="namespace" value="study_"/>
+        <property name="valueSerializer">
+            <bean class="org.springframework.data.redis.serializer.StringRedisSerializer"/>
+        </property>
+    </bean>
+
+    <bean id="studyRedisTemplate" class="com.netease.edu.persist.redis.RedisTemplateFactory"
+          parent="noNamespaceRedisTemplate">
+        <property name="namespace" value="study_"/>
+    </bean>
+
+    <bean id="studyJedisClient" class="com.netease.edu.persist.redis.JedisClientFactory"
+          parent="noNamespaceJedisClient">
+        <property name="namespace" value="study_jedis_"/>
+    </bean>
+
+
+    <bean id="studyMemcachedClient"
+          class="com.netease.edu.persist.cache.KeyPrefixSupportedMemcachedClientFactory"
+          parent="noNamespaceMemcachedClient">
+        <property name="namespace" value="memcached_study_"/>
+    </bean>
+
+
+    <bean id="bareMemcachedClient"
+          class="net.spy.memcached.spring.MemcachedClientFactoryBean">
+        <property name="servers" value="${memcached_address_list}"/>
+
+        <property name="protocol" value="BINARY"/>
+        <property name="transcoder">
+            <bean class="net.spy.memcached.transcoders.SerializingTranscoder">
+                <property name="compressionThreshold" value="16384"/>
+            </bean>
+        </property>
+        <property name="maxReconnectDelay" value="60"/>
+
+        <property name="opTimeout" value="200"/>
+        <property name="opQueueMaxBlockTime" value="400"/>
+        <property name="timeoutExceptionThreshold" value="20"/>
+        <property name="hashAlg">
+            <value type="net.spy.memcached.DefaultHashAlgorithm">KETAMA_HASH</value>
+        </property>
+        <property name="locatorType">
+            <value type="net.spy.memcached.ConnectionFactoryBuilder.Locator">CONSISTENT</value>
+        </property>
+        <property name="failureMode">
+            <value type="net.spy.memcached.FailureMode">Redistribute</value>
+        </property>
+        <property name="useNagleAlgorithm" value="false"/>
+    </bean>
+
+
+</beans>
