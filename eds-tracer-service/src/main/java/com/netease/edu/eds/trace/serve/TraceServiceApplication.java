@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.web.SpringDataWebAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
@@ -23,7 +22,7 @@ import org.springframework.core.Ordered;
  **/
 @SpringBootApplication(exclude = { DataSourceTransactionManagerAutoConfiguration.class,
                                    MongoDataAutoConfiguration.class, MongoRepositoriesAutoConfiguration.class,
-                                   RedisAutoConfiguration.class, RedisRepositoriesAutoConfiguration.class,
+                                   RedisRepositoriesAutoConfiguration.class,
                                    EmbeddedMongoAutoConfiguration.class, RabbitAutoConfiguration.class,
                                    SpringDataWebAutoConfiguration.class })
 @EnableFeignClients

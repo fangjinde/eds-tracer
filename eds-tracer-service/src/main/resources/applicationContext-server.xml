@@ -4,12 +4,6 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
 	   http://www.springframework.org/schema/beans/spring-beans.xsd ">
 
-    <import resource="classpath:applicationContext-async.xml"/>
     <import resource="classpath:applicationContext-dubbo-provider.xml"/>
-    <import resource="classpath:base/applicationContext-framework-dao-base.xml"/>
-    <import resource="classpath:base/applicationContext-framework-cache-base.xml"/>
-    <import resource="classpath:base/applicationContext-search.xml"/>
-    <import resource="classpath:applicationContext-jms.xml"/>
-    <import resource="classpath:applicationContext-cache.xml"/>
 
 </beans>
