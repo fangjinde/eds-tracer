@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project [<!ENTITY buildfile SYSTEM "file:./build-user.xml">]>
+<project basedir="" default="deploy" name="study">
+    <property name="mvn" value="mvnJDK8"/>
+    <property name="compress.dir" value="compressed"/>
+    <property name="target.dir" value="target"/>
+    <property name="baseline.dir" value="${basedir}"/>
+    <property name="service.dir" value="${baseline.dir}"/>
+
+    <target name="clean">
+        <delete dir="${compress.dir}"/>
+        <delete dir="${baseline.dir}/unzip"/>
+    </target>
+
+    <target name="package" depends="clean">
+        <exec dir="${baseline.dir}" executable="${mvn}" failonerror="true">
+            <arg line="-T 1.5C clean package -U -Dmaven.test.skip=true"/>
+        </exec>
+    </target>
+
+    <target name="compress-app">
+        <mkdir dir="${compress.dir}"/>
+        <mkdir dir="${compress.dir}/lib"/>
+        <copy tofile="${compress.dir}/app.jar">
+            <fileset dir="${service.dir}/${target.dir}" includes="*.jar"/>
+        </copy>
+    </target>
+
+    <target name="cp-sentry-premain">
+        <copy todir="${compress.dir}/conf/sentry-javaagent-home" overwrite="true">
+            <fileset dir="${service.dir}/src/main/resources/sentry-javaagent-home"/>
+        </copy>
+    </target>
+
+    <!--单测去除-->
+    <target name="cp-sentry-collector">
+        <mkdir dir="${baseline.dir}/unzip"/>
+        <exec dir="." executable="unzip" failonerror="true">
+            <arg line="-o ${compress.dir}/app.jar -d ${baseline.dir}/unzip"/>
+        </exec>
+        <copy todir="${compress.dir}/lib" overwrite="true">
+            <fileset dir="${baseline.dir}/unzip/BOOT-INF/lib" includes="sentry-javaagent-collector-*.jar"/>
+        </copy>
+        <copy tofile="${compress.dir}/lib/eds-tracer-agent.jar" overwrite="true">
+            <fileset dir="${baseline.dir}/unzip/BOOT-INF/lib" includes="eds-tracer-agent-*.jar"
+                     excludes="*-sources.jar"/>
+        </copy>
+    </target>
+
+    <target name="deploy">
+        <echo message="begin auto deploy......"/>
+        <antcall target="package"/>
+        <antcall target="compress-app"/>
+        <antcall target="cp-sentry-premain"/>
+        <antcall target="cp-sentry-collector"/>
+    </target>
+</project>

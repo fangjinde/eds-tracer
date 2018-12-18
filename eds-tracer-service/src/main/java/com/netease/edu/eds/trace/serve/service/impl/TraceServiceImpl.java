@@ -7,11 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import com.netease.edu.eds.trace.serve.service.TraceService;
+import org.springframework.stereotype.Component;
 
 /**
  * @author hzfjd
  * @create 18/12/12
  **/
+@Component("traceServiceImpl")
 public class TraceServiceImpl implements TraceService {
 
     private static final String TRACE_HTTP_REDIRECT_UNIQUE_KEY_PREFIX = "trace_hruk_";

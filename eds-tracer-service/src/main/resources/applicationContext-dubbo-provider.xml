@@ -19,8 +19,8 @@
 					executes="${dubbo_executes}" actives="${dubbo_actives}" filter="-exception,eduexception" />
 
 	<!-- 服务提供 -->
-	<dubbo:service interface="com.netease.edu.eds.trace.demo.service.TraceDemoService"
-				   ref="traceDemoServiceImpl" register="${local_service_enable}"
+	<dubbo:service interface="com.netease.edu.eds.trace.serve.service.TraceService"
+				   ref="traceServiceImpl" register="${local_service_enable}"
 				   version="1.0.0${local_service_version_suffix}" />
 
 

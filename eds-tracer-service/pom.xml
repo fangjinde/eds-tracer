@@ -24,7 +24,6 @@
 
     <dependencies>
 
-
         <dependency>
             <groupId>com.netease.edu.eds</groupId>
             <artifactId>eds-tracer</artifactId>
@@ -117,6 +116,23 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>1.4.3.RELEASE</version>
+                <configuration>
+                    <mainClass>com.netease.edu.eds.trace.serve.TraceServiceApplication</mainClass>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 </project>
