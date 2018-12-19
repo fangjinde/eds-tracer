@@ -3,9 +3,7 @@ package com.netease.edu.eds.trace.clientdemo;/**
                                               */
 
 import com.netease.edu.eds.trace.clientdemo.message.stream.binding.ShuffleStreamBindingForClient;
-import com.netease.edu.eds.trace.demo.constants.ApplicationCommandArgs;
 import com.netease.edu.web.health.servlet.HealthCheckServlet;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -27,9 +25,7 @@ import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.Ordered;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -50,14 +46,7 @@ public class TracerClientDemoApplication {
 
     public static void main(String[] args) throws InterruptedException {
 
-        String[] argsDiff = { "--spring.application.name=eds-tracer-demo-client" };
-        List<String> argsList = new ArrayList<>(args.length + ApplicationCommandArgs.SAME_ARGS.length
-                                                + argsDiff.length);
-        CollectionUtils.addAll(argsList, args);
-        CollectionUtils.addAll(argsList, ApplicationCommandArgs.SAME_ARGS);
-        CollectionUtils.addAll(argsList, argsDiff);
-
-        new SpringApplicationBuilder().bannerMode(Banner.Mode.OFF).sources(TracerClientDemoApplication.class).profiles("client").run(argsList.toArray(new String[0]));
+        new SpringApplicationBuilder().bannerMode(Banner.Mode.OFF).sources(TracerClientDemoApplication.class).run(args);
 
     }
 
@@ -71,19 +60,19 @@ public class TracerClientDemoApplication {
     }
 
     @Bean
-    public HealthCheckServlet healthCheckServlet(){
-        HealthCheckServlet healthCheckServlet=new HealthCheckServlet();
+    public HealthCheckServlet healthCheckServlet() {
+        HealthCheckServlet healthCheckServlet = new HealthCheckServlet();
         return healthCheckServlet;
     }
 
-
     @Bean
-    public ServletRegistrationBean healthCheckServletRegistrationBean(){
-        ServletRegistrationBean registration=new ServletRegistrationBean();
+    public ServletRegistrationBean healthCheckServletRegistrationBean() {
+        ServletRegistrationBean registration = new ServletRegistrationBean();
         registration.setServlet(healthCheckServlet());
         registration.setName("healthCheckServlet");
-        Map<String,String> initParams=new HashMap<String,String>();
-        initParams.put("allowIps","127.0.0.1,10.120.152.63,10.120.144.71,172.17.1.18,10.164.132.130,10.122.138.119,10.164.143.133");
+        Map<String, String> initParams = new HashMap<String, String>();
+        initParams.put("allowIps",
+                       "127.0.0.1,10.120.152.63,10.120.144.71,172.17.1.18,10.164.132.130,10.122.138.119,10.164.143.133");
         registration.setInitParameters(initParams);
         registration.addUrlMappings("/health/*");
         return registration;
