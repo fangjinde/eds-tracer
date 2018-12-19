@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project [<!ENTITY buildfile SYSTEM "file:./build-user.xml">]>
+<project basedir="." default="deploy_proxy" name="study_proxy">
+    <!--后端依赖的前端工程名，多个以逗号隔开-->
+
+    <import file="./deploy/ndp/backend/build.xml"/>
+
+    <target name="deploy_proxy">
+        <antcall target="deploy" />
+    </target>
+
+</project>
