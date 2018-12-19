@@ -10,8 +10,7 @@ import com.netease.edu.eds.trace.constants.PropagationConstants;
 import com.netease.edu.eds.trace.core.UrlParameterManagerDto;
 import com.netease.edu.eds.trace.instrument.http.RedirectUrlTraceMatcher;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
-import com.netease.edu.eds.trace.support.TracePropertiesSupport;
-import com.netease.edu.eds.trace.support.TraceRedisSupport;
+import com.netease.edu.eds.trace.support.TraceKvSupport;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author hzfjd
@@ -108,9 +106,7 @@ public class PropagationUtils {
         injector.inject(span.context(), tracePropagationMap);
         String tracePropagationInfoStr = TraceContextPropagationUtils.generateTraceContextJson(tracePropagationMap);
         String uuid = TraceContextPropagationUtils.generateTraceUniqueKey();
-        TraceRedisSupport.unsafeSet(TraceContextPropagationUtils.getTraceUniqueKeyWithCachePrefix(uuid),
-                                    tracePropagationInfoStr,
-                                    TracePropertiesSupport.getRedirectTraceCacheExpireSeconds(), TimeUnit.SECONDS);
+        TraceKvSupport.unsafeSetTraceContext(uuid, tracePropagationInfoStr);
 
         String newLocation = addTracePropagationToLocation(location, uuid);
         if (StringUtils.isNotBlank(newLocation)) {

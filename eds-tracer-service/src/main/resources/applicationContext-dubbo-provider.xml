@@ -19,10 +19,13 @@
 					executes="${dubbo_executes}" actives="${dubbo_actives}" filter="-exception,eduexception" />
 
 	<!-- 服务提供 -->
-	<dubbo:service interface="com.netease.edu.eds.trace.serve.service.TraceService"
+	<dubbo:service interface="com.netease.edu.eds.trace.server.service.TraceService"
 				   ref="traceServiceImpl" register="${local_service_enable}"
 				   version="1.0.0${local_service_version_suffix}" />
 
+	<dubbo:service interface="com.netease.edu.eds.shuffle.server.service.ShuffleService"
+				   ref="shuffleServiceImpl" register="${local_service_enable}"
+				   version="1.0.0${local_service_version_suffix}" />
 
 	
 </beans>

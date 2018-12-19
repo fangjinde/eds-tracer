@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoCo
 import org.springframework.boot.autoconfigure.data.web.SpringDataWebAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
@@ -16,18 +17,21 @@ import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.Ordered;
 
+import com.netease.edu.eds.trace.serve.props.ShuffleServerProperties;
+import com.netease.edu.eds.trace.serve.props.TraceServerProperties;
+
 /**
  * @author hzfjd
  * @create 18/12/12
  **/
 @SpringBootApplication(exclude = { DataSourceTransactionManagerAutoConfiguration.class,
                                    MongoDataAutoConfiguration.class, MongoRepositoriesAutoConfiguration.class,
-                                   RedisRepositoriesAutoConfiguration.class,
-                                   EmbeddedMongoAutoConfiguration.class, RabbitAutoConfiguration.class,
-                                   SpringDataWebAutoConfiguration.class })
+                                   RedisRepositoriesAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class,
+                                   RabbitAutoConfiguration.class, SpringDataWebAutoConfiguration.class })
 @EnableFeignClients
 @EnableDiscoveryClient
 @ImportResource({ "classpath:applicationContext-server.xml" })
+@EnableConfigurationProperties({ TraceServerProperties.class ,ShuffleServerProperties.class})
 public class TraceServiceApplication {
 
     public static void main(String[] args) {

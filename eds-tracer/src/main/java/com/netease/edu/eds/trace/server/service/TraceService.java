@@ -1,4 +1,4 @@
-package com.netease.edu.eds.trace.serve.service;
+package com.netease.edu.eds.trace.server.service;
 
 /**
  * @author hzfjd

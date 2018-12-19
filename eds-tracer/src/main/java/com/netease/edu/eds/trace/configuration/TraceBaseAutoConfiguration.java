@@ -6,25 +6,20 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.netease.edu.eds.trace.constants.PropagationConstants;
-import com.netease.edu.eds.trace.constants.TraceBeanNameConstants;
-import com.netease.edu.eds.trace.properties.RedisProperties;
 import com.netease.edu.eds.trace.properties.TraceProperties;
 import com.netease.edu.eds.trace.support.EduExceptionMessageErrorParser;
 import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
-import com.netease.edu.eds.trace.support.TraceRedisSupport;
+import com.netease.edu.eds.trace.support.TraceKvSupport;
 import com.netease.edu.eds.trace.utils.TraceContextPropagationUtils;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.sleuth.ErrorParser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
-import org.springframework.data.redis.core.RedisOperations;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.context.annotation.ImportResource;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,6 +32,12 @@ import java.util.concurrent.TimeUnit;
 @ConditionalOnProperty(value = "trace.enabled", matchIfMissing = true)
 @AutoConfigureBefore(EduZipkinAutoConfiguration.class)
 public class TraceBaseAutoConfiguration {
+
+    @Configuration
+    @ImportResource(locations = { "classpath:trace/applicationContext-client.xml" })
+    public class TraceServiceConfiguration{
+
+    }
 
     @Bean
     @ConditionalOnMissingBean
@@ -56,31 +57,6 @@ public class TraceBaseAutoConfiguration {
         return new TraceProperties();
     }
 
-    @Bean
-    @ConditionalOnMissingBean(name = TraceBeanNameConstants.TRACE_REDIS_CONNECTION_FACTORY_BEAN_NAME)
-    public JedisConnectionFactory traceRedisConnectionFactory() {
-        JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();
-        RedisProperties redisProperties = traceRedisProperties();
-        jedisConnectionFactory.setHostName(redisProperties.getHost());
-        jedisConnectionFactory.setPassword(redisProperties.getPassword());
-        jedisConnectionFactory.setPort(redisProperties.getPort());
-        jedisConnectionFactory.setTimeout(redisProperties.getTimeout());
-        return jedisConnectionFactory;
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(name = TraceBeanNameConstants.TRACE_REDIS_TEMPLATE_BEAN_NAME)
-    public RedisOperations traceRedisTemplate() {
-        RedisTemplate redisTemplate = new RedisTemplate();
-        redisTemplate.setConnectionFactory(traceRedisConnectionFactory());
-        return redisTemplate;
-    }
-
-    @Bean
-    @ConfigurationProperties(prefix = "trace.redis")
-    public RedisProperties traceRedisProperties() {
-        return new RedisProperties();
-    }
 
     /***
      * refresh whenever environment is changed will be overhead， later i will work it out.
@@ -96,7 +72,7 @@ public class TraceBaseAutoConfiguration {
             @Override
             public Object load(String key) throws Exception {
 
-                Object value = TraceRedisSupport.unsafeGet(key);
+                Object value = TraceKvSupport.unsafeGetTraceContext(key);
 
                 if (!(value instanceof String)) {
                     return PropagationConstants.NULL_OBJECT;

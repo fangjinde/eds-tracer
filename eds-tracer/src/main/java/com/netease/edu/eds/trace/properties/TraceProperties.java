@@ -14,12 +14,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "trace")
 public class TraceProperties {
 
-    public static final String  DEFAULT_ENCODING                            = "UTF-8";
-    public static final boolean DEFAULT_FORCE_ENCODING                      = true;
-    public static final int     DEFAULT_REDIRECT_TRACE_CACHE_EXPIRE_SECONDS = 3 * 60;
+    public static final String  DEFAULT_ENCODING       = "UTF-8";
+    public static final boolean DEFAULT_FORCE_ENCODING = true;
 
-    private Http                http                                        = new Http();
-    private Cache               cache                                       = new Cache();
+    private Http                http                   = new Http();
+    private Cache               cache                  = new Cache();
 
     public Http getHttp() {
         return http;
@@ -39,9 +38,8 @@ public class TraceProperties {
 
     public static class Http {
 
-        private String  encoding                        = DEFAULT_ENCODING;
-        private boolean forceEncoding                   = DEFAULT_FORCE_ENCODING;
-        private int     redirectTraceCacheExpireSeconds = DEFAULT_REDIRECT_TRACE_CACHE_EXPIRE_SECONDS;
+        private String  encoding      = DEFAULT_ENCODING;
+        private boolean forceEncoding = DEFAULT_FORCE_ENCODING;
         private String  needTraceRedirectUrlPattern;
 
         public String getEncoding() {
@@ -58,14 +56,6 @@ public class TraceProperties {
 
         public void setForceEncoding(boolean forceEncoding) {
             this.forceEncoding = forceEncoding;
-        }
-
-        public int getRedirectTraceCacheExpireSeconds() {
-            return redirectTraceCacheExpireSeconds;
-        }
-
-        public void setRedirectTraceCacheExpireSeconds(int redirectTraceCacheExpireSeconds) {
-            this.redirectTraceCacheExpireSeconds = redirectTraceCacheExpireSeconds;
         }
 
         public String getNeedTraceRedirectUrlPattern() {

@@ -16,7 +16,6 @@ import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.support.TracePropertiesSupport;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
-import com.netease.edu.eds.trace.utils.TraceContextPropagationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,13 +49,12 @@ public final class TracingFilter implements Filter {
 
                                                                     LoadingCache<String, Object> traceContextCache = SpringBeanFactorySupport.getBean("traceContextCache");
                                                                     Object cacheValue = null;
-                                                                    String traceCacheKey = TraceContextPropagationUtils.getTraceUniqueKeyWithCachePrefix(traceUuid);
                                                                     if (traceContextCache != null) {
                                                                         try {
-                                                                            cacheValue = traceContextCache.get(traceCacheKey);
+                                                                            cacheValue = traceContextCache.get(traceUuid);
                                                                         } catch (ExecutionException e) {
-                                                                            logger.error(String.format("getCacheFrom trace loadingCache error, with key=%s",
-                                                                                                       traceCacheKey),
+                                                                            logger.error(String.format("getCacheFrom trace loadingCache error, with traceUuid=%s",
+                                                                                                       traceUuid),
                                                                                          e);
                                                                         }
                                                                     }

@@ -1,5 +1,19 @@
 package com.netease.edu.eds.shuffle.configuration;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.x.discovery.*;
+import org.apache.curator.x.discovery.details.InstanceSerializer;
+import org.apache.curator.x.discovery.details.JsonInstanceSerializer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cloud.commons.util.InetUtils;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportResource;
+import org.springframework.util.StringUtils;
+
 import com.netease.edu.eds.shuffle.core.BeanNameConstants;
 import com.netease.edu.eds.shuffle.core.ServiceDirectory;
 import com.netease.edu.eds.shuffle.core.ShuffleProperties;
@@ -9,27 +23,6 @@ import com.netease.edu.eds.shuffle.instrument.rabbit.SpringRabbitComponentNameEn
 import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
 import com.netease.edu.eds.shuffle.spi.KeyValueManager;
 import com.netease.edu.eds.shuffle.support.*;
-import com.netease.edu.eds.trace.properties.RedisProperties;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.x.discovery.*;
-import org.apache.curator.x.discovery.details.InstanceSerializer;
-import org.apache.curator.x.discovery.details.JsonInstanceSerializer;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.cloud.commons.util.InetUtils;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
-import org.springframework.data.redis.core.RedisOperations;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.util.StringUtils;
-import redis.clients.jedis.JedisPoolConfig;
-
-import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  * @author hzfjd
@@ -168,91 +161,16 @@ public class ShuffleConfiguration {
         @ConditionalOnProperty(value = "shuffle.turnOn", havingValue = "true", matchIfMissing = false)
         public static class ShuffleKeyValueManagerConfiguration {
 
+            @Configuration
+            @ImportResource(locations = { "classpath:shuffle/applicationContext-client.xml" })
+            public class TraceServiceConfiguration {
+
+            }
+
             @Bean
-            @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_REDIS_KEY_VALUE_MANAGER)
+            @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_KEY_VALUE_MANAGER)
             public KeyValueManager shuffleRedisKeyValueManager() {
-                return new RedisKeyValueManager();
-            }
-
-            @Bean
-            @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_REDIS_TEMPLATE)
-            public RedisOperations shuffleRedisTemplate() {
-                RedisTemplate redisTemplate = new RedisTemplate();
-                redisTemplate.setConnectionFactory(shuffleRedisConnectionFactory());
-                return redisTemplate;
-            }
-
-            @Bean
-            @ConditionalOnMissingBean(name="shuffleRedisConnectionFactory")
-            public JedisConnectionFactory shuffleRedisConnectionFactory() {
-                return applyProperties(createJedisConnectionFactory());
-            }
-
-            @Bean
-            @ConfigurationProperties(prefix = "shuffle.redis")
-            public RedisProperties shuffleRedisProperties() {
-                return new RedisProperties();
-            }
-
-            private JedisConnectionFactory createJedisConnectionFactory() {
-                JedisPoolConfig poolConfig = shuffleRedisProperties().getPool() != null ? jedisPoolConfig() : new JedisPoolConfig();
-                return new JedisConnectionFactory(poolConfig);
-            }
-
-            private JedisPoolConfig jedisPoolConfig() {
-                JedisPoolConfig config = new JedisPoolConfig();
-                RedisProperties.Pool props = shuffleRedisProperties().getPool();
-                config.setMaxTotal(props.getMaxActive());
-                config.setMaxIdle(props.getMaxIdle());
-                config.setMinIdle(props.getMinIdle());
-                config.setMaxWaitMillis(props.getMaxWait());
-                return config;
-            }
-
-            private JedisConnectionFactory applyProperties(JedisConnectionFactory factory) {
-                configureConnection(factory);
-                if (shuffleRedisProperties().isSsl()) {
-                    factory.setUseSsl(true);
-                }
-                factory.setDatabase(shuffleRedisProperties().getDatabase());
-                if (shuffleRedisProperties().getTimeout() > 0) {
-                    factory.setTimeout(shuffleRedisProperties().getTimeout());
-                }
-                return factory;
-            }
-
-            private void configureConnection(JedisConnectionFactory factory) {
-                if (StringUtils.hasText(shuffleRedisProperties().getUrl())) {
-                    configureConnectionFromUrl(factory);
-                } else {
-                    factory.setHostName(shuffleRedisProperties().getHost());
-                    factory.setPort(shuffleRedisProperties().getPort());
-                    if (shuffleRedisProperties().getPassword() != null) {
-                        factory.setPassword(shuffleRedisProperties().getPassword());
-                    }
-                }
-            }
-
-            private void configureConnectionFromUrl(JedisConnectionFactory factory) {
-                String url = shuffleRedisProperties().getUrl();
-                if (url.startsWith("rediss://")) {
-                    factory.setUseSsl(true);
-                }
-                try {
-                    URI uri = new URI(url);
-                    factory.setHostName(uri.getHost());
-                    factory.setPort(uri.getPort());
-                    if (uri.getUserInfo() != null) {
-                        String password = uri.getUserInfo();
-                        int index = password.indexOf(":");
-                        if (index >= 0) {
-                            password = password.substring(index + 1);
-                        }
-                        factory.setPassword(password);
-                    }
-                } catch (URISyntaxException ex) {
-                    throw new IllegalArgumentException("Malformed 'spring.redis.url' " + url, ex);
-                }
+                return new DubboKeyValueManager();
             }
 
         }
