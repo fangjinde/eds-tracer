@@ -22,7 +22,7 @@
         <mkdir dir="${compress.dir}"/>
         <mkdir dir="${compress.dir}/lib"/>
         <copy tofile="${compress.dir}/app.jar">
-            <fileset dir="${service.dir}/${target.dir}" includes="*.jar"/>
+            <fileset dir="${service.dir}/${target.dir}" includes="*.jar" excludes="*-sources.jar"/>
         </copy>
     </target>
 
