@@ -31,6 +31,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import static com.netease.edu.eds.trace.constants.PropagationConstants.TRACE_ID_HTTP_RESPONSE_HEADER_NAME;
+
 public final class TracingFilter implements Filter {
 
     private static final Logger                     logger  = LoggerFactory.getLogger(TracingFilter.class);
@@ -156,8 +158,17 @@ public final class TracingFilter implements Filter {
 
         SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.HTTP);
 
+        String traceId = null;
+        if (span != null && !span.isNoop()) {
+            traceId = span.context().traceIdString();
+            if (StringUtils.isNotBlank(traceId)){
+                httpResponse.setHeader(TRACE_ID_HTTP_RESPONSE_HEADER_NAME,traceId);
+            }
+        }
+
         if (span != null && !span.isNoop() && environment != null) {
             SpanUtils.safeTag(span, CommonTagKeys.SERVER_ENV, environment.getProperty("spring.profiles.active"));
+
         }
 
         // Add attributes for explicit access to customization or span context
@@ -176,6 +187,8 @@ public final class TracingFilter implements Filter {
             error = e;
             throw e;
         } finally {
+
+
             handler.handleSend(httpResponse, error, span);
         }
     }
