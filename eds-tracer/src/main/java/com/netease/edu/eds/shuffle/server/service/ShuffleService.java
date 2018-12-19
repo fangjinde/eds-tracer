@@ -10,6 +10,6 @@ public interface ShuffleService {
 
     void setValue(String key, String value, Integer expireInSeconds);
 
-    Long increment(String key, long delta, Integer expireInSeconds);
+    Long increment(String key, Long delta, Integer expireInSeconds);
 
 }

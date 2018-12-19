@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.concurrent.TimeUnit;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit;
  * @create 18/12/19
  **/
 @Component("shuffleServiceImpl")
+@RestController
 public class ShuffleServiceImpl implements ShuffleService {
 
     private static final Logger     logger                   = LoggerFactory.getLogger(ShuffleServiceImpl.class);
@@ -26,7 +28,8 @@ public class ShuffleServiceImpl implements ShuffleService {
     private ShuffleServerProperties shuffleServerProperties;
 
     @Override
-    public String getValue(String key) {
+    @RequestMapping(path = "/shuffle/value/{key}", method = RequestMethod.GET)
+    public String getValue(@PathVariable("key") String key) {
 
         if (StringUtils.isBlank(key)) {
             return null;
@@ -36,7 +39,9 @@ public class ShuffleServiceImpl implements ShuffleService {
     }
 
     @Override
-    public void setValue(String key, String value, Integer expireInSeconds) {
+    @RequestMapping(path = "/shuffle/value/{key}", method = RequestMethod.POST)
+    public void setValue(@PathVariable("key") String key, @RequestParam("value") String value,
+                         @RequestParam(value = "expireInSeconds", required = false) Integer expireInSeconds) {
         if (StringUtils.isBlank(key) || StringUtils.isBlank(value)) {
             return;
         }
@@ -49,9 +54,15 @@ public class ShuffleServiceImpl implements ShuffleService {
     }
 
     @Override
-    public Long increment(String key, long delta, Integer expireInSeconds) {
+    @RequestMapping(path = "/shuffle/value/{key}/increase", method = RequestMethod.POST)
+    public Long increment(@PathVariable("key") String key, @RequestParam(value = "delta", required = false) Long delta,
+                          @RequestParam(value = "expireInSeconds", required = false) Integer expireInSeconds) {
         if (StringUtils.isBlank(key)) {
             return 0L;
+        }
+
+        if (delta == null) {
+            delta = 1L;
         }
 
         if (expireInSeconds <= 0) {
