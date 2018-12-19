@@ -37,11 +37,11 @@ public class ShuffleConfiguration {
     }
 
     @Configuration
-    @ConditionalOnProperty(value = "shuffle.turnOn", havingValue = "true", matchIfMissing = false)
+    @ConditionalOnProperty(value = "shuffle.enable", havingValue = "true", matchIfMissing = false)
     public static class ShuffleComponentConfiguration {
 
         @Configuration
-        @ConditionalOnProperty(value = "shuffle.turnOn", havingValue = "true", matchIfMissing = false)
+        @ConditionalOnProperty(value = "shuffle.enable", havingValue = "true", matchIfMissing = false)
         @ConditionalOnClass(name = "org.springframework.amqp.core.MessageListener")
         public static class RabbitShuffleConfiguration {
 
@@ -158,7 +158,7 @@ public class ShuffleConfiguration {
         }
 
         @Configuration
-        @ConditionalOnProperty(value = "shuffle.turnOn", havingValue = "true", matchIfMissing = false)
+        @ConditionalOnProperty(value = "shuffle.enable", havingValue = "true", matchIfMissing = false)
         public static class ShuffleKeyValueManagerConfiguration {
 
             @Configuration

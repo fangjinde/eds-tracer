@@ -119,13 +119,11 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-zookeeper</artifactId>
-            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.curator</groupId>
             <artifactId>curator-x-discovery</artifactId>
-            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -136,6 +134,11 @@
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
         </dependency>
 
         <dependency>
@@ -174,6 +177,8 @@
             <artifactId>dubbo</artifactId>
             <optional>true</optional>
         </dependency>
+
+
 
         <dependency>
             <groupId>com.netease.edu</groupId>

@@ -8,11 +8,10 @@
             http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd"
        default-autowire="byName" default-lazy-init="false">
 
-    <dubbo:consumer check="false"/>
     <!-- 服务消费 -->
 
     <dubbo:reference id="traceService"
-                     interface="com.netease.edu.eds.trace.server.service.TraceService"
+                     interface="com.netease.edu.eds.trace.server.service.TraceService" check="false"
                      version="1.0.0${local_service_version_suffix}">
     </dubbo:reference>
 

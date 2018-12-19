@@ -5,7 +5,6 @@
 	   http://www.springframework.org/schema/beans/spring-beans.xsd ">
 
 
-    <import resource="classpath:trace/applicationContext-dubbo.xml"/>
     <import resource="classpath:trace/applicationContext-dubbo-consumer.xml"/>
 
 </beans>

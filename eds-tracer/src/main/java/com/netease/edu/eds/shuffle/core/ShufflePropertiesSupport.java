@@ -23,7 +23,7 @@ public class ShufflePropertiesSupport {
         Environment environment = SpringBeanFactorySupport.getEnvironment();
         String turnOnValue = null;
         if (environment != null) {
-            turnOnValue = environment.getProperty("shuffle.turnOn");
+            turnOnValue = environment.getProperty("shuffle.enable");
         }
 
         if (StringUtils.isNotBlank(turnOnValue)) {
