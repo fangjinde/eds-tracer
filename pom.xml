@@ -15,6 +15,7 @@
         <module>eds-tracer-service</module>
         <module>eds-tracer-admin</module>
         <module>eds-tracer-demo</module>
+        <module>eds-tracer-demo-client</module>
     </modules>
 
     <properties>

@@ -2,6 +2,12 @@ package com.netease.edu.eds.trace.demo;/**
                                         * Created by hzfjd on 18/1/8.
                                         */
 
+import com.netease.edu.eds.trace.demo.aop.TransactionAspect;
+import com.netease.edu.eds.trace.demo.constants.ApplicationCommandArgs;
+import com.netease.edu.eds.trace.demo.ioc.ExcludeBeanFactoryPostProcessor;
+import com.netease.edu.eds.trace.demo.message.stream.binding.ShuffleStreamBinding;
+import com.netease.edu.transaction.message.client.config.TransactionMessageClientConfig;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -23,10 +29,8 @@ import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.Ordered;
 
-import com.netease.edu.eds.trace.demo.aop.TransactionAspect;
-import com.netease.edu.eds.trace.demo.ioc.ExcludeBeanFactoryPostProcessor;
-import com.netease.edu.eds.trace.demo.message.stream.binding.ShuffleStreamBinding;
-import com.netease.edu.transaction.message.client.config.TransactionMessageClientConfig;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author hzfjd
@@ -43,12 +47,21 @@ import com.netease.edu.transaction.message.client.config.TransactionMessageClien
 @EnableFeignClients
 @EnableDiscoveryClient
 @ImportResource({ "classpath:applicationContext-server.xml" })
+// @EnableAsync(proxyTargetClass = true)
 @Import(value = { TransactionMessageClientConfig.class })
 @EnableBinding({ ShuffleStreamBinding.class })
 public class TraceDemoApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(TraceDemoApplication.class, args);
+
+        String[] argsDiff = { "--spring.application.name=eds-tracer-demo" };
+        List<String> argsList = new ArrayList<>(args.length + ApplicationCommandArgs.SAME_ARGS.length
+                                                + argsDiff.length);
+        CollectionUtils.addAll(argsList, args);
+        CollectionUtils.addAll(argsList, ApplicationCommandArgs.SAME_ARGS);
+        CollectionUtils.addAll(argsList, argsDiff);
+
+        SpringApplication.run(TraceDemoApplication.class, argsList.toArray(new String[0]));
     }
 
     @Bean
