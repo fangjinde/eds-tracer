@@ -16,4 +16,6 @@ public interface ShuffleConstants {
      */
     String SHUFFLE_ROUTE_BACK_EXCHANGE  = "shuffle.route.back.exchange";
 
+    String LEGACY_STANDARD_ENV_NAME= "std";
+
 }

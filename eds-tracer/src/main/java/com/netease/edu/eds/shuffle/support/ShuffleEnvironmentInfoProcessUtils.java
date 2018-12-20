@@ -2,6 +2,7 @@ package com.netease.edu.eds.shuffle.support;
 
 import com.google.common.collect.Lists;
 import com.netease.edu.eds.shuffle.core.EnvironmentShuffleUtils;
+import com.netease.edu.eds.shuffle.dto.PrefixOrSuffixInfoDto;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
@@ -15,6 +16,25 @@ import java.util.List;
 public class ShuffleEnvironmentInfoProcessUtils {
 
     private static List<String> environmentComponentNameSeparators = Lists.newArrayList(".", "-", "_");
+
+    public static PrefixOrSuffixInfoDto getPrefixOrSuffixInfo(String origin, String env) {
+
+        if (StringUtils.isBlank(origin) || StringUtils.isBlank(env)) {
+            return new PrefixOrSuffixInfoDto(env);
+        }
+
+        for (String separator : environmentComponentNameSeparators) {
+            if (origin.startsWith(env + separator)) {
+                return new PrefixOrSuffixInfoDto(env, env, null, separator);
+            }
+            if (origin.endsWith(separator + env)) {
+                return new PrefixOrSuffixInfoDto(env, null, env, separator);
+            }
+        }
+
+        return new PrefixOrSuffixInfoDto(env);
+
+    }
 
     public static String getRawNameWithoutCurrentEnvironmentInfo(String originName) {
         String currentEnv = EnvironmentShuffleUtils.getCurrentEnv();
