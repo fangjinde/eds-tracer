@@ -1,7 +1,7 @@
 package com.netease.edu.eds.trace.demo.service.impl;
 
-import com.netease.edu.eds.trace.clientdemo.service.TraceDemoDownstreamService;
-import com.netease.edu.eds.trace.demo.service.TraceDemoService;
+import com.netease.edu.eds.trace.democommon.service.TraceDemoDownstreamService;
+import com.netease.edu.eds.trace.democommon.service.TraceDemoService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;

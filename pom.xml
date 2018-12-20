@@ -14,6 +14,7 @@
         <module>eds-tracer</module>
         <module>eds-tracer-service</module>
         <module>eds-tracer-admin</module>
+        <module>eds-tracer-demo-common</module>
         <module>eds-tracer-demo</module>
         <module>eds-tracer-demo-client</module>
     </modules>
@@ -99,6 +100,12 @@
                 <groupId>com.netease.edu.boot</groupId>
                 <artifactId>edu-hystrix-spring-boot-starter</artifactId>
                 <version>1.0.3.2-GA-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.netease.edu.eds</groupId>
+                <artifactId>eds-tracer-demo-common</artifactId>
+                <version>${project.version}</version>
             </dependency>
 
         </dependencies>

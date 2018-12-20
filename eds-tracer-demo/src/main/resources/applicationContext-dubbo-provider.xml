@@ -8,13 +8,13 @@
             http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd"
 	default-autowire="byName" default-lazy-init="false">
 
-	<import resource="classpath:/applicationContext-dubbo.xml"/>
+
 
 	<dubbo:consumer check="false"/>
 
 	<dubbo:reference id="traceDemoDownstreamService"
-					 interface="com.netease.edu.eds.trace.clientdemo.service.TraceDemoDownstreamService"
-					 check="false" version="1.0.0${remote_service_version_suffix}"/>
+					 interface="com.netease.edu.eds.trace.democommon.service.TraceDemoDownstreamService"
+					 check="false" version="1.0.0${local_service_version_suffix}"/>
 
 	<dubbo:reference id="jobShareService"
 					 interface="com.netease.edu.job.share.JobShareService"

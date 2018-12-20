@@ -1,4 +1,4 @@
-package com.netease.edu.eds.trace.demo.service;
+package com.netease.edu.eds.trace.democommon.service;
 
 public interface TraceDemoService {
 

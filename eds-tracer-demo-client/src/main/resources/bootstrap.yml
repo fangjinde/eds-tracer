@@ -1,6 +1,6 @@
 spring:
   application:
-    name: eds-tracer-demo
+    name: eds-tracer-demo-client
   profiles:
     active: mac-linux-dev
   cloud:

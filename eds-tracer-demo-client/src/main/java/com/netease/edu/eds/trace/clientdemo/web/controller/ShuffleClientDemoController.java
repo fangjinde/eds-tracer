@@ -2,8 +2,8 @@ package com.netease.edu.eds.trace.clientdemo.web.controller;
 
 import brave.propagation.ExtraFieldPropagation;
 import com.netease.edu.eds.trace.clientdemo.message.stream.binding.ShuffleStreamBindingForClient;
-import com.netease.edu.eds.trace.demo.dto.DemoDto;
-import com.netease.edu.eds.trace.demo.service.TraceDemoService;
+import com.netease.edu.eds.trace.democommon.dto.DemoDto;
+import com.netease.edu.eds.trace.democommon.service.TraceDemoService;
 import com.netease.edu.web.viewer.ResponseView;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.amqp.core.AmqpTemplate;

@@ -1,7 +1,8 @@
 package com.netease.edu.eds.trace.clientdemo.service.impl;
 
-import com.netease.edu.eds.trace.clientdemo.service.TraceDemoDownstreamService;
 import org.springframework.stereotype.Component;
+
+import com.netease.edu.eds.trace.democommon.service.TraceDemoDownstreamService;
 
 /**
  * @author hzfjd

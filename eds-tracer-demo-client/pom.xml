@@ -30,6 +30,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.netease.edu.eds</groupId>
+            <artifactId>eds-tracer-demo-common</artifactId>
+        </dependency>
+
+
+        <dependency>
             <groupId>com.netease.edu</groupId>
             <artifactId>job-client</artifactId>
         </dependency>
