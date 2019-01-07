@@ -4,6 +4,8 @@ import java.lang.instrument.Instrumentation;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import org.elasticsearch.action.Action;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.springframework.beans.factory.BeanFactory;
 
@@ -37,8 +39,8 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
 
     public static class TraceInterceptor {
 
-        public static Object execute(@Argument(1) ActionRequest request, @SuperCall Callable<Object> callable)
-                                                                                                              throws Exception {
+        public static Object execute(@Argument(0) Action action, @Argument(1) ActionRequest request,
+            @Argument(2) ActionListener listener, @SuperCall Callable<Object> callable) throws Exception {
 
             ElasticsearchTracing tracing = null;
             BeanFactory beanFactory = SpringBeanFactorySupport.getBeanFactory();
