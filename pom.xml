@@ -4,7 +4,7 @@
 
     <groupId>com.netease.edu.eds</groupId>
     <artifactId>eds-tracer</artifactId>
-    <version>1.0.9-fjd-20181120-RELEASE</version>
+    <version>1.0.9.1-es-jt-20190116-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>eds-tracer</name>
@@ -185,6 +185,13 @@
                 <version>2.0.3</version>
                 <scope>provided</scope>
             </dependency>
+            
+            <dependency>
+                <groupId>org.elasticsearch</groupId>
+                <artifactId>elasticsearch</artifactId>
+                <version>5.6.9</version>
+                <scope>provided</scope>
+            </dependency>
 
         </dependencies>
     </dependencyManagement>
@@ -337,6 +344,12 @@
             <artifactId>dwr</artifactId>
             <scope>provided</scope>
         </dependency>
+
+		<dependency>
+			<groupId>org.elasticsearch</groupId>
+			<artifactId>elasticsearch</artifactId>
+			<scope>provided</scope>
+		</dependency>
 
     </dependencies>
 
