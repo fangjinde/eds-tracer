@@ -39,7 +39,7 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
 
     public static class TraceInterceptor {
 
-        public static Object execute(@Argument(0) Action action, @Argument(1) ActionRequest request,
+        public static void execute(@Argument(0) Action action, @Argument(1) ActionRequest request,
             @Argument(2) ActionListener listener, @SuperCall Callable<Object> callable) throws Exception {
 
             ElasticsearchTracing tracing = null;
@@ -49,7 +49,7 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
             }
 
             if (tracing == null) {
-                return callable.call();
+                callable.call();
             }
 
             Span span = tracing.tracing().tracer().nextSpan();
@@ -64,7 +64,7 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
             }
 
             try (Tracer.SpanInScope spanInScope = tracing.tracing().tracer().withSpanInScope(span)) {
-                return callable.call();
+                callable.call();
             } catch (Exception e) {
                 span.tag("es_error", ExceptionStringUtils.getStackTraceString(e));
 
