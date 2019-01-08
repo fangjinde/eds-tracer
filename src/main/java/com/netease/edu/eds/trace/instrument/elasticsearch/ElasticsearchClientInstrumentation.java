@@ -40,7 +40,7 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
     public static class TraceInterceptor {
 
         public static void execute(@Argument(0) Action action, @Argument(1) ActionRequest request,
-            @Argument(2) ActionListener listener, @SuperCall Callable<Object> callable) throws Exception {
+            @Argument(2) ActionListener listener, @SuperCall Callable<Object> callable) {
 
             ElasticsearchTracing tracing = null;
             BeanFactory beanFactory = SpringBeanFactorySupport.getBeanFactory();
@@ -49,7 +49,13 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
             }
 
             if (tracing == null) {
-                callable.call();
+                try {
+                    callable.call();
+                } catch (RuntimeException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             Span span = tracing.tracing().tracer().nextSpan();
@@ -65,10 +71,11 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
 
             try (Tracer.SpanInScope spanInScope = tracing.tracing().tracer().withSpanInScope(span)) {
                 callable.call();
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 span.tag("es_error", ExceptionStringUtils.getStackTraceString(e));
-
                 throw e;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             } finally {
                 span.finish();
             }
