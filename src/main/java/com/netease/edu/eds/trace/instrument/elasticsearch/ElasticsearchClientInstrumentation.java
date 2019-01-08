@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.elasticsearch.action.Action;
+import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.client.ElasticsearchClient;
@@ -36,54 +37,73 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
             (builder, typeDescription, classloader, javaModule) -> builder.method(
                 ElementMatchers.namedIgnoreCase("execute").and(ElementMatchers.isDeclaredBy(typeDescription)).and(
                     ElementMatchers.returns(TypeDescription.VOID))).intercept(
-                MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(
+                MethodDelegation.to(TraceVoidReturnInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(
             inst);
+
+        new AgentBuilder.Default().type(ElementMatchers.hasSuperType(ElementMatchers.is(ElasticsearchClient.class))).transform(
+            (builder, typeDescription, classloader, javaModule) -> builder.method(
+                ElementMatchers.namedIgnoreCase("execute").and(ElementMatchers.isDeclaredBy(typeDescription)).and(
+                    ElementMatchers.returns(new TypeDescription.ForLoadedType(ActionFuture.class)))).intercept(
+                MethodDelegation.to(TraceActionFutureReturnInterceptor.class))).with(
+            DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
     }
 
-    public static class TraceInterceptor {
+    public static class TraceVoidReturnInterceptor {
 
         public static void execute(@Argument(0) Action action, @Argument(1) ActionRequest request,
-            @Argument(2) ActionListener listener, @SuperCall Callable<Object> callable) {
+            @Argument(2) ActionListener listener, @SuperCall Callable<Void> callable) {
 
-            ElasticsearchTracing tracing = null;
-            BeanFactory beanFactory = SpringBeanFactorySupport.getBeanFactory();
-            if (beanFactory != null) {
-                tracing = beanFactory.getBean(ElasticsearchTracing.class);
-            }
+            interceptElasticsearch(request, callable);
+        }
+    }
 
-            if (tracing == null) {
-                try {
-                    callable.call();
-                } catch (RuntimeException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
+    public static class TraceActionFutureReturnInterceptor {
 
-            Span span = tracing.tracing().tracer().nextSpan();
-            SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.ELASTICSEARCH);
-            if (!span.isNoop()) {
-                try {
-                    span.tag("search_body", request.toString());
-                } catch (Exception e) {
-                    span.tag("search_body", ExceptionStringUtils.getStackTraceString(e));
-                }
-                span.start();
-            }
+        public static ActionFuture execute(@Argument(0) Action action, @Argument(1) ActionRequest request,
+            @SuperCall Callable<ActionFuture> callable) {
 
-            try (Tracer.SpanInScope spanInScope = tracing.tracing().tracer().withSpanInScope(span)) {
-                callable.call();
+            return interceptElasticsearch(request, callable);
+        }
+    }
+
+    private static <T> T interceptElasticsearch(ActionRequest request, Callable<T> callable) {
+        ElasticsearchTracing tracing = null;
+        BeanFactory beanFactory = SpringBeanFactorySupport.getBeanFactory();
+        if (beanFactory != null) {
+            tracing = beanFactory.getBean(ElasticsearchTracing.class);
+        }
+
+        if (tracing == null) {
+            try {
+                return callable.call();
             } catch (RuntimeException e) {
-                span.tag("es_error", ExceptionStringUtils.getStackTraceString(e));
                 throw e;
             } catch (Exception e) {
                 throw new RuntimeException(e);
-            } finally {
-                span.finish();
             }
+        }
 
+        Span span = tracing.tracing().tracer().nextSpan();
+        SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.ELASTICSEARCH);
+        if (!span.isNoop()) {
+            try {
+                span.tag("search_body", request.toString());
+            } catch (Exception e) {
+                span.tag("search_body", ExceptionStringUtils.getStackTraceString(e));
+            }
+            span.start();
+        }
+
+        try (Tracer.SpanInScope spanInScope = tracing.tracing().tracer().withSpanInScope(span)) {
+            return callable.call();
+        } catch (RuntimeException e) {
+            span.tag("es_error", ExceptionStringUtils.getStackTraceString(e));
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            span.finish();
         }
     }
 
