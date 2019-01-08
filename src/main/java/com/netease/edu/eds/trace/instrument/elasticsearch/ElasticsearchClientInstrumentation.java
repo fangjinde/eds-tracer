@@ -89,9 +89,21 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
         SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.ELASTICSEARCH);
         if (!span.isNoop()) {
             try {
-                String name = getActionRequestName(request);
+                String name = null;
+                String requestBody = null;
+                if (request instanceof SearchRequest) {
+                    SearchRequest searchRequest = (SearchRequest) request;
+                    String indices = searchRequest.indices() != null && searchRequest.indices().length <= 1 ? searchRequest.indices()[0] : JSON.toJSONString(searchRequest.indices());
+                    String types = searchRequest.types() != null && searchRequest.types().length <= 1 ? searchRequest.types()[0] : JSON.toJSONString(searchRequest.types());
+
+                    name = String.format("GET /%s/%s/_search", indices, types);
+                    requestBody = searchRequest.source().toString();
+                } else {
+                    name = request.getClass().getName();
+                    requestBody = request.toString();
+                }
                 span.kind(Span.Kind.CLIENT).name(name);
-                span.tag("request", JSON.toJSONString(request));
+                span.tag("request_body", requestBody);
             } catch (Exception e) {
                 span.tag("request_err", ExceptionStringUtils.getStackTraceString(e));
             }
@@ -108,17 +120,6 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
         } finally {
             span.finish();
         }
-    }
-
-    private static String getActionRequestName(ActionRequest request) {
-        String name = null;
-        if (request instanceof SearchRequest) {
-            SearchRequest searchRequest = (SearchRequest) request;
-            name = "GET " + "/" + searchRequest.indices() + "/" + searchRequest.types() + "/_search";
-        } else {
-            name = request.getClass().getName();
-        }
-        return name;
     }
 
 }
