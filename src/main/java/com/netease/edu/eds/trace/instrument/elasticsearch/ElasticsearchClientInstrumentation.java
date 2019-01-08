@@ -8,6 +8,7 @@ import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.springframework.beans.factory.BeanFactory;
 
@@ -16,11 +17,11 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
-import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import brave.Span;
 import brave.Tracer;
 
+import com.alibaba.fastjson.JSON;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.spi.TraceAgentInstrumetation;
 import com.netease.edu.eds.trace.support.DefaultAgentBuilderListener;
@@ -88,9 +89,11 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
         SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.ELASTICSEARCH);
         if (!span.isNoop()) {
             try {
-                span.tag("search_body", request.toString());
+                String name = getActionRequestName(request);
+                span.kind(Span.Kind.CLIENT).name(name);
+                span.tag("request", JSON.toJSONString(request));
             } catch (Exception e) {
-                span.tag("search_body", ExceptionStringUtils.getStackTraceString(e));
+                span.tag("request_err", ExceptionStringUtils.getStackTraceString(e));
             }
             span.start();
         }
@@ -105,6 +108,17 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
         } finally {
             span.finish();
         }
+    }
+
+    private static String getActionRequestName(ActionRequest request) {
+        String name = null;
+        if (request instanceof SearchRequest) {
+            SearchRequest searchRequest = (SearchRequest) request;
+            name = "GET " + "/" + searchRequest.indices() + "/" + searchRequest.types() + "/_search";
+        } else {
+            name = request.getClass().getName();
+        }
+        return name;
     }
 
 }
