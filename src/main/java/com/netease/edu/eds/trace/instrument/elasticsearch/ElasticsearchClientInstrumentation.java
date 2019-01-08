@@ -7,12 +7,15 @@ import java.util.concurrent.Callable;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.client.ElasticsearchClient;
 import org.springframework.beans.factory.BeanFactory;
 
 import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import brave.Span;
 import brave.Tracer;
@@ -29,12 +32,13 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
     @Override
     public void premain(Map<String, String> props, Instrumentation inst) {
 
-        new AgentBuilder.Default().type(
-            ElementMatchers.hasSuperType(ElementMatchers.namedIgnoreCase("org.elasticsearch.client.ElasticsearchClient"))).transform(
+        new AgentBuilder.Default().type(ElementMatchers.hasSuperType(ElementMatchers.is(ElasticsearchClient.class))).transform(
             (builder, typeDescription, classloader, javaModule) -> builder.method(
-                ElementMatchers.namedIgnoreCase("execute").and(ElementMatchers.isDeclaredBy(typeDescription))).intercept(
+                ElementMatchers.namedIgnoreCase("execute").and(ElementMatchers.isDeclaredBy(typeDescription)).and(
+                    ElementMatchers.returns(TypeDescription.VOID))).intercept(
                 MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(
             inst);
+
     }
 
     public static class TraceInterceptor {
