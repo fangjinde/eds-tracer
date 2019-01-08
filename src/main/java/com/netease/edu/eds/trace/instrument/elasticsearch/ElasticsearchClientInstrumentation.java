@@ -9,13 +9,13 @@ import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.client.ElasticsearchClient;
 import org.springframework.beans.factory.BeanFactory;
 
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
+import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.matcher.ElementMatchers;
 import brave.Span;
@@ -36,7 +36,7 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
 
         new AgentBuilder.Default().type(
             ElementMatchers.not(ElementMatchers.nameStartsWithIgnoreCase("com.alibaba.dubbo.common.bytecode")).and(
-                ElementMatchers.isSubTypeOf(ElasticsearchClient.class))).transform(
+                ElementMatchers.hasSuperType(ElementMatchers.named("org.elasticsearch.client.ElasticsearchClient")))).transform(
             (builder, typeDescription, classloader, javaModule) -> builder.method(
                 ElementMatchers.namedIgnoreCase("execute").and(ElementMatchers.isDeclaredBy(typeDescription)).and(
                     ElementMatchers.returns(TypeDescription.VOID))).intercept(
@@ -45,10 +45,10 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
 
         new AgentBuilder.Default().type(
             ElementMatchers.not(ElementMatchers.nameStartsWithIgnoreCase("com.alibaba.dubbo.common.bytecode")).and(
-                ElementMatchers.isSubTypeOf(ElasticsearchClient.class))).transform(
+                ElementMatchers.hasSuperType(ElementMatchers.named("org.elasticsearch.client.ElasticsearchClient")))).transform(
             (builder, typeDescription, classloader, javaModule) -> builder.method(
                 ElementMatchers.namedIgnoreCase("execute").and(ElementMatchers.isDeclaredBy(typeDescription)).and(
-                    ElementMatchers.returns(new TypeDescription.ForLoadedType(ActionFuture.class)))).intercept(
+                    ElementMatchers.returns(ElementMatchers.named("org.elasticsearch.action.ActionFuture")))).intercept(
                 MethodDelegation.to(TraceActionFutureReturnInterceptor.class))).with(
             DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
@@ -56,6 +56,7 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
 
     public static class TraceVoidReturnInterceptor {
 
+        @RuntimeType
         public static void execute(@Argument(0) Action action, @Argument(1) ActionRequest request,
             @Argument(2) ActionListener listener, @SuperCall Callable<Void> callable) {
 
@@ -65,6 +66,7 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
 
     public static class TraceActionFutureReturnInterceptor {
 
+        @RuntimeType
         public static ActionFuture execute(@Argument(0) Action action, @Argument(1) ActionRequest request,
             @SuperCall Callable<ActionFuture> callable) {
 
