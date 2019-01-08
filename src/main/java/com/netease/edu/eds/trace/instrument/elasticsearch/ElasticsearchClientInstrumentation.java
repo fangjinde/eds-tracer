@@ -34,14 +34,14 @@ public class ElasticsearchClientInstrumentation implements TraceAgentInstrumetat
     @Override
     public void premain(Map<String, String> props, Instrumentation inst) {
 
-        new AgentBuilder.Default().type(ElementMatchers.hasSuperType(ElementMatchers.is(ElasticsearchClient.class))).transform(
+        new AgentBuilder.Default().type(ElementMatchers.isSubTypeOf(ElasticsearchClient.class)).transform(
             (builder, typeDescription, classloader, javaModule) -> builder.method(
                 ElementMatchers.namedIgnoreCase("execute").and(ElementMatchers.isDeclaredBy(typeDescription)).and(
                     ElementMatchers.returns(TypeDescription.VOID))).intercept(
                 MethodDelegation.to(TraceVoidReturnInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(
             inst);
 
-        new AgentBuilder.Default().type(ElementMatchers.hasSuperType(ElementMatchers.is(ElasticsearchClient.class))).transform(
+        new AgentBuilder.Default().type(ElementMatchers.isSubTypeOf(ElasticsearchClient.class)).transform(
             (builder, typeDescription, classloader, javaModule) -> builder.method(
                 ElementMatchers.namedIgnoreCase("execute").and(ElementMatchers.isDeclaredBy(typeDescription)).and(
                     ElementMatchers.returns(new TypeDescription.ForLoadedType(ActionFuture.class)))).intercept(
