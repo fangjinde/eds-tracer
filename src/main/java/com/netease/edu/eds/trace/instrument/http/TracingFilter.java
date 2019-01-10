@@ -157,6 +157,14 @@ public final class TracingFilter implements Filter {
 
         SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.HTTP);
 
+        String traceId = null;
+        if (span != null && !span.isNoop()) {
+            traceId = span.context().traceIdString();
+            if (StringUtils.isNotBlank(traceId)) {
+                httpResponse.setHeader(PropagationConstants.TRACE_ID_HTTP_RESPONSE_HEADER_NAME, traceId);
+            }
+        }
+        
         if (span != null && !span.isNoop() && environment != null) {
             SpanUtils.safeTag(span, "serverEnv", environment.getProperty("spring.profiles.active"));
         }
