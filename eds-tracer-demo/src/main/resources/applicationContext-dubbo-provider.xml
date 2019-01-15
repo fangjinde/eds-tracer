@@ -25,7 +25,7 @@
 					threads="1000" />
 
 	<dubbo:provider timeout="600000" loadbalance="random"
-					executes="1000" actives="300" filter="-exception,eduexception" />
+					executes="1000" actives="300" filter="-exception,eduexception" delay="-1" />
 
 	<!-- 服务提供 -->
 	<!--测试dubbo -->
