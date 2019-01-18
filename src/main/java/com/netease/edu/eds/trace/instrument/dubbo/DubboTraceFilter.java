@@ -71,7 +71,7 @@ public final class DubboTraceFilter implements Filter {
         final Span span;
         if (kind.equals(Kind.CLIENT)) {
             span = tracer.nextSpan();
-            injector.inject(span.context(), invocation.getAttachments());
+
         } else {
             TraceContextOrSamplingFlags extracted = extractor.extract(invocation.getAttachments());
             span = extracted.context() != null ? tracer.joinSpan(extracted.context()) : tracer.nextSpan(extracted);
@@ -109,9 +109,11 @@ public final class DubboTraceFilter implements Filter {
         try (Tracer.SpanInScope scope = tracer.withSpanInScope(span)) {
 
             // 一定要放在SpanInScope中，否则CurrentContext不正确。
-            if (rpcContext.isProviderSide()) {
                 PropagationUtils.setOriginEnvIfNotExists(span.context(),
                                                          environment.getProperty("spring.profiles.active"));
+
+            if (kind.equals(Kind.CLIENT)) {
+                injector.inject(span.context(), invocation.getAttachments());
             }
 
             if (rpcContext.isConsumerSide()) {
