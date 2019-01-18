@@ -17,6 +17,7 @@ public interface SpanType {
     String REDIS               = "Redis";
     String HTTP                = "Http";
     String TRANSACTION_MESSAGE = "TransMsg";
+    String ELASTICSEARCH       = "Elasticsearch";
 
     interface HttpSubType {
 
