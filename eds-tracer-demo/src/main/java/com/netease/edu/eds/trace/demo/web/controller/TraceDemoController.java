@@ -1,6 +1,6 @@
 package com.netease.edu.eds.trace.demo.web.controller;/**
-                                                         * Created by hzfjd on 18/4/13.
-                                                         */
+                                                       * Created by hzfjd on 18/4/13.
+                                                       */
 
 import com.google.common.collect.Lists;
 import com.netease.edu.eds.trace.demo.constants.TransactionMessageTestContants;
@@ -35,6 +35,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.DefaultResultMapper;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -42,6 +43,7 @@ import org.springframework.data.elasticsearch.core.ResultsMapper;
 import org.springframework.data.elasticsearch.core.query.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -61,13 +63,16 @@ import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 @RestController
 public class TraceDemoController {
 
+    @Autowired
+    private RestTemplate                  restTemplateDemo;
+
     @Resource(name = "traceDemoAmqpTemplate")
     private AmqpTemplate                  traceDemoAmqpTemplate;
 
     @Autowired
-    private StudyCourseSearchDao studyCourseSearchDao;
+    private StudyCourseSearchDao          studyCourseSearchDao;
     @Autowired
-    private NDirIndexClient      ndirIndexClient;
+    private NDirIndexClient               ndirIndexClient;
 
     @Resource(name = "studyRedisTemplate")
     private RedisTemplate<String, Object> studyRedisTemplate;
@@ -85,20 +90,41 @@ public class TraceDemoController {
     private MemcachedClient               bareMemcachedClient;
 
     @Autowired
-    private EduAttributesService eduAttributesService;
+    private EduAttributesService          eduAttributesService;
 
     private ExecutorService               executorService = new ThreadPoolExecutor(3, 3, 0L, TimeUnit.MILLISECONDS,
                                                                                    new LinkedBlockingQueue<Runnable>());
 
     @Autowired
-    private ElasticsearchOperations elasticsearchOperations;
+    private ElasticsearchOperations       elasticsearchOperations;
     @Autowired
-    private AsyncTestService        asyncTestService;
+    private AsyncTestService              asyncTestService;
 
     @Autowired
     private TransactionMessageTestService transactionMessageTestService;
     @Autowired
     private JobShareService               jobShareService;
+
+    @Value("${spring.application.name}.${spring.profiles.active}")
+    private String                        serviceId;
+
+    @RequestMapping(path = "/webClient/sendByRestTemplate")
+    public ResponseView sendByRestTemplate() {
+        ResponseView responseView = new ResponseView();
+        Map<String, Object> map = new HashMap<>();
+
+        String pong = restTemplateDemo.getForObject(String.format("http://%s/web/echo?ping={1}", serviceId), String.class,
+                                                    "hello");
+
+        map.put("pong", pong);
+        responseView.setResult(map);
+        return responseView;
+    }
+
+    @RequestMapping(path = "/web/echo")
+    public String webEcho(@RequestParam(required = false, name = "ping") String ping) {
+        return ping;
+    }
 
     @RequestMapping(path = "/job/submitDelayTask")
     public ResponseView submitDelayTask(@RequestParam("bizId") String bizId,

@@ -16,6 +16,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerA
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +30,7 @@ import com.netease.edu.eds.trace.demo.aop.TransactionAspect;
 import com.netease.edu.eds.trace.demo.ioc.ExcludeBeanFactoryPostProcessor;
 import com.netease.edu.eds.trace.demo.message.stream.binding.ShuffleStreamBinding;
 import com.netease.edu.transaction.message.client.config.TransactionMessageClientConfig;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -92,6 +94,12 @@ public class TraceDemoApplication {
     @Bean
     public TransactionAspect TransactionAspect() {
         return new TransactionAspect();
+    }
+
+    @Bean
+    @LoadBalanced
+    public RestTemplate restTemplateDemo(){
+        return new RestTemplate();
     }
 
 }
