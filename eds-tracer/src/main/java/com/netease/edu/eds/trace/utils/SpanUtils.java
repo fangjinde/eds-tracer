@@ -75,7 +75,16 @@ public class SpanUtils {
     }
 
     public static void tagPropagationInfos(SpanCustomizer span) {
-        Map<String, String> propagationExtraMap = ExtraFieldPropagation.getAll();
+        Map<String, String> propagationExtraMap = getAllPropagation();
+        tagPropagationInfos(span, propagationExtraMap);
+
+    }
+
+    public static Map<String, String> getAllPropagation() {
+        return ExtraFieldPropagation.getAll();
+    }
+
+    public static void tagPropagationInfos(SpanCustomizer span, Map<String, String> propagationExtraMap) {
         if (propagationExtraMap == null) {
             return;
         }

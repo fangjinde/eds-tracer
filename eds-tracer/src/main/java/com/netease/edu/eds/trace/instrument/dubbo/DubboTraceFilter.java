@@ -15,6 +15,7 @@ import com.alibaba.dubbo.rpc.protocol.dubbo.FutureAdapter;
 import com.alibaba.dubbo.rpc.support.RpcUtils;
 import com.netease.edu.eds.trace.constants.CommonTagKeys;
 import com.netease.edu.eds.trace.constants.SpanType;
+import com.netease.edu.eds.trace.utils.EnvironmentUtils;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.edu.eds.trace.utils.TraceJsonUtils;
@@ -60,19 +61,38 @@ public final class DubboTraceFilter implements Filter {
             return invoker.invoke(invocation);
         }
 
-        String service = invoker.getInterface().getSimpleName();
+        String serviceSimpleName = invoker.getInterface().getSimpleName();
+        String serviceName = invoker.getInterface().getName();
         String method = RpcUtils.getMethodName(invocation);
 
-        if ("MonitorService".equalsIgnoreCase(service)) {
+        if ("com.alibaba.dubbo.monitor.MonitorService".equalsIgnoreCase(serviceName)) {
             return invoker.invoke(invocation);
         }
 
         RpcContext rpcContext = RpcContext.getContext();
         Kind kind = rpcContext.isProviderSide() ? Kind.SERVER : Kind.CLIENT;
-        final Span span;
+        Span span = null;
+        // 当前节点span是否取自于cluster span，否则为新创建。
+        boolean spanFromCluster = false;
         if (kind.equals(Kind.CLIENT)) {
-            span = tracer.nextSpan();
-            injector.inject(span.context(), invocation.getAttachments());
+
+            if (!ContextHolder.get().isShareSpanMerged()) {
+                // 首个node invoker调用，和cluster span共享一个span。
+                span = ContextHolder.get().getShareSpan();
+
+                if (span == null) {
+                    // 理论上不会发生，这里做个容错。
+                    span = tracer.nextSpan();
+                    ContextHolder.get().setShareSpan(span);
+                } else {
+                    spanFromCluster = true;
+                }
+
+            } else {
+                // 重试的node invoker调用，新开span。
+                span = tracer.nextSpan();
+            }
+
         } else {
             TraceContextOrSamplingFlags extracted = extractor.extract(invocation.getAttachments());
             span = extracted.context() != null ? tracer.joinSpan(extracted.context()) : tracer.nextSpan(extracted);
@@ -80,16 +100,18 @@ public final class DubboTraceFilter implements Filter {
         }
 
         SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.DUBBO);
-        SpanUtils.safeTag(span, "service", service);
-        SpanUtils.safeTag(span, CommonTagKeys.CLASS, service);
+        SpanUtils.safeTag(span, CommonTagKeys.CLASS, serviceName);
         SpanUtils.safeTag(span, CommonTagKeys.METHOD, method);
 
         if (!span.isNoop()) {
 
-            span.kind(kind).start();
+            if (!spanFromCluster) {
+                // 如果是从cluster中继承过来，则不要重复start。
+                span.start();
+            }
 
             span.kind(kind);
-            span.name(service + "." + method);
+            span.name(serviceSimpleName + "." + method);
 
             InetSocketAddress remoteAddress = rpcContext.getRemoteAddress();
             Endpoint.Builder remoteEndpoint = Endpoint.newBuilder().port(remoteAddress.getPort());
@@ -98,9 +120,9 @@ public final class DubboTraceFilter implements Filter {
             }
 
             if (kind.equals(Kind.CLIENT)) {
-                SpanUtils.safeTag(span, CommonTagKeys.CLIENT_ENV, environment.getProperty("spring.profiles.active"));
+                SpanUtils.safeTag(span, CommonTagKeys.CLIENT_ENV, EnvironmentUtils.getCurrentEnv());
             } else {
-                SpanUtils.safeTag(span, CommonTagKeys.SERVER_ENV, environment.getProperty("spring.profiles.active"));
+                SpanUtils.safeTag(span, CommonTagKeys.SERVER_ENV, EnvironmentUtils.getCurrentEnv());
             }
 
             Endpoint ep = remoteEndpoint.build();
@@ -111,14 +133,13 @@ public final class DubboTraceFilter implements Filter {
         try (Tracer.SpanInScope scope = tracer.withSpanInScope(span)) {
 
             // 一定要放在SpanInScope中，否则CurrentContext不正确。
-            if (rpcContext.isProviderSide()) {
-                PropagationUtils.setOriginEnvIfNotExists(span.context(),
-                                                         environment.getProperty("spring.profiles.active"));
+            PropagationUtils.setOriginEnvIfNotExists(span.context(), EnvironmentUtils.getCurrentEnv());
+
+            if (kind.equals(Kind.CLIENT)) {
+                injector.inject(span.context(), invocation.getAttachments());
             }
 
-            if (rpcContext.isConsumerSide()) {
-                onValue("args", invocation.getArguments(), span, rpcContext.isConsumerSide());
-            }
+            onValue("args", invocation.getArguments(), span, rpcContext.isConsumerSide());
 
             SpanUtils.tagPropagationInfos(span);
 
@@ -147,23 +168,35 @@ public final class DubboTraceFilter implements Filter {
             onError(e, span, rpcContext.isConsumerSide());
             throw e;
         } finally {
-            if (isOneway) {
-                span.flush();
-            } else if (!deferFinish) {
-                span.finish();
+
+            if (kind.equals(Kind.CLIENT)) {
+                if (!ContextHolder.get().isShareSpanMerged()) {
+                    // 仅仅首个node client invoker需要和cluster合并
+                    ContextHolder.get().setShareSpanMerged(true);
+                }
             }
+
+            // 继承自cluster的span，其finish操作交由cluster来完成。
+            if (!spanFromCluster) {
+                if (isOneway) {
+                    span.flush();
+                } else if (!deferFinish) {
+                    span.finish();
+                }
+            }
+
         }
     }
 
     public void onValue(String adviceName, Object value, Span span, boolean consumerSide) {
-        if (consumerSide) {
+        if (!consumerSide) {
             SpanUtils.safeTag(span, adviceName, TraceJsonUtils.toJson(value));
         }
 
     }
 
     static void onError(Throwable error, SpanCustomizer span, boolean consumerSide) {
-        if (consumerSide) {
+        if (!consumerSide) {
             SpanUtils.tagErrorMark(span);
             SpanUtils.tagError(span, error);
         }

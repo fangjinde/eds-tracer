@@ -1,4 +1,6 @@
 #order should be respected
+com.netease.edu.eds.shuffle.dubbo.AbstractClusterInvokerShuffleInstrument
+com.netease.edu.eds.trace.instrument.dubbo.AbstractClusterInvokerTraceInstrument
 com.netease.edu.eds.trace.instrument.ndir.NdirSearchClientInstrumentation
 com.netease.edu.eds.trace.instrument.ndir.NdirIndexClientIntrumentation
 com.netease.edu.eds.trace.instrument.elasticsearch.ElasticsearchClientInstrumentation
