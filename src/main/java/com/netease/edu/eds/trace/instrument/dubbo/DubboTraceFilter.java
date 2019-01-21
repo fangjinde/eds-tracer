@@ -1,12 +1,13 @@
 package com.netease.edu.eds.trace.instrument.dubbo;
 
-import brave.Span;
-import brave.Span.Kind;
-import brave.SpanCustomizer;
-import brave.Tracer;
-import brave.propagation.Propagation;
-import brave.propagation.TraceContext;
-import brave.propagation.TraceContextOrSamplingFlags;
+import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.Future;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
+
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.extension.Activate;
 import com.alibaba.dubbo.remoting.exchange.ResponseCallback;
@@ -18,14 +19,15 @@ import com.netease.edu.eds.trace.utils.EnvironmentUtils;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import com.netease.edu.eds.trace.utils.TraceJsonUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.core.env.Environment;
-import zipkin2.Endpoint;
 
-import java.net.InetSocketAddress;
-import java.util.Map;
-import java.util.concurrent.Future;
+import brave.Span;
+import brave.Span.Kind;
+import brave.SpanCustomizer;
+import brave.Tracer;
+import brave.propagation.Propagation;
+import brave.propagation.TraceContext;
+import brave.propagation.TraceContextOrSamplingFlags;
+import zipkin2.Endpoint;
 
 @Activate(group = { Constants.PROVIDER, Constants.CONSUMER }, order = -8990)
 public final class DubboTraceFilter implements Filter {
@@ -70,7 +72,8 @@ public final class DubboTraceFilter implements Filter {
 
         RpcContext rpcContext = RpcContext.getContext();
         Kind kind = rpcContext.isProviderSide() ? Kind.SERVER : Kind.CLIENT;
-        Span span=null;
+        Span span = null;
+        // 当前节点span是否取自于cluster span，否则为新创建。
         boolean spanFromCluster = false;
         if (kind.equals(Kind.CLIENT)) {
 
@@ -169,15 +172,20 @@ public final class DubboTraceFilter implements Filter {
 
             if (kind.equals(Kind.CLIENT)) {
                 if (!ContextHolder.get().isShareSpanMerged()) {
+                    // 仅仅首个node client invoker需要和cluster合并
                     ContextHolder.get().setShareSpanMerged(true);
                 }
             }
 
-            if (isOneway) {
-                span.flush();
-            } else if (!deferFinish) {
-                span.finish();
+            // 继承自cluster的span，其finish操作交由cluster来完成。
+            if (!spanFromCluster) {
+                if (isOneway) {
+                    span.flush();
+                } else if (!deferFinish) {
+                    span.finish();
+                }
             }
+
         }
     }
 

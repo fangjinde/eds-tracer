@@ -40,6 +40,8 @@ public class AbstractClusterInvokerTraceInstrument extends AbstractTraceAgentIns
         // public Result invoke(final Invocation invocation) throws RpcException
         ElementMatcher.Junction invoke1 = namedIgnoreCase("invoke").and(isPublic()).and(isDeclaredBy(typeDescription)).and(takesArguments(1));
 
+
+
         return invoke1;
     }
 
@@ -98,7 +100,7 @@ public class AbstractClusterInvokerTraceInstrument extends AbstractTraceAgentIns
                     // 具体的span信息有待具体的节点invoker确定后补充上来。除外是无节点的情况。
                     // 解决典型的no provider问题。
                     span.kind(Span.Kind.CLIENT);
-                    span.name(serviceSimpleName + "." + method);
+                    span.name(serviceSimpleName + "." + methodName);
                     SpanUtils.safeTag(span, "clientEnv", currentEnv);
                     SpanUtils.safeTag(span, "args", TraceJsonUtils.toJson(invocation.getArguments()));
                     SpanUtils.tagPropagationInfos(span, propagationExtraMap);
