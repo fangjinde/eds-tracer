@@ -1,6 +1,5 @@
 package com.netease.edu.eds.shuffle.configuration;
 
-import com.netease.edu.eds.trace.properties.RedisProperties;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.x.discovery.*;
 import org.apache.curator.x.discovery.details.InstanceSerializer;
@@ -26,6 +25,9 @@ import com.netease.edu.eds.shuffle.instrument.rabbit.SpringRabbitComponentNameEn
 import com.netease.edu.eds.shuffle.spi.EnvironmentDetector;
 import com.netease.edu.eds.shuffle.spi.KeyValueManager;
 import com.netease.edu.eds.shuffle.support.*;
+import com.netease.edu.eds.trace.properties.RedisProperties;
+
+import redis.clients.jedis.JedisPoolConfig;
 
 /**
  * @author hzfjd
@@ -141,13 +143,25 @@ public class ShuffleConfiguration {
         @Bean
         @ConditionalOnMissingBean(name = BeanNameConstants.SHUFFLE_REDIS_CONNECTION_FACTORY)
         public JedisConnectionFactory shuffleRedisConnectionFactory() {
-            JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();
             RedisProperties redisProperties = shuffleRedisProperties();
+            JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory(jedisPoolConfig(redisProperties));
             jedisConnectionFactory.setHostName(redisProperties.getHost());
             jedisConnectionFactory.setPassword(redisProperties.getPassword());
             jedisConnectionFactory.setPort(redisProperties.getPort());
             jedisConnectionFactory.setTimeout(redisProperties.getTimeout());
             return jedisConnectionFactory;
+        }
+
+        private JedisPoolConfig jedisPoolConfig(RedisProperties redisProperties) {
+            JedisPoolConfig config = new JedisPoolConfig();
+            RedisProperties.Pool props = redisProperties.getPool();
+            if (props != null) {
+                config.setMaxTotal(props.getMaxActive());
+                config.setMaxIdle(props.getMaxIdle());
+                config.setMinIdle(props.getMinIdle());
+                config.setMaxWaitMillis(props.getMaxWait());
+            }
+            return config;
         }
 
         @Bean
