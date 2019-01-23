@@ -79,8 +79,8 @@ public class RabbitTemplateInstrumentation implements TraceAgentInstrumetation {
                     SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.RABBIT);
                     injector.inject(span.context(), message.getMessageProperties());
 
-                    RabbitTracing.tagSendMessageInfo(span, exchange, routingKey);
-                    RabbitTracing.tagMessagePayload(span, message.toString());
+                    RabbitSpanUtils.tagSendMessageInfo(span, exchange, routingKey);
+                    RabbitSpanUtils.tagMessagePayload(span, message.toString());
                     SpanUtils.safeTag(span, CommonTagKeys.CLIENT_ENV, EnvironmentUtils.getCurrentEnv());
                     Endpoint.Builder builder = Endpoint.newBuilder();
                     if (rabbitTracing.remoteServiceName() != null) {

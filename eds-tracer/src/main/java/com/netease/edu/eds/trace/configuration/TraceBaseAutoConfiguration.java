@@ -12,6 +12,7 @@ import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.support.TraceKvSupport;
 import com.netease.edu.eds.trace.utils.TraceContextPropagationUtils;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -35,6 +36,7 @@ public class TraceBaseAutoConfiguration {
 
     @Configuration
     @ImportResource(locations = { "classpath:trace/applicationContext-client.xml" })
+    @ConditionalOnClass(name="com.alibaba.dubbo.config.spring.schema.DubboNamespaceHandler")
     public class TraceServiceConfiguration{
 
     }

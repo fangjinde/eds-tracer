@@ -2,12 +2,8 @@ package com.netease.edu.eds.trace.instrument.rabbit;/**
                                                      * Created by hzfjd on 18/4/12.
                                                      */
 
-import org.springframework.amqp.core.MessageProperties;
-
-import com.google.auto.value.AutoValue;
-
-import brave.Span;
 import brave.Tracing;
+import com.google.auto.value.AutoValue;
 
 /**
  * @author hzfjd
@@ -44,27 +40,6 @@ public abstract class RabbitTracing {
 
         Builder() {
 
-        }
-    }
-
-    public static void tagSendMessageInfo(Span span, String exchange, String routingKey) {
-        maybeTag(span, RabbitTracing.RABBIT_EXCHANGE, exchange);
-        maybeTag(span, RabbitTracing.RABBIT_ROUTING_KEY, routingKey);
-    }
-
-    public static void tagReceivedMessageProperties(Span span, MessageProperties messageProperties) {
-        maybeTag(span, RabbitTracing.RABBIT_EXCHANGE, messageProperties.getReceivedExchange());
-        maybeTag(span, RabbitTracing.RABBIT_ROUTING_KEY, messageProperties.getReceivedRoutingKey());
-        maybeTag(span, RabbitTracing.RABBIT_QUEUE, messageProperties.getConsumerQueue());
-    }
-
-    public static void tagMessagePayload(Span span, String payload) {
-        maybeTag(span, RabbitTracing.RABBIT_PAYLOAD, payload);
-    }
-
-    public static void maybeTag(Span span, String tag, String value) {
-        if (value != null) {
-            span.tag(tag, value);
         }
     }
 

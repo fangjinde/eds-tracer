@@ -164,6 +164,7 @@ public class ShuffleConfiguration {
 
             @Configuration
             @ImportResource(locations = { "classpath:shuffle/applicationContext-client.xml" })
+            @ConditionalOnClass(name="com.alibaba.dubbo.config.spring.schema.DubboNamespaceHandler")
             public class TraceServiceConfiguration {
 
             }

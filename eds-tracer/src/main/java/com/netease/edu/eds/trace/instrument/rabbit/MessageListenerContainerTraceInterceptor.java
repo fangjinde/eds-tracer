@@ -83,8 +83,8 @@ public class MessageListenerContainerTraceInterceptor {
 
         if (!consumerSpan.isNoop()) {
             consumerSpan.start();
-            RabbitTracing.tagReceivedMessageProperties(consumerSpan, message.getMessageProperties());
-            RabbitTracing.tagMessagePayload(consumerSpan, message.toString());
+            RabbitSpanUtils.tagReceivedMessageProperties(consumerSpan, message.getMessageProperties());
+            RabbitSpanUtils.tagMessagePayload(consumerSpan, message.toString());
             Endpoint.Builder builder = Endpoint.newBuilder();
             if (rabbitTracing.remoteServiceName() != null) {
                 builder.serviceName(rabbitTracing.remoteServiceName());
