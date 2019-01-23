@@ -196,6 +196,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>log4j-over-slf4j</artifactId>
         </dependency>
+        
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.google.auto.value</groupId>
@@ -235,7 +240,6 @@
         </dependency>
 
 
-
         <dependency>
             <groupId>com.netease.edu</groupId>
             <artifactId>job-client</artifactId>
@@ -248,17 +252,14 @@
             <artifactId>dwr</artifactId>
             <optional>true</optional>
         </dependency>
-        
+
         <dependency>
-			<groupId>org.elasticsearch</groupId>
-			<artifactId>elasticsearch</artifactId>
-			<optional>true</optional>
-		</dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <optional>true</optional>
+        </dependency>
 
     </dependencies>
-
-
-
 
 
     <build>

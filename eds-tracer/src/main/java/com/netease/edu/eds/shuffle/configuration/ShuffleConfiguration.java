@@ -159,6 +159,7 @@ public class ShuffleConfiguration {
 
         @Configuration
         @ConditionalOnProperty(value = "shuffle.enable", havingValue = "true", matchIfMissing = false)
+        @ConditionalOnClass(name="com.alibaba.dubbo.config.spring.schema.DubboNamespaceHandler")
         public static class ShuffleKeyValueManagerConfiguration {
 
             @Configuration

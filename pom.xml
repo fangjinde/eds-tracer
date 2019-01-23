@@ -111,15 +111,6 @@
         </dependencies>
     </dependencyManagement>
 
-    <dependencies>
-
-		<dependency>
-			<groupId>org.elasticsearch</groupId>
-			<artifactId>elasticsearch</artifactId>
-			<scope>provided</scope>
-		</dependency>
-
-    </dependencies>
 
     <build>
         <finalName>${project.artifactId}</finalName>
