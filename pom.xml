@@ -17,6 +17,9 @@
         <module>eds-tracer-demo-common</module>
         <module>eds-tracer-demo</module>
         <module>eds-tracer-demo-client</module>
+        <module>eds-tracer-springboot1-autoconfigure</module>
+        <module>eds-tracer-springboot2-autoconfigure</module>
+        <module>eds-tracer-common4springboot</module>
     </modules>
 
     <properties>

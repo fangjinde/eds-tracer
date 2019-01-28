@@ -1,6 +1,8 @@
-package com.netease.edu.eds.trace.instrument.http;/**
+package com.netease.edu.eds.trace.springbootcompatible.support;/**
  * Created by hzfjd on 18/3/30.
  */
+
+import com.netease.edu.eds.trace.springbootcompatible.spi.SkipUriMatcher;
 
 import java.util.regex.Pattern;
 
@@ -16,7 +18,7 @@ public class SkipUriMatcherRegexImpl implements SkipUriMatcher {
         this.pattern = pattern;
     }
 
-    @Override public boolean match(String uri) {
+    public boolean match(String uri) {
         return pattern.matcher(uri).find();
     }
 }

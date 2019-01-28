@@ -1,0 +1,6 @@
+# Auto Configuration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.netease.edu.eds.trace.springbootcompatible.configuration.TraceWebSpringBootCompatibleAutoConfiguration
+
+
+

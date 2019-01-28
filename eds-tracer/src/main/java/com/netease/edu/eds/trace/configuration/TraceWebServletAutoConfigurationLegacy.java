@@ -9,12 +9,14 @@
 
 package com.netease.edu.eds.trace.configuration;
 
+import brave.Tracing;
 import brave.http.HttpTracing;
 import com.netease.edu.eds.trace.agent.constants.BeanNameConstants;
 import com.netease.edu.eds.trace.instrument.http.*;
 import com.netease.edu.eds.trace.properties.TraceProperties;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -46,6 +48,28 @@ import static javax.servlet.DispatcherType.*;
 @AutoConfigureAfter(TraceHttpAutoConfiguration.class)
 public class TraceWebServletAutoConfigurationLegacy {
 
+    @Bean
+    @ConditionalOnProperty(name = "spring.sleuth.http.legacy.enabled", havingValue = "false", matchIfMissing = true)
+    public HttpTracing sleuthHttpTracing(Tracing tracing) {
+        return HttpTracing.newBuilder(tracing).serverParser(new HttpServerParserCustomed()).build();
+    }
+
+    /**
+     * Nested config that configures Web MVC if it's present (without adding a runtime dependency to it)
+     */
+    @Configuration
+    @ConditionalOnClass(WebMvcConfigurer.class)
+    @Import(TraceWebMvcConfigurerLegacy.class)
+    public static class TraceWebMvcAutoConfiguration {
+
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public SkipUriMatcher skipUriMatcher(ObjectProvider<com.netease.edu.eds.trace.springbootcompatible.spi.SkipUriMatcher> adaptee) {
+        return new SkipUriMatcherAdapter(adaptee.getIfAvailable());
+    }
+
     @Configuration
     public static class RedirectUrlTraceConfiguration {
 
@@ -60,16 +84,6 @@ public class TraceWebServletAutoConfigurationLegacy {
             Pattern pattern = Pattern.compile(traceProperties.getHttp().getNeedTraceRedirectUrlPattern());
             return new RediectUrlTraceMatcherRegexImpl(pattern);
         }
-    }
-
-    /**
-     * Nested config that configures Web MVC if it's present (without adding a runtime dependency to it)
-     */
-    @Configuration
-    @ConditionalOnClass(WebMvcConfigurer.class)
-    @Import(TraceWebMvcConfigurerLegacy.class)
-    public static class TraceWebMvcAutoConfiguration {
-
     }
 
     @ConditionalOnClass(name = { "com.netease.edu.web.cookie.utils.NeteaseEduCookieManager",
@@ -108,21 +122,4 @@ public class TraceWebServletAutoConfigurationLegacy {
         return filterRegistrationBean;
     }
 
-    // @Bean
-    // public FilterRegistrationBean traceWebFilter(
-    // TraceFilterLegacy traceFilter) {
-    // FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(traceFilter);
-    // filterRegistrationBean.setDispatcherTypes(ASYNC, ERROR, FORWARD, INCLUDE, REQUEST);
-    // filterRegistrationBean.setOrder(TraceFilterLegacy.ORDER);
-    // return filterRegistrationBean;
-    // }
-
-    // @Bean
-    // @ConditionalOnMissingBean
-    // public TraceFilterLegacy traceFilter(BeanFactory beanFactory,
-    // SkipPatternProvider skipPatternProvider) {
-    // return new TraceFilterLegacy(beanFactory, skipPatternProvider.skipPattern());
-    // }
-
-    // TracingFilter
 }
