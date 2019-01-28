@@ -4,6 +4,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.cloud.sleuth.instrument.web.TraceWebAutoConfiguration;
@@ -31,6 +32,7 @@ import brave.Tracing;
 public class TraceWebFluxAutoConfiguration4Springboot2 {
 
     @Bean
+    @ConditionalOnMissingBean
     public TraceWebFilter traceWebFilter(BeanFactory beanFactory, ObjectProvider<SkipUriMatcher> skipUriMatcherOp) {
         return TraceWebFilter.create(beanFactory, skipUriMatcherOp.getIfAvailable());
     }

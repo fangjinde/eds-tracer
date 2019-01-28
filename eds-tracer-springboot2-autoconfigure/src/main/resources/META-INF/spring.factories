@@ -1,5 +1,6 @@
 # Auto Configuration
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.netease.edu.eds.trace.springboot2.TraceWebSpringboot2AutoConfiguration
+com.netease.edu.eds.trace.springboot2.TraceWebSpringboot2AutoConfiguration,\
+com.netease.edu.eds.trace.springboot2.TraceWebFluxAutoConfiguration4Springboot2
 
 
