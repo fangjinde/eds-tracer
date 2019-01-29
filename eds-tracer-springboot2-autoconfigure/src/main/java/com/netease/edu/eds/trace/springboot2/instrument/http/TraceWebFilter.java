@@ -190,8 +190,8 @@ public final class TraceWebFilter implements WebFilter, Ordered {
 									// there
 									// was
 									// a
-									// span
 									// received
+									// span
 									// then
 									// we
 									// must
