@@ -90,7 +90,7 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 
 			HttpMethod httpMethod = (HttpMethod) args[0];
 			String url = (String) args[1];
-			addTraceHeadersBeforeHttpClientSend(args, spanRef.get());
+			addTraceHeadersBeforeHttpClientSend(args, spanRef);
 
 			retObject = invoker.invoke(args);
 
@@ -130,7 +130,7 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 
 			HttpMethod httpMethod = (HttpMethod) args[0];
 			String url = (String) args[1];
-			addTraceHeadersBeforeHttpClientSend(args, spanRef.get());
+			addTraceHeadersBeforeHttpClientSend(args, spanRef);
 
 			AtomicReference<HttpClientResponse> httpClientResponseRef = new AtomicReference();
 			retObject = invoker.invoke(args);
@@ -175,7 +175,7 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 		}
 
 		private static void addTraceHeadersBeforeHttpClientSend(Object[] args,
-				Span span) {
+				AtomicReference<Span> spanRef) {
 			Function<? super HttpClientRequest, ? extends Publisher<Void>> handler = (Function<? super HttpClientRequest, ? extends Publisher<Void>>) args[2];
 
 			Function<? super HttpClientRequest, ? extends Publisher<Void>> tracedHandler = (
@@ -185,19 +185,25 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 					return httpClientRequest;
 				}
 
+				Span span = spanRef.get();
 				if (span == null || injector == null) {
 					return handler.apply(httpClientRequest);
 				}
 
 				io.netty.handler.codec.http.HttpHeaders tracedHeaders = new DefaultHttpHeaders();
 				injector.inject(span.context(), tracedHeaders);
+				// must use TracedHttpClientRequest, as sc gw netty route filter will
+				// clear all headers and use the headers from downstream.
+				// Function<? super HttpClientRequest, ? extends HttpClientRequest> before
+				// = (
+				// req) -> {
+				// tracedHeaders.entries().stream().forEach(
+				// (entry) -> req.addHeader(entry.getKey(), entry.getValue()));
+				// return req;
+				// };
 
-				Function<? super HttpClientRequest, ? extends HttpClientRequest> before = (
-						req) -> {
-					return req.headers(tracedHeaders);
-				};
-
-				return handler.compose(before).apply(httpClientRequest);
+				return handler.apply(
+						new TracedHttpClientRequest(httpClientRequest, tracedHeaders));
 
 			};
 
