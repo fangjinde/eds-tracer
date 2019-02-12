@@ -37,84 +37,99 @@ import java.util.concurrent.Callable;
  **/
 public class ControllerTraceInstrumentation implements TraceAgentInstrumetation {
 
-    @Override
-    public void premain(Map<String, String> props, Instrumentation inst) {
-        ElementMatcher.Junction controllerAnnoMatch = ElementMatchers.isAnnotatedWith(Controller.class).or(ElementMatchers.isAnnotatedWith(RestController.class));
-        // ElementMatcher.Junction inheritsConrollerAnnoMatch =
-        // ElementMatchers.inheritsAnnotation(Controller.class).or(ElementMatchers.inheritsAnnotation(RestController.class));
-        ElementMatcher.Junction typeMatch = ElementMatchers.not(ElementMatchers.isInterface()).and(controllerAnnoMatch);
+	@Override
+	public void premain(Map<String, String> props, Instrumentation inst) {
+		ElementMatcher.Junction controllerAnnoMatch = ElementMatchers
+				.isAnnotatedWith(Controller.class)
+				.or(ElementMatchers.isAnnotatedWith(RestController.class));
 
-        new AgentBuilder.Default().type(typeMatch)
+		// ElementMatcher.Junction typeWithControllerOnInterface=
+		// ElementMatchers.hasSuperType(ElementMatchers.isInterface().and(controllerAnnoMatch));
+		// ElementMatchers.isOverriddenFrom(ElementMatchers.isInterface().and(controllerAnnoMatch));
 
-                                  .transform((builder, typeDescription, classloader, javaModule) -> builder.method(
+		// ElementMatcher.Junction inheritsConrollerAnnoMatch =
+		// ElementMatchers.inheritsAnnotation(Controller.class).or(ElementMatchers.inheritsAnnotation(RestController.class));
+		ElementMatcher.Junction typeMatch = ElementMatchers
+				.not(ElementMatchers.isInterface()).and(controllerAnnoMatch);
 
-                                                                                                                   ElementMatchers.isPublic().and(ElementMatchers.isAnnotatedWith(RequestMapping.class))
+		new AgentBuilder.Default().type(typeMatch)
 
-                                  ).intercept(MethodDelegation.to(TraceInterceptor.class))).with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
+				.transform((builder, typeDescription, classloader,
+						javaModule) -> builder.method(
 
-    }
+								ElementMatchers.isPublic().and(ElementMatchers
+										.isAnnotatedWith(RequestMapping.class))
 
-    private static int detectRequestBodyParamIndex(Method method) {
-        int indexOfRequestBodyParam = 0;
-        Annotation[][] parametersAnnotations = method.getParameterAnnotations();
-        for (Annotation[] paramAnnos : parametersAnnotations) {
-            for (Annotation anno : paramAnnos) {
-                if (anno instanceof RequestBody) {
-                    return indexOfRequestBodyParam;
-                }
-            }
-            indexOfRequestBodyParam++;
-        }
+				).intercept(MethodDelegation.to(TraceInterceptor.class)))
+				.with(DefaultAgentBuilderListener.getInstance()).installOn(inst);
 
-        return -1;
-    }
+	}
 
-    public static class TraceInterceptor {
+	private static int detectRequestBodyParamIndex(Method method) {
+		int indexOfRequestBodyParam = 0;
+		Annotation[][] parametersAnnotations = method.getParameterAnnotations();
+		for (Annotation[] paramAnnos : parametersAnnotations) {
+			for (Annotation anno : paramAnnos) {
+				if (anno instanceof RequestBody) {
+					return indexOfRequestBodyParam;
+				}
+			}
+			indexOfRequestBodyParam++;
+		}
 
-        @RuntimeType
-        public static Object around(@AllArguments Object[] args, @SuperCall Callable<Object> callable,
-                                    @Origin Method method) {
+		return -1;
+	}
 
-            HttpTracing httpTracing = SpringBeanFactorySupport.getBean(HttpTracing.class);
-            if (httpTracing == null) {
-                try {
-                    return callable.call();
-                } catch (Exception e) {
-                    throw ExceptionHandler.wrapToRuntimeException(e);
-                }
-            }
+	public static class TraceInterceptor {
 
-            ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            HttpServletRequest request = null;
-            Span span = null;
-            if (servletRequestAttributes != null) {
-                request = servletRequestAttributes.getRequest();
-                if (request != null) {
-                    span = (Span) request.getAttribute(SpanCustomizer.class.getName());
-                    HttpTagUtils.tagRequestParams(request, span);
-                    HttpTagUtils.tagRequestHeaders(request, span);
-                }
+		@RuntimeType
+		public static Object around(@AllArguments Object[] args,
+				@SuperCall Callable<Object> callable, @Origin Method method) {
 
-            }
+			HttpTracing httpTracing = SpringBeanFactorySupport.getBean(HttpTracing.class);
+			if (httpTracing == null) {
+				try {
+					return callable.call();
+				}
+				catch (Exception e) {
+					throw ExceptionHandler.wrapToRuntimeException(e);
+				}
+			}
 
-            if (span != null && !span.isNoop()) {
-                int requestBodyParamIndex = detectRequestBodyParamIndex(method);
-                if (requestBodyParamIndex >= 0 && requestBodyParamIndex < args.length) {
-                    span.tag("requestBody", TraceJsonUtils.toJson(args[requestBodyParamIndex]));
-                }
-            }
+			ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) RequestContextHolder
+					.getRequestAttributes();
+			HttpServletRequest request = null;
+			Span span = null;
+			if (servletRequestAttributes != null) {
+				request = servletRequestAttributes.getRequest();
+				if (request != null) {
+					span = (Span) request.getAttribute(SpanCustomizer.class.getName());
+					HttpTagUtils.tagRequestParams(request, span);
+					HttpTagUtils.tagRequestHeaders(request, span);
+				}
 
-            try {
-                Object ret = callable.call();
-                SpanUtils.safeTag(span, "return", TraceJsonUtils.toJson(ret));
-                return ret;
-            } catch (Exception e) {
-                SpanUtils.tagErrorMark(span);
-                SpanUtils.tagError(span, e);
-                throw ExceptionHandler.wrapToRuntimeException(e);
-            }
+			}
 
-        }
-    }
+			if (span != null && !span.isNoop()) {
+				int requestBodyParamIndex = detectRequestBodyParamIndex(method);
+				if (requestBodyParamIndex >= 0 && requestBodyParamIndex < args.length) {
+					span.tag("requestBody",
+							TraceJsonUtils.toJson(args[requestBodyParamIndex]));
+				}
+			}
+
+			try {
+				Object ret = callable.call();
+				SpanUtils.safeTag(span, "return", TraceJsonUtils.toJson(ret));
+				return ret;
+			}
+			catch (Exception e) {
+				SpanUtils.tagErrorMark(span);
+				SpanUtils.tagError(span, e);
+				throw ExceptionHandler.wrapToRuntimeException(e);
+			}
+
+		}
+	}
 
 }

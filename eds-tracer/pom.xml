@@ -113,6 +113,19 @@
                 <version>1.0.3.2-GA-SNAPSHOT</version>
             </dependency>
 
+            <dependency>
+                <groupId>io.projectreactor.ipc</groupId>
+                <artifactId>reactor-netty</artifactId>
+                <version>0.7.8.RELEASE</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-core</artifactId>
+                <version>3.1.9.RELEASE</version>
+            </dependency>
+
+
         </dependencies>
     </dependencyManagement>
 
@@ -202,11 +215,6 @@
             <artifactId>commons-lang</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-actuator</artifactId>
-            <optional>true</optional>
-        </dependency>
 
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -236,6 +244,25 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
+        </dependency>
+
+
+        <dependency>
+            <groupId>io.projectreactor.ipc</groupId>
+            <artifactId>reactor-netty</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-actuator</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <dependency>

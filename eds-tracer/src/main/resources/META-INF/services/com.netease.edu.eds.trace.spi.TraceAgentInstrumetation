@@ -15,6 +15,7 @@ com.netease.edu.eds.trace.instrument.ddb.SqlManagerInstrumentation
 com.netease.edu.eds.trace.instrument.async.ThreadPoolExecutorInstrumentation
 com.netease.edu.eds.trace.instrument.http.ControllerTraceInstrumentation
 com.netease.edu.eds.trace.instrument.http.DwrTraceInstrument
+com.netease.edu.eds.trace.instrument.http.client.reactornetty.HttpClientTraceInstrument
 com.netease.edu.eds.trace.instrument.rabbit.RabbitTemplateInstrumentation
 com.netease.edu.eds.trace.instrument.transaction.message.TransactionMessageServiceTraceInstrument
 com.netease.edu.eds.trace.instrument.transaction.message.RabbitTemplateForTransactionMessageInstrument
