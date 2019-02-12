@@ -3,10 +3,14 @@ package com.netease.edu.eds.trace.instrument.http.client.reactornetty;
 import brave.Span;
 import brave.Tracer;
 import brave.Tracing;
+import brave.propagation.Propagation;
+import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.support.AbstractTraceAgentInstrumetation;
 import com.netease.edu.eds.trace.utils.SpanUtils;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.annotation.*;
@@ -81,17 +85,19 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 			}
 
 			Object retObject = null;
+			AtomicReference<Span> spanRef = new AtomicReference<>();
+			TraceContext.Injector<HttpHeaders> injector = getInjector();
 
 			HttpMethod httpMethod = (HttpMethod) args[0];
 			String url = (String) args[1];
-			Function<? super HttpClientRequest, ? extends Publisher<Void>> handler = (Function<? super HttpClientRequest, ? extends Publisher<Void>>) args[2];
+			addTraceHeadersBeforeHttpClientSend(args, spanRef.get());
+
 			retObject = invoker.invoke(args);
 
 			if (retObject instanceof Mono) {
 
 				String spanName = httpMethod.name() + url;
 				Mono<HttpClientResponse> monoReponse = (Mono<HttpClientResponse>) retObject;
-				AtomicReference<Span> spanRef = new AtomicReference<>();
 
 				Mono<HttpClientResponse> tracedMono = monoReponse.doOnError(t -> {
 					Span span = spanRef.get();
@@ -120,10 +126,12 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 			}
 
 			Object retObject = null;
+			AtomicReference<Span> spanRef = new AtomicReference<>();
 
 			HttpMethod httpMethod = (HttpMethod) args[0];
 			String url = (String) args[1];
-			Function<? super HttpClientRequest, ? extends Publisher<Void>> handler = (Function<? super HttpClientRequest, ? extends Publisher<Void>>) args[2];
+			addTraceHeadersBeforeHttpClientSend(args, spanRef.get());
+
 			AtomicReference<HttpClientResponse> httpClientResponseRef = new AtomicReference();
 			retObject = invoker.invoke(args);
 
@@ -139,13 +147,78 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 						t -> Mono.subscriberContext().map(c -> c.put(CONTEXT_ERROR, t)))
 						.flatMap(
 								doTraceAfterResponse(tracer, httpClientResponseRef.get()))
-						.subscriberContext(doTraceBeforeRequest(tracer, spanName, null)));
+						.subscriberContext(
+								doTraceBeforeRequest(tracer, spanName, spanRef)));
 
 				return tracedMono;
 			}
 
 			return retObject;
 		}
+
+		private static TraceContext.Injector<HttpHeaders> getInjector() {
+
+			if (injector != null) {
+				return injector;
+			}
+
+			synchronized (Interceptor.class) {
+				if (injector == null) {
+					Tracing tracing = Tracing.current();
+					if (tracing != null) {
+						injector = tracing.propagation().injector(SETTER);
+					}
+				}
+			}
+			return injector;
+
+		}
+
+		private static void addTraceHeadersBeforeHttpClientSend(Object[] args,
+				Span span) {
+			Function<? super HttpClientRequest, ? extends Publisher<Void>> handler = (Function<? super HttpClientRequest, ? extends Publisher<Void>>) args[2];
+
+			Function<? super HttpClientRequest, ? extends Publisher<Void>> tracedHandler = (
+					httpClientRequest) -> {
+
+				if (handler == null) {
+					return httpClientRequest;
+				}
+
+				if (span == null || injector == null) {
+					return handler.apply(httpClientRequest);
+				}
+
+				io.netty.handler.codec.http.HttpHeaders tracedHeaders = new DefaultHttpHeaders();
+				injector.inject(span.context(), tracedHeaders);
+
+				Function<? super HttpClientRequest, ? extends HttpClientRequest> before = (
+						req) -> {
+					return req.headers(tracedHeaders);
+				};
+
+				return handler.compose(before).apply(httpClientRequest);
+
+			};
+
+			args[2] = tracedHandler;
+		}
+
+		private static final Propagation.Setter<HttpHeaders, String> SETTER = new Propagation.Setter<HttpHeaders, String>() {
+			@Override
+			public void put(HttpHeaders carrier, String key, String value) {
+				if (!carrier.contains(key)) {
+					carrier.add(key, value);
+				}
+			}
+
+			@Override
+			public String toString() {
+				return "HttpHeaders::add";
+			}
+		};
+
+		private static TraceContext.Injector<HttpHeaders> injector = null;
 
 		private static Function<? super Context, ? extends Mono<? extends HttpClientResponse>> doTraceAfterResponse(
 				Tracer tracer, HttpClientResponse httpClientResponse) {
