@@ -137,9 +137,9 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 					return res;
 				}).compose(p -> p.then(Mono.subscriberContext()).onErrorResume(
 						t -> Mono.subscriberContext().map(c -> c.put(CONTEXT_ERROR, t)))
-						.flatMap(doTraceAfterResponse(tracer,
-								httpClientResponseRef.get())))
-						.subscriberContext(doTraceBeforeRequest(tracer, spanName, null));
+						.flatMap(
+								doTraceAfterResponse(tracer, httpClientResponseRef.get()))
+						.subscriberContext(doTraceBeforeRequest(tracer, spanName, null)));
 
 				return tracedMono;
 			}
@@ -202,7 +202,7 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 							TraceContextOrSamplingFlags.create(parentSpan.context()));
 				}
 
-				span.name(spanName).start();
+				span.name(spanName).kind(Span.Kind.CLIENT).start();
 
 				if (spanRef != null) {
 					spanRef.set(span);
