@@ -15,17 +15,11 @@
         <edu-third-party-base.version>1.0.49</edu-third-party-base.version>
         <eduos-second-party-base.version>1.0.34</eduos-second-party-base.version>
         <eds-tracer-dependencies.version>${project.version}</eds-tracer-dependencies.version>
-        <eds-tracer-springboot-adapter.version>1.0.0-SNAPSHOT</eds-tracer-springboot-adapter.version>
+        <eds-tracer-springboot-adapter.version>${project.version}</eds-tracer-springboot-adapter.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-
-            <dependency>
-                <groupId>com.netease.edu.eds</groupId>
-                <artifactId>eds-tracer-common4springboot</artifactId>
-                <version>${eds-tracer-springboot-adapter.version}</version>
-            </dependency>
 
             <dependency>
                 <groupId>com.netease.edu.eds</groupId>

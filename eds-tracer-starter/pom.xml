@@ -11,32 +11,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <eds-tracer-core.version>${project.version}</eds-tracer-core.version>
         <eds-tracer-dependencies.version>${project.version}</eds-tracer-dependencies.version>
-        <eds-tracer-springboot-adapter.version>1.0.0-SNAPSHOT</eds-tracer-springboot-adapter.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-
-            <dependency>
-                <groupId>com.netease.edu.eds</groupId>
-                <artifactId>eds-tracer-common4springboot</artifactId>
-                <version>${eds-tracer-springboot-adapter.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.netease.edu.eds</groupId>
-                <artifactId>eds-tracer-springboot1-autoconfigure</artifactId>
-                <version>${eds-tracer-springboot-adapter.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.netease.edu.eds</groupId>
-                <artifactId>eds-tracer-springboot2-autoconfigure</artifactId>
-                <version>${eds-tracer-springboot-adapter.version}</version>
-            </dependency>
 
             <dependency>
                 <groupId>com.netease.edu.eds</groupId>
@@ -46,11 +25,7 @@
                 <scope>import</scope>
             </dependency>
 
-            <dependency>
-                <groupId>com.netease.edu.eds</groupId>
-                <artifactId>eds-tracer-core</artifactId>
-                <version>${eds-tracer-core.version}</version>
-            </dependency>
+
 
         </dependencies>
     </dependencyManagement>
