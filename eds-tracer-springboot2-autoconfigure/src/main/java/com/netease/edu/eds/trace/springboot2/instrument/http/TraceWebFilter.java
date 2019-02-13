@@ -1,5 +1,22 @@
 package com.netease.edu.eds.trace.springboot2.instrument.http;
 
+import brave.Span;
+import brave.Tracer;
+import brave.http.HttpServerHandler;
+import brave.http.HttpTracing;
+import brave.propagation.Propagation;
+import brave.propagation.SamplingFlags;
+import brave.propagation.TraceContext;
+import brave.propagation.TraceContextOrSamplingFlags;
+import com.netease.edu.eds.trace.constants.CommonTagKeys;
+import com.netease.edu.eds.trace.constants.SpanType;
+import com.netease.edu.eds.trace.core.UrlParameterManagerDto;
+import com.netease.edu.eds.trace.springbootcompatible.spi.SkipUriMatcher;
+import com.netease.edu.eds.trace.utils.EnvironmentUtils;
+import com.netease.edu.eds.trace.utils.PropagationUtils;
+import com.netease.edu.eds.trace.utils.SpanUtils;
+import com.netease.edu.eds.trace.utils.TraceJsonUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeansException;
@@ -13,19 +30,12 @@ import org.springframework.web.reactive.HandlerMapping;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
-
-import com.netease.edu.eds.trace.springbootcompatible.spi.SkipUriMatcher;
-
-import brave.Span;
-import brave.Tracer;
-import brave.http.HttpServerHandler;
-import brave.http.HttpTracing;
-import brave.propagation.Propagation;
-import brave.propagation.SamplingFlags;
-import brave.propagation.TraceContext;
-import brave.propagation.TraceContextOrSamplingFlags;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A {@link WebFilter} that creates / continues / closes and detaches spans for a reactive
@@ -138,112 +148,167 @@ public final class TraceWebFilter implements WebFilter, Ordered {
 		Span spanFromAttribute = getSpanFromAttribute(exchange);
 		String name = HTTP_COMPONENT + ":" + uri;
 		final String CONTEXT_ERROR = "sleuth.webfilter.context.error";
+		AtomicReference<Span> spanRef = new AtomicReference<>();
 
-		return chain.filter(exchange)
-				.compose(f -> f.then(Mono.subscriberContext()).onErrorResume(
+		return chain.filter(exchange).compose(f -> f.then(Mono.subscriberContext())
+				.onErrorResume(
 						t -> Mono.subscriberContext().map(c -> c.put(CONTEXT_ERROR, t)))
-						.flatMap(c -> {
-							// reactivate
-							// span
-							// from
-							// context
-							Span span = spanFromContext(c);
-							Mono<Void> continuation;
-							Throwable t = null;
-							if (c.hasKey(CONTEXT_ERROR)) {
-								t = c.get(CONTEXT_ERROR);
-								continuation = Mono.error(t);
-							}
-							else {
-								continuation = Mono.empty();
-								Object attribute = exchange.getAttribute(
-										HandlerMapping.BEST_MATCHING_HANDLER_ATTRIBUTE);
-								if (attribute instanceof HandlerMethod) {
-									HandlerMethod handlerMethod = (HandlerMethod) attribute;
-									addClassMethodTag(handlerMethod, span);
-									addClassNameTag(handlerMethod, span);
-								}
+				.flatMap(c -> {
+					// reactivate
+					// span
+					// from
+					// context
+					Span span = spanFromContext(c);
+					Mono<Void> continuation;
+					Throwable t = null;
+					if (c.hasKey(CONTEXT_ERROR)) {
+						t = c.get(CONTEXT_ERROR);
+						continuation = Mono.error(t);
+					}
+					else {
+						continuation = Mono.empty();
+						Object attribute = exchange.getAttribute(
+								HandlerMapping.BEST_MATCHING_HANDLER_ATTRIBUTE);
+						if (attribute instanceof HandlerMethod) {
+							HandlerMethod handlerMethod = (HandlerMethod) attribute;
+							addClassMethodTag(handlerMethod, span);
+							addClassNameTag(handlerMethod, span);
+						}
 
-							}
-							addResponseTagsForSpanWithoutParent(exchange, response, span);
-							handler().handleSend(response, t, span);
-							if (log.isDebugEnabled()) {
-								log.debug("Handled send of " + span);
-							}
-							return continuation;
-						}).subscriberContext(c -> {
-							Span span;
-							if (c.hasKey(Span.class)) {
-								Span parent = c.get(Span.class);
-								span = tracer().nextSpan(TraceContextOrSamplingFlags
-										.create(parent.context())).start();
-								if (log.isDebugEnabled()) {
-									log.debug("Found span in reactor context" + span);
-								}
+					}
+					addResponseTagsForSpanWithoutParent(exchange, response, span);
+					handler().handleSend(response, t, span);
+					if (log.isDebugEnabled()) {
+						log.debug("Handled send of " + span);
+					}
+					return continuation;
+				}).doOnSubscribe((subscription -> {
+					Span span = spanRef.get();
+					if (span != null) {
+						try (Tracer.SpanInScope spanInScope = tracer
+								.withSpanInScope(span)) {
+							// 一定要放在SpanInScope中，否则CurrentContext不正确。
+							PropagationUtils.setOriginEnvIfNotExists(span.context(),
+									EnvironmentUtils.getCurrentEnv());
+							// any downstream code can see Tracer.currentSpan() or use
+							// Tracer.currentSpanCustomizer()
+							SpanUtils.tagPropagationInfos(span);
+						}
+					}
+
+				})).subscriberContext(c -> {
+					Span span;
+					if (c.hasKey(Span.class)) {
+						Span parent = c.get(Span.class);
+						span = tracer().nextSpan(
+								TraceContextOrSamplingFlags.create(parent.context()))
+								.start();
+						if (log.isDebugEnabled()) {
+							log.debug("Found span in reactor context" + span);
+						}
+					}
+					else {
+						try {
+							boolean hasTracingContextInHeaders = extractor().extract(
+									request.getHeaders()) != TraceContextOrSamplingFlags.EMPTY;
+							// if
+							// there
+							// was
+							// a
+							// received
+							// span
+							// then
+							// we
+							// must
+							// not
+							// change
+							// the
+							// sampling
+							// decision
+							if (skip && !hasTracingContextInHeaders) {
+								span = unsampledSpan(name);
 							}
 							else {
-								try {
-									boolean hasTracingContextInHeaders = extractor()
-											.extract(request
-													.getHeaders()) != TraceContextOrSamplingFlags.EMPTY;
-									// if
-									// there
-									// was
-									// a
-									// received
-									// span
-									// then
-									// we
-									// must
-									// not
-									// change
-									// the
-									// sampling
-									// decision
-									if (skip && !hasTracingContextInHeaders) {
-										span = unsampledSpan(name);
+								if (spanFromAttribute != null) {
+									span = spanFromAttribute;
+									if (log.isDebugEnabled()) {
+										log.debug("Found span in attribute " + span);
 									}
-									else {
-										if (spanFromAttribute != null) {
-											span = spanFromAttribute;
-											if (log.isDebugEnabled()) {
-												log.debug("Found span in attribute "
-														+ span);
-											}
-										}
-										else {
-											span = handler().handleReceive(extractor(),
-													request.getHeaders(), request);
-											if (log.isDebugEnabled()) {
-												log.debug("Handled receive of span "
-														+ span);
-											}
-										}
-									}
-									exchange.getAttributes().put(TRACE_REQUEST_ATTR,
-											span);
 								}
-								catch (Exception e) {
-									log.error(
-											"Exception occurred while trying to parse the request. "
-													+ "Will fallback to manual span setting",
-											e);
-									if (skip) {
-										span = unsampledSpan(name);
-									}
-									else {
-										span = tracer().nextSpan().name(name).start();
-										exchange.getAttributes()
-												.put(TRACE_SPAN_WITHOUT_PARENT, span);
-										if (log.isDebugEnabled()) {
-											log.debug("Created a new 'fallback' span "
-													+ span);
-										}
+								else {
+									span = handler().handleReceive(extractor(),
+											request.getHeaders(), request);
+									if (log.isDebugEnabled()) {
+										log.debug("Handled receive of span " + span);
 									}
 								}
 							}
-							return c.put(Span.class, span);
-						}));
+							exchange.getAttributes().put(TRACE_REQUEST_ATTR, span);
+						}
+						catch (Exception e) {
+							log.error(
+									"Exception occurred while trying to parse the request. "
+											+ "Will fallback to manual span setting",
+									e);
+							if (skip) {
+								span = unsampledSpan(name);
+							}
+							else {
+								span = tracer().nextSpan().name(name).start();
+								exchange.getAttributes().put(TRACE_SPAN_WITHOUT_PARENT,
+										span);
+								if (log.isDebugEnabled()) {
+									log.debug("Created a new 'fallback' span " + span);
+								}
+							}
+						}
+					}
+
+					SpanUtils.safeTag(span, SpanType.TAG_KEY, SpanType.HTTP);
+					if (span != null && !span.isNoop()) {
+						SpanUtils.safeTag(span, CommonTagKeys.SERVER_ENV,
+								EnvironmentUtils.getCurrentEnv());
+
+					}
+					spanRef.set(span);
+					tagServerHttpRequestHeaders(request, span);
+					tagServerHttpRequestParams(request, span);
+					return c.put(Span.class, span);
+				}));
+	}
+
+	private static void tagServerHttpRequestParams(ServerHttpRequest request, Span span) {
+		if (request == null || span == null || span.isNoop()) {
+			return;
+		}
+
+		String requestUrl = request.getURI().toString();
+		if (StringUtils.isNotBlank(requestUrl)) {
+			Map<String, String> params = new UrlParameterManagerDto(requestUrl)
+					.getEncodedParams();
+			params.entrySet().stream().forEach(entry -> SpanUtils.safeTag(span,
+					"p_" + entry.getKey(), entry.getValue()));
+
+		}
+
+	}
+
+	private static void tagServerHttpRequestHeaders(ServerHttpRequest request,
+			Span span) {
+		if (request == null || span == null || span.isNoop()) {
+			return;
+		}
+		HttpHeaders httpHeaders = request.getHeaders();
+		httpHeaders.entrySet().stream().forEach(entry -> SpanUtils.safeTag(span,
+				"h_" + entry.getKey(), printPretty(entry.getValue())));
+
+	}
+
+	private static String printPretty(List<String> values) {
+		if (values != null && values.size() == 1) {
+			return values.get(0);
+		}
+		return TraceJsonUtils.toJson(values);
 	}
 
 	private Span spanFromContext(Context c) {

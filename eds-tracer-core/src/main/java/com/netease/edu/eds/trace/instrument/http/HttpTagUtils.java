@@ -11,29 +11,30 @@ import java.util.Enumeration;
  * @create 18/10/8
  **/
 public class HttpTagUtils {
-    public static void tagRequestParams(HttpServletRequest request, Span span) {
-        if (request == null || span == null || span.isNoop()) {
-            return;
-        }
-        Enumeration<String> paraNames = request.getParameterNames();
-        while (paraNames.hasMoreElements()) {
-            String paramName = paraNames.nextElement();
-            String paramValue = request.getParameter(paramName);
-            SpanUtils.safeTag(span, "p_" + paramName, paramValue);
+	public static void tagRequestParams(HttpServletRequest request, Span span) {
+		if (request == null || span == null || span.isNoop()) {
+			return;
+		}
+		Enumeration<String> paraNames = request.getParameterNames();
+		while (paraNames.hasMoreElements()) {
+			String paramName = paraNames.nextElement();
+			String paramValue = request.getParameter(paramName);
+			SpanUtils.safeTag(span, "p_" + paramName, paramValue);
 
-        }
-    }
+		}
+	}
 
-    public static void tagRequestHeaders(HttpServletRequest request, Span span) {
-        if (request == null || span == null || span.isNoop()) {
-            return;
-        }
-        Enumeration<String> paraNames = request.getHeaderNames();
-        while (paraNames.hasMoreElements()) {
-            String paramName = paraNames.nextElement();
-            String paramValue = request.getHeader(paramName);
-            SpanUtils.safeTag(span, "h_" + paramName, paramValue);
+	public static void tagRequestHeaders(HttpServletRequest request, Span span) {
+		if (request == null || span == null || span.isNoop()) {
+			return;
+		}
+		Enumeration<String> paraNames = request.getHeaderNames();
+		while (paraNames.hasMoreElements()) {
+			String paramName = paraNames.nextElement();
+			String paramValue = request.getHeader(paramName);
+			SpanUtils.safeTag(span, "h_" + paramName, paramValue);
 
-        }
-    }
+		}
+	}
+
 }
