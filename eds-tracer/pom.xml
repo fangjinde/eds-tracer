@@ -29,18 +29,6 @@
 
             <dependency>
                 <groupId>com.netease.edu.eds</groupId>
-                <artifactId>eds-tracer-springboot1-autoconfigure</artifactId>
-                <version>${eds-tracer-springboot-adapter.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.netease.edu.eds</groupId>
-                <artifactId>eds-tracer-springboot2-autoconfigure</artifactId>
-                <version>${eds-tracer-springboot-adapter.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.netease.edu.eds</groupId>
                 <artifactId>eds-tracer-dependencies</artifactId>
                 <version>${eds-tracer-dependencies.version}</version>
                 <type>pom</type>
@@ -134,16 +122,6 @@
         <dependency>
             <groupId>com.netease.edu.eds</groupId>
             <artifactId>eds-tracer-common4springboot</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.netease.edu.eds</groupId>
-            <artifactId>eds-tracer-springboot1-autoconfigure</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.netease.edu.eds</groupId>
-            <artifactId>eds-tracer-springboot2-autoconfigure</artifactId>
         </dependency>
 
         <dependency>
