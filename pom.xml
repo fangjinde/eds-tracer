@@ -11,6 +11,7 @@
 
     <modules>
         <module>eds-tracer-dependencies</module>
+        <module>eds-tracer-starter</module>
         <module>eds-tracer</module>
         <module>eds-tracer-service</module>
         <module>eds-tracer-admin</module>
