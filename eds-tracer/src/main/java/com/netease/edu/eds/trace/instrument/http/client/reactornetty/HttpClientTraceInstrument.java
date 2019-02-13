@@ -146,7 +146,7 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 				}).compose(p -> p.then(Mono.subscriberContext()).onErrorResume(
 						t -> Mono.subscriberContext().map(c -> c.put(CONTEXT_ERROR, t)))
 						.flatMap(
-								doTraceAfterResponse(tracer, httpClientResponseRef.get()))
+								doTraceAfterResponse(tracer, httpClientResponseRef))
 						.subscriberContext(
 								doTraceBeforeRequest(tracer, spanName, spanRef)));
 
@@ -227,10 +227,10 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 		private static TraceContext.Injector<HttpHeaders> injector = null;
 
 		private static Function<? super Context, ? extends Mono<? extends HttpClientResponse>> doTraceAfterResponse(
-				Tracer tracer, HttpClientResponse httpClientResponse) {
+				Tracer tracer, AtomicReference<HttpClientResponse> httpClientResponseRef ) {
 			return context -> {
 
-				Mono responseMono = Mono.fromSupplier(() -> httpClientResponse);
+				Mono<HttpClientResponse> responseMono = Mono.fromSupplier(() -> httpClientResponseRef.get());
 				Span span = null;
 				if (context.hasKey(Span.class)) {
 					span = context.get(Span.class);
