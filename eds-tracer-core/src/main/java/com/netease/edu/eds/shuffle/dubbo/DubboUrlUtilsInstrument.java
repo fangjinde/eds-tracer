@@ -52,7 +52,7 @@ public class DubboUrlUtilsInstrument implements TraceAgentInstrumetation {
 
         /**
          * 对原方法进行改造，去除version匹配
-         * 
+         *
          * @param consumerUrl
          * @param providerUrl
          * @return
@@ -61,9 +61,8 @@ public class DubboUrlUtilsInstrument implements TraceAgentInstrumetation {
             String consumerInterface = consumerUrl.getServiceInterface();
             String providerInterface = providerUrl.getServiceInterface();
             if (!(Constants.ANY_VALUE.equals(consumerInterface)
-                  || StringUtils.isEquals(consumerInterface, providerInterface))) {
+                  || StringUtils.isEquals(consumerInterface, providerInterface)))
                 return false;
-            }
 
             // 注意，在方法体内部的类方法调用，不会触发类的预加载。因此此处调用是安全的。
             if (!UrlUtils.isMatchCategory(providerUrl.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY),
@@ -77,19 +76,15 @@ public class DubboUrlUtilsInstrument implements TraceAgentInstrumetation {
             }
 
             String consumerGroup = consumerUrl.getParameter(Constants.GROUP_KEY);
-            String consumerVersion = consumerUrl.getParameter(Constants.VERSION_KEY);
             String consumerClassifier = consumerUrl.getParameter(Constants.CLASSIFIER_KEY, Constants.ANY_VALUE);
 
             String providerGroup = providerUrl.getParameter(Constants.GROUP_KEY);
-            String providerVersion = providerUrl.getParameter(Constants.VERSION_KEY);
             String providerClassifier = providerUrl.getParameter(Constants.CLASSIFIER_KEY, Constants.ANY_VALUE);
             return (Constants.ANY_VALUE.equals(consumerGroup) || StringUtils.isEquals(consumerGroup, providerGroup)
                     || StringUtils.isContains(consumerGroup, providerGroup))
 
                    && (consumerClassifier == null || Constants.ANY_VALUE.equals(consumerClassifier)
-                       || StringUtils.isEquals(consumerClassifier, providerClassifier))
-                   && (Constants.ANY_VALUE.equals(consumerVersion)
-                       || hasConsumerVersionSuitableProviderVersion(consumerVersion, providerVersion));
+                       || StringUtils.isEquals(consumerClassifier, providerClassifier));
         }
 
         /**
@@ -99,6 +94,7 @@ public class DubboUrlUtilsInstrument implements TraceAgentInstrumetation {
          * @param providerVersion
          * @return
          */
+        @Deprecated
         private static boolean hasConsumerVersionSuitableProviderVersion(String consumerVersion,
                                                                          String providerVersion) {
 
