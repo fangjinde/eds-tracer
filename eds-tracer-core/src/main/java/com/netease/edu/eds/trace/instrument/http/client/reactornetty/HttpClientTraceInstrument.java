@@ -26,7 +26,6 @@ import reactor.util.context.Context;
 
 import java.lang.reflect.Method;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -66,16 +65,25 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 		@RuntimeType
 		public static Object intercept(@AllArguments Object[] args,
 				@Morph Invoker invoker, @Origin Method method, @This Object proxy) {
-
-			if (new Random().nextInt(10) % 2 == 1) {
-				return intercept1(args, invoker, method, proxy);
-			}
-			else {
-				return intercept2(args, invoker, method, proxy);
-			}
+			return intercept1(args, invoker, method, proxy);
+			// if (new Random().nextInt(10) % 2 == 1) {
+			// return intercept1(args, invoker, method, proxy);
+			// }
+			// else {
+			// return intercept2(args, invoker, method, proxy);
+			// }
 
 		}
 
+		/**
+		 * 有莫名其妙的问题，会导致c和s端span信息在zipkin端没有正常join。具体问题后面可以再慢慢排查
+		 * @param args
+		 * @param invoker
+		 * @param method
+		 * @param proxy
+		 * @return
+		 */
+		@Deprecated
 		private static Object intercept2(Object[] args, Invoker invoker, Method method,
 				Object proxy) {
 
