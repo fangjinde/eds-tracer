@@ -127,8 +127,14 @@ public class TraceDemoController {
 
 		// http://127.0.0.1:9999/traceBackend/web/echo?ping=xxx
 		CloseableHttpClient client = HttpClients.createDefault();
-		HttpGet request = new HttpGet(
-				"http://127.0.0.1:9999/traceBackend/web/echo?ping=xxx");
+		// HttpGet request = new HttpGet(
+		// "http://127.0.0.1:9999/traceBackend/web/echo?ping=xxx");
+
+		// HttpGet request = new HttpGet("http://127.0.0.1:9999/web/echo?ping=xxx");
+		// request.addHeader("Host", "echo.fjd.com");
+
+		// raw domain request test case
+		HttpGet request = new HttpGet("http://echo.fjd.com/web/echo?ping=xxx");
 
 		List<NameValuePair> params = new ArrayList<NameValuePair>();
 		params.add(new BasicNameValuePair("ping", "xxx"));

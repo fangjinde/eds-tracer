@@ -1,6 +1,7 @@
 package com.netease.edu.eds.trace.springboot2;
 
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -19,6 +20,7 @@ import com.netease.edu.eds.trace.springboot2.instrument.http.TraceHttpHeadersFil
 @ConditionalOnProperty(value = "spring.sleuth.web.enabled", matchIfMissing = true)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.REACTIVE)
 @AutoConfigureBefore(GatewayAutoConfiguration.class)
+@ConditionalOnClass(name = "org.springframework.cloud.gateway.filter.headers.HttpHeadersFilter")
 public class GatewayFilterSpringboot2Autoconfiguration {
 
 	@Bean
