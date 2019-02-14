@@ -1,9 +1,12 @@
 package com.netease.edu.eds.shuffle.instrument.http;
 
+import brave.Span;
 import brave.Tracer;
 import brave.Tracing;
 import com.netease.edu.eds.trace.core.Invoker;
+import com.netease.edu.eds.trace.instrument.http.httpclient.HttpRequestBypassSupport;
 import com.netease.edu.eds.trace.support.AbstractTraceAgentInstrumetation;
+import com.netease.edu.eds.trace.utils.SpanUtils;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.annotation.*;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -69,6 +72,11 @@ public class HttpClientShuffleInstrumentation extends AbstractTraceAgentInstrume
 			HttpHost httpHost = (HttpHost) args[0];
 			String hostName = httpHost.getHostName();
 			HttpRequest httpRequest = (HttpRequest) args[1];
+			String uri = httpRequest.getRequestLine().getUri();
+
+			if (HttpRequestBypassSupport.byPassTrace(uri)) {
+				return invoker.invoke(args);
+			}
 
 			if ("echo.fjd.com".equalsIgnoreCase(hostName)) {
 				// http://127.0.0.1:9999
@@ -76,6 +84,10 @@ public class HttpClientShuffleInstrumentation extends AbstractTraceAgentInstrume
 						httpHost.getSchemeName());
 				args[0] = newHttpHost;
 				httpRequest.addHeader("Host", hostName);
+
+				Span span = tracer.currentSpan();
+				SpanUtils.safeTag(span, "HttpClientOriginHost", hostName);
+				SpanUtils.safeTag(span, "HttpClientRewriteTo", "127.0.0.1:9999");
 			}
 
 			return invoker.invoke(args);

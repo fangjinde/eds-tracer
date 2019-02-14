@@ -8,7 +8,6 @@ import brave.propagation.TraceContext;
 import com.netease.edu.eds.trace.constants.CommonTagKeys;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.support.AbstractTraceAgentInstrumetation;
-import com.netease.edu.eds.trace.support.TracePropertiesSupport;
 import com.netease.edu.eds.trace.utils.EnvironmentUtils;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;
@@ -23,8 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.isOverriddenFrom;
@@ -81,7 +78,7 @@ public class HttpClientTraceInstrumentation extends AbstractTraceAgentInstrumeta
 			String httpMethod = httpRequest.getRequestLine().getMethod();
 			String uri = httpRequest.getRequestLine().getUri();
 
-			if (byPassTrace(uri)) {
+			if (HttpRequestBypassSupport.byPassTrace(uri)) {
 				return invoker.invoke(args);
 			}
 
@@ -115,19 +112,7 @@ public class HttpClientTraceInstrumentation extends AbstractTraceAgentInstrumeta
 
 		}
 
-		private static boolean byPassTrace(String uri) {
-			try {
-				URL url = new URL(uri);
-				if (url.getPath().startsWith("/eureka/")) {
-					return !TracePropertiesSupport.isHttpClientTracedForEureka();
-				}
 
-			}
-			catch (MalformedURLException e) {
-				log.error("byPassTrace error for MalformedURLException, url= " + uri, e);
-			}
-			return false;
-		}
 
 		private static final Propagation.Setter<HttpRequest, String> SETTER = new Propagation.Setter<HttpRequest, String>() {
 			@Override
