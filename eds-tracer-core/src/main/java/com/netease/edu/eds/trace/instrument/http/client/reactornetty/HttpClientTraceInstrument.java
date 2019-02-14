@@ -94,8 +94,6 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 
 			Object retObject = null;
 			AtomicReference<Span> spanRef = new AtomicReference<>();
-			TraceContext.Injector<HttpHeaders> injector = getInjector();
-
 			HttpMethod httpMethod = (HttpMethod) args[0];
 			String url = (String) args[1];
 			addTraceHeadersBeforeHttpClientSend(args, spanRef);
@@ -194,6 +192,7 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 				}
 
 				Span span = spanRef.get();
+				TraceContext.Injector<HttpHeaders> injector = getInjector();
 				if (span == null || injector == null) {
 					return handler.apply(httpClientRequest);
 				}
