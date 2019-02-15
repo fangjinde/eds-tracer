@@ -42,7 +42,7 @@ public class EnvironmentShuffleUtils {
 
     }
 
-    private static List<String> getAllEnvironmentsForPropagationSelection(boolean includeCurrentEnv) {
+    public static List<String> getAllEnvironmentsForPropagationSelection(boolean includeCurrentEnv) {
         List<String> environmentsForPropagationSelection = new ArrayList<>(3);
         String lastEnv = null;
 

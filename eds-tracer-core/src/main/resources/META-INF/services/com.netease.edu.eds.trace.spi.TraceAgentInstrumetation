@@ -1,4 +1,5 @@
 #order should be respected, small order interceptor is called later.
+#later, should add order mechanism to make it more clearly.
 com.netease.edu.eds.shuffle.dubbo.AbstractClusterInvokerShuffleInstrument
 com.netease.edu.eds.trace.instrument.dubbo.AbstractClusterInvokerTraceInstrument
 com.netease.edu.eds.trace.instrument.ndir.NdirSearchClientInstrumentation
@@ -18,6 +19,7 @@ com.netease.edu.eds.trace.instrument.http.DwrTraceInstrument
 com.netease.edu.eds.trace.instrument.http.client.reactornetty.HttpClientTraceInstrument
 com.netease.edu.eds.shuffle.instrument.http.HttpClientShuffleInstrumentation
 com.netease.edu.eds.trace.instrument.http.httpclient.HttpClientTraceInstrumentation
+com.netease.edu.eds.shuffle.instrument.lbclient.RibbonLoadBalancerClientShuffleInstrumentation
 com.netease.edu.eds.trace.instrument.rabbit.RabbitTemplateInstrumentation
 com.netease.edu.eds.trace.instrument.transaction.message.TransactionMessageServiceTraceInstrument
 com.netease.edu.eds.trace.instrument.transaction.message.RabbitTemplateForTransactionMessageInstrument
