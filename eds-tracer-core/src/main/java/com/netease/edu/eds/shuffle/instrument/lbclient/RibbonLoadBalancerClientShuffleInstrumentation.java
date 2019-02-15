@@ -39,10 +39,23 @@ public class RibbonLoadBalancerClientShuffleInstrumentation
 	protected ElementMatcher.Junction defineMethodMatcher(Map<String, String> props,
 			TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
 		// protected ILoadBalancer getLoadBalancer(String serviceId)
-		ElementMatcher.Junction getLoadBalancer1 = namedIgnoreCase("getLoadBalancer")
+		// ElementMatcher.Junction getLoadBalancer1 = namedIgnoreCase("getLoadBalancer")
+		// .and(isDeclaredBy(typeDescription)).and(takesArguments(1))
+		// .and(isProtected());
+
+		// public ServiceInstance choose(String serviceId)
+
+		ElementMatcher.Junction choose1 = namedIgnoreCase("choose")
 				.and(isDeclaredBy(typeDescription)).and(takesArguments(1))
-				.and(isProtected());
-		return getLoadBalancer1;
+				.and(isPublic());
+
+		// public <T> T execute(String serviceId, LoadBalancerRequest<T> request) throws
+		// IOException
+		ElementMatcher.Junction execute2 = namedIgnoreCase("execute")
+				.and(isDeclaredBy(typeDescription)).and(takesArguments(2))
+				.and(isPublic());
+
+		return choose1.or(execute2);
 	}
 
 	@Override
