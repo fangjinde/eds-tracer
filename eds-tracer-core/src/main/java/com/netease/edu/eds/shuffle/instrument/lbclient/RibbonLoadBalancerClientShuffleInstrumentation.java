@@ -72,8 +72,8 @@ public class RibbonLoadBalancerClientShuffleInstrumentation
 					.getAllEnvironmentsForPropagationSelection(curSpan == null);
 
 			String shuffledServiceId = getShuffledServiceId(
-					environmentsForPropagationSelection, serviceId);
-			args[0] = shuffledServiceId;
+					environmentsForPropagationSelection, serviceId.toLowerCase());
+			args[0] = shuffledServiceId.toUpperCase();
 
 			return invoker.invoke(args);
 
