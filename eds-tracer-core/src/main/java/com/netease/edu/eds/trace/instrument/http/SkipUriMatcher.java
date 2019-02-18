@@ -5,8 +5,6 @@ package com.netease.edu.eds.trace.instrument.http;
  */
 public interface SkipUriMatcher {
 
-    boolean match(String uri);
-
-
+	boolean match(String uri);
 
 }

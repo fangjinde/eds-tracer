@@ -11,7 +11,7 @@ import brave.propagation.TraceContextOrSamplingFlags;
 import com.netease.edu.eds.trace.constants.CommonTagKeys;
 import com.netease.edu.eds.trace.constants.SpanType;
 import com.netease.edu.eds.trace.core.UrlParameterManagerDto;
-import com.netease.edu.eds.trace.springbootcompatible.spi.SkipUriMatcher;
+import com.netease.edu.eds.trace.instrument.http.SkipUriMatcher;
 import com.netease.edu.eds.trace.utils.EnvironmentUtils;
 import com.netease.edu.eds.trace.utils.PropagationUtils;
 import com.netease.edu.eds.trace.utils.SpanUtils;

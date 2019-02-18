@@ -7,6 +7,7 @@ import brave.propagation.Propagation;
 import brave.propagation.TraceContext;
 import brave.propagation.TraceContextOrSamplingFlags;
 import com.netease.edu.eds.trace.core.Invoker;
+import com.netease.edu.eds.trace.instrument.http.httpclient.HttpRequestBypassSupport;
 import com.netease.edu.eds.trace.support.AbstractTraceAgentInstrumetation;
 import com.netease.edu.eds.trace.utils.SpanUtils;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -136,6 +137,11 @@ public class HttpClientTraceInstrument extends AbstractTraceAgentInstrumetation 
 
 			HttpMethod httpMethod = (HttpMethod) args[0];
 			String url = (String) args[1];
+
+			if (HttpRequestBypassSupport.byPassTrace(url)) {
+				return invoker.invoke(args);
+			}
+
 			addTraceHeadersBeforeHttpClientSend(args, spanRef);
 
 			AtomicReference<HttpClientResponse> httpClientResponseRef = new AtomicReference();

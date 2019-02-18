@@ -1,5 +1,7 @@
 package com.netease.edu.eds.trace.instrument.http.httpclient;
 
+import com.netease.edu.eds.trace.instrument.http.ClientSkipUriMatcher;
+import com.netease.edu.eds.trace.support.SpringBeanFactorySupport;
 import com.netease.edu.eds.trace.support.TracePropertiesSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,8 +20,17 @@ public class HttpRequestBypassSupport {
 	public static boolean byPassTrace(String uri) {
 		try {
 			URL url = new URL(uri);
-			if (url.getPath().startsWith("/eureka/")) {
-				return !TracePropertiesSupport.isHttpClientTracedForEureka();
+			ClientSkipUriMatcher clientSkipUriMatcher = SpringBeanFactorySupport
+					.getBean(ClientSkipUriMatcher.class);
+
+			if (clientSkipUriMatcher != null) {
+				return clientSkipUriMatcher.match(url.toString());
+			}
+			else {
+				// fall back to check certain important ignores
+				if (url.getPath().startsWith("/eureka/")) {
+					return !TracePropertiesSupport.isHttpClientTracedForEureka();
+				}
 			}
 
 		}

@@ -4,6 +4,7 @@ import brave.Span;
 import brave.Tracer;
 import brave.Tracing;
 import com.netease.edu.eds.shuffle.core.ShufflePropertiesSupport;
+import com.netease.edu.eds.shuffle.core.ShuffleSwitch;
 import com.netease.edu.eds.trace.core.Invoker;
 import com.netease.edu.eds.trace.instrument.http.httpclient.HttpRequestBypassSupport;
 import com.netease.edu.eds.trace.support.AbstractTraceAgentInstrumetation;
@@ -73,6 +74,10 @@ public class HttpClientShuffleInstrumentation extends AbstractTraceAgentInstrume
 		@RuntimeType
 		public static Object intercept(@AllArguments Object[] args,
 				@Morph Invoker invoker, @Origin Method method, @This Object proxy) {
+
+			if (!ShuffleSwitch.isTurnOn()) {
+				return invoker.invoke(args);
+			}
 
 			Tracer tracer = Tracing.currentTracer();
 			if (tracer == null) {

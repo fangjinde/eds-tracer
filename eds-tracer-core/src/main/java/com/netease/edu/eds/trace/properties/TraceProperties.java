@@ -82,6 +82,18 @@ public class TraceProperties {
 
 		private boolean eurekaEnable = DAFAULT_EUREKA_ENABLE;
 
+		public static String DEFAULT_SKIP_URL_PATTERN = "^(http|https)://([\\w\\.-]+)(:\\d+)?/eureka/";
+
+		private String skipUrlPattern = DEFAULT_SKIP_URL_PATTERN;
+
+		public String getSkipUrlPattern() {
+			return skipUrlPattern;
+		}
+
+		public void setSkipUrlPattern(String skipUrlPattern) {
+			this.skipUrlPattern = skipUrlPattern;
+		}
+
 		public boolean isEurekaEnable() {
 			return eurekaEnable;
 		}

@@ -60,6 +60,8 @@ public class TraceBaseAutoConfiguration {
     }
 
 
+
+
     /***
      * refresh whenever environment is changed will be overhead， later i will work it out.
      * 

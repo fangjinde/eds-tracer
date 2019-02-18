@@ -1,10 +1,13 @@
 package com.netease.edu.eds.trace.springboot1;
 
-import com.netease.edu.eds.trace.springbootcompatible.spi.SkipUriMatcher;
-import com.netease.edu.eds.trace.springbootcompatible.support.SkipUriMatcherRegexImpl;
+import com.netease.edu.eds.trace.instrument.http.ServerSkipUriMatcher;
+import com.netease.edu.eds.trace.support.ServerSkipUriMatcherRegexImpl;
 import org.springframework.boot.actuate.autoconfigure.ManagementServerProperties;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.sleuth.instrument.web.SleuthWebProperties;
@@ -31,16 +34,16 @@ public class TraceWebSpringboot1AutoConfiguration {
 
 
     @Configuration
-    @ConditionalOnMissingBean(SkipUriMatcher.class)
+    @ConditionalOnMissingBean(ServerSkipUriMatcher.class)
     public static class SkipPatternProviderConfig {
 
         @Bean
         @ConditionalOnBean(ManagementServerProperties.class)
         @RefreshScope
-        public SkipUriMatcher skipPatternForManagementServerProperties(
+        public ServerSkipUriMatcher skipPatternForManagementServerProperties(
                 final ManagementServerProperties managementServerProperties,
                 final SleuthWebProperties sleuthWebProperties) {
-            return new SkipUriMatcherRegexImpl(getPatternForManagementServerProperties(
+            return new ServerSkipUriMatcherRegexImpl(getPatternForManagementServerProperties(
                     managementServerProperties,
                     sleuthWebProperties));
         }
@@ -67,10 +70,10 @@ public class TraceWebSpringboot1AutoConfiguration {
         @Bean
         @ConditionalOnMissingBean(ManagementServerProperties.class)
         @RefreshScope
-        public SkipUriMatcher defaultSkipPatternBeanIfManagementServerPropsArePresent(
+        public ServerSkipUriMatcher defaultSkipPatternBeanIfManagementServerPropsArePresent(
                 SleuthWebProperties sleuthWebProperties) {
-            return new SkipUriMatcherRegexImpl(defaultSkipPattern(sleuthWebProperties.getSkipPattern(),
-                                                                  sleuthWebProperties.getAdditionalSkipPattern()));
+			return new ServerSkipUriMatcherRegexImpl(defaultSkipPattern(sleuthWebProperties.getSkipPattern(),
+                                                                        sleuthWebProperties.getAdditionalSkipPattern()));
         }
     }
 
