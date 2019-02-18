@@ -2,6 +2,12 @@ package com.netease.edu.eds.trace.demo;/**
                                         * Created by hzfjd on 18/1/8.
                                         */
 
+import com.netease.edu.eds.trace.demo.aop.TransactionAspect;
+import com.netease.edu.eds.trace.demo.component.DefaultHealthCheckProcessor;
+import com.netease.edu.eds.trace.demo.ioc.ExcludeBeanFactoryPostProcessor;
+import com.netease.edu.eds.trace.demo.message.stream.binding.ShuffleStreamBinding;
+import com.netease.edu.transaction.message.client.config.TransactionMessageClientConfig;
+import com.netease.edu.web.health.HealthCheckProcessor;
 import com.netease.edu.web.health.servlet.HealthCheckServlet;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
@@ -25,11 +31,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.Ordered;
-
-import com.netease.edu.eds.trace.demo.aop.TransactionAspect;
-import com.netease.edu.eds.trace.demo.ioc.ExcludeBeanFactoryPostProcessor;
-import com.netease.edu.eds.trace.demo.message.stream.binding.ShuffleStreamBinding;
-import com.netease.edu.transaction.message.client.config.TransactionMessageClientConfig;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -84,6 +85,11 @@ public class TraceDemoApplication {
         registration.setInitParameters(initParams);
         registration.addUrlMappings("/health/*");
         return registration;
+    }
+
+    @Bean
+    public HealthCheckProcessor defaultHealthCheckProcessor(){
+        return new DefaultHealthCheckProcessor();
     }
 
     @Bean
