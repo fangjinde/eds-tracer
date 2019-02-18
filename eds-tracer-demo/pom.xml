@@ -30,6 +30,11 @@
         </dependency>
 
         <dependency>
+            <groupId>com.netease.sentry</groupId>
+            <artifactId>sentry-javaagent-collector</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.netease.edu.eds</groupId>
             <artifactId>eds-tracer-demo-common</artifactId>
         </dependency>
