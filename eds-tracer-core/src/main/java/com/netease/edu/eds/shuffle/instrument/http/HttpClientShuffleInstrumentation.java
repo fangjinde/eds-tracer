@@ -29,6 +29,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static net.bytebuddy.matcher.ElementMatchers.isOverriddenFrom;
@@ -123,16 +124,41 @@ public class HttpClientShuffleInstrumentation extends AbstractTraceAgentInstrume
 
 		}
 
-		static String GW_SCHEMA = "gw";
-		static String GW_SERVICE_NAME = "eds-sc-gateway";
-		static String GW_URL_PREFIX = GW_SCHEMA + "://" + GW_SERVICE_NAME;
+		static final String GW_SCHEMA = "gw";
+		static final String GW_ORIGINAL_ENV = "original";
+
+		static final Pattern pattern = Pattern.compile("^gw://([\\w\\.-]+)\\.([\\w-]+)$");
+
+		// public static void main(String[] args) {
+		// printMatch("gw://edu-sc-gateway.original");
+		// printMatch("gw://eds-sc-gateway.edu-std");
+		// }
+		//
+		// private static void printMatch(String url) {
+		// Matcher matcher = pattern.matcher(url);
+		// if (matcher.find()) {
+		// System.out.println(url + " is matched. ");
+		// System.out.println(matcher.group(1));
+		// System.out.println(matcher.group(2));
+		// }
+		// else {
+		// System.out.println(url + " not matched!");
+		// }
+		// }
 
 		private static ServiceInstance getServiceInstanceByRoutingToUri(
 				String routingToUrl) {
 
-			String GW_STD = GW_URL_PREFIX + "."
-					+ ShufflePropertiesSupport.getStandardEnvName();
-			String GW_ORIGINNAL = GW_URL_PREFIX + "." + "original";
+			if (StringUtils.isBlank(routingToUrl)) {
+				return null;
+			}
+
+			Matcher matcher = pattern.matcher(routingToUrl);
+
+			if (!matcher.find()) {
+				return null;
+			}
+
 			DiscoveryClient discoveryClient = SpringBeanFactorySupport
 					.getBean(DiscoveryClient.class);
 			if (discoveryClient == null) {
@@ -140,24 +166,18 @@ public class HttpClientShuffleInstrumentation extends AbstractTraceAgentInstrume
 			}
 
 			String serviceId = null;
+			String serviceName = matcher.group(1);
+			String env = matcher.group(2);
 
-			List<ServiceInstance> serviceInstances = null;
-			if (GW_STD.equalsIgnoreCase(routingToUrl)) {
-				serviceId = GW_SERVICE_NAME + "."
-						+ ShufflePropertiesSupport.getStandardEnvName();
-
+			if (GW_ORIGINAL_ENV.equalsIgnoreCase(env)) {
+				serviceId = serviceName + "." + PropagationUtils.getOriginEnv();
 			}
-			else if (GW_ORIGINNAL.equalsIgnoreCase(routingToUrl)) {
-
-				serviceId = GW_SERVICE_NAME + "." + PropagationUtils.getOriginEnv();
-
+			else {
+				serviceId = serviceName + "." + env;
 			}
 
-			if (StringUtils.isBlank(serviceId)) {
-				return null;
-			}
-
-			serviceInstances = discoveryClient.getInstances(serviceId.toUpperCase());
+			List<ServiceInstance> serviceInstances = discoveryClient
+					.getInstances(serviceId.toUpperCase());
 
 			if (CollectionUtils.isEmpty(serviceInstances)) {
 				return null;
