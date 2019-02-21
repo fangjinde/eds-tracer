@@ -3,6 +3,7 @@ package com.netease.edu.eds.trace.clientdemo;/**
                                               */
 
 import com.netease.edu.eds.trace.clientdemo.message.stream.binding.ShuffleStreamBindingForClient;
+import com.netease.edu.web.health.HealthCheckProcessor;
 import com.netease.edu.web.health.servlet.HealthCheckServlet;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringBootConfiguration;
@@ -76,6 +77,13 @@ public class TracerClientDemoApplication {
         registration.setInitParameters(initParams);
         registration.addUrlMappings("/health/*");
         return registration;
+    }
+
+    @Bean
+    public HealthCheckProcessor defaultHealthCheckProcessor() {
+        return () -> {
+            return true;
+        };
     }
 
 }
