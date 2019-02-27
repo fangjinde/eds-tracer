@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.netease.edu.eds</groupId>
     <artifactId>eds-tracer-dependencies</artifactId>
-    <version>1.1.2-HCP-GW-RELEASE</version>
+    <version>1.1.2.1-HCP-GW-RELEASE</version>
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
     <url>http://maven.apache.org</url>
@@ -16,8 +16,8 @@
         <spring-cloud-sleuth.version>2.0.0.M7</spring-cloud-sleuth.version>
         <eds-tracer-agent.version>1.1.0-fjd-20181120-RELEASE</eds-tracer-agent.version>
         <sentry-javaagent-collector.version>1.2.21</sentry-javaagent-collector.version>
-        <eds-tracer.version>1.1.2-HCP-GW-RELEASE</eds-tracer.version>
-        <eds-tracer-springboot-adapter.version>1.1.2-HCP-GW-RELEASE</eds-tracer-springboot-adapter.version>
+        <eds-tracer.version>1.1.2.1-HCP-GW-RELEASE</eds-tracer.version>
+        <eds-tracer-springboot-adapter.version>1.1.2.1-HCP-GW-RELEASE</eds-tracer-springboot-adapter.version>
     </properties>
 
     <dependencyManagement>

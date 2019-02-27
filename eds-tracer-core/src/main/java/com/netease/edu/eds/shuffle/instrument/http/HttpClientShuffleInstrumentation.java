@@ -108,8 +108,9 @@ public class HttpClientShuffleInstrumentation extends AbstractTraceAgentInstrume
 						continue;
 					}
 
+					String scheme = (serviceInstance.isSecure()) ? "https" : "http";
 					HttpHost newHttpHost = new HttpHost(serviceInstance.getHost(),
-							serviceInstance.getPort(), serviceInstance.getScheme());
+							serviceInstance.getPort(), scheme);
 					args[0] = newHttpHost;
 					httpRequest.addHeader("Host", hostName);
 
